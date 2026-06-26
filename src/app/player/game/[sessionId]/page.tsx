@@ -36,7 +36,7 @@ export default function GamePage() {
   const [questionNumber, setQuestionNumber] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [timerSeconds, setTimerSeconds] = useState(0);
-  const [isAnswered, setIsAnsweredLocal] = useState(false);
+  const [isAnsweredLocal, setIsAnsweredLocal] = useState(false);  // ✅ renommé
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<WsAnswerResultPayload | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -46,8 +46,8 @@ export default function GamePage() {
   const [finalLeaderboard, setFinalLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [finalMessage, setFinalMessage] = useState('');
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
-  const [score, setScoreState] = useState(0);
-  const [rank, setRankState] = useState(0);
+  const [scoreState, setScoreState] = useState(0);  // ✅ renommé
+  const [rankState, setRankState] = useState(0);    // ✅ renommé
   const [totalParts, setTotalParts] = useState(0);
   const [gapToNext, setGapToNext] = useState<number | null>(null);
   const [gapToPodium, setGapToPodium] = useState<number | null>(null);
@@ -121,8 +121,8 @@ export default function GamePage() {
         time_taken_ms: 0,
         correct_answers: [],
         your_answer: [],
-        total_score: score,
-        rank,
+        total_score: scoreState,
+        rank: rankState,
         total_participants: totalParts,
         gap_to_next: null,
         gap_to_podium: null,
