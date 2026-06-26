@@ -7,7 +7,6 @@ import { useQuiz } from '@/hooks/useQuiz';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ArrowLeft, Trash2, Plus, Play } from 'lucide-react';
-import { CreateQuestionDto } from '@/types';
 
 export default function QuizDetailPage() {
   const params = useParams();
