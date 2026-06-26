@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { API_URL, HTTP_PREFIX, STORAGE_KEYS } from '@/constants';
+import { API_URL, HTTP_PREFIX } from '@/constants';
+import { useAuthStore } from '@/store/authStore';
 
 const api = axios.create({
   baseURL: `${API_URL}${HTTP_PREFIX}`,
@@ -9,7 +10,8 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+  // Récupérer le token depuis le store Zustand
+  const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
