@@ -52,17 +52,21 @@ export default function SessionControlPage() {
 
     joinedRef.current = true;
 
-    // Écouter les événements
+    // --- Écouteurs d'événements ---
+
+    // Participant rejoint
     socket.on('participant:joined', (data: any) => {
       fetchParticipants(sessionId);
       setParticipantCount((prev) => prev + 1);
     });
 
+    // Participant déconnecté
     socket.on('participant:disconnected', (data: any) => {
       fetchParticipants(sessionId);
       setParticipantCount((prev) => prev - 1);
     });
 
+    // Participant a répondu (progression)
     socket.on('participant:answered', (data: WsParticipantProgressPayload) => {
       setProgressMap((prev) => ({
         ...prev,
@@ -70,18 +74,42 @@ export default function SessionControlPage() {
       }));
     });
 
+    // 🔄 Mise à jour automatique du panneau de contrôle
+    socket.on('question:start', () => {
+      fetchSession(sessionId);
+    });
+
+    socket.on('session:paused', () => {
+      fetchSession(sessionId);
+    });
+
+    socket.on('session:resumed', () => {
+      fetchSession(sessionId);
+    });
+
+    socket.on('quiz:finished', () => {
+      fetchSession(sessionId);
+    });
+
+    // Erreur
     socket.on('error', (data: any) => {
       console.error('Erreur WebSocket:', data.message);
     });
 
+    // --- Cleanup ---
     return () => {
       socket.off('participant:joined');
       socket.off('participant:disconnected');
       socket.off('participant:answered');
+      socket.off('question:start');
+      socket.off('session:paused');
+      socket.off('session:resumed');
+      socket.off('quiz:finished');
       socket.off('error');
     };
-  }, [socket, isConnected, token, sessionId, fetchParticipants]);
+  }, [socket, isConnected, token, sessionId, fetchParticipants, fetchSession]);
 
+  // Actions du créateur
   const handleStartQuestion = () => {
     if (!socket || !isConnected) return;
     setIsStarting(true);

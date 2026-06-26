@@ -3,10 +3,9 @@ import { WS_URL } from '@/constants';
 
 let socket: Socket | null = null;
 
-export const getSocket = (token?: string): Socket => {
+export const getSocket = (): Socket => {
   if (!socket) {
     socket = io(WS_URL, {
-      auth: { token },
       transports: ['websocket'],
       autoConnect: false,
     });
@@ -14,8 +13,8 @@ export const getSocket = (token?: string): Socket => {
   return socket;
 };
 
-export const connectSocket = (token?: string) => {
-  const s = getSocket(token);
+export const connectSocket = () => {
+  const s = getSocket();
   if (!s.connected) {
     s.connect();
   }
