@@ -77,7 +77,7 @@ export function SessionControl({
       )}
 
       {isFinished && (
-        <span className="text-sm text-neutral-500">Quiz terminé</span>
+        <span className="text-sm text-ink-secondary">Quiz terminé</span>
       )}
     </div>
   );

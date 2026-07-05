@@ -36,21 +36,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-8">
         <h1 className="text-2xl font-bold text-center">Connexion</h1>
-        <p className="text-neutral-600 text-center mt-1">Connectez-vous pour gérer vos quiz</p>
+        <p className="text-ink-secondary text-center mt-1">Connectez-vous pour gérer vos quiz</p>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-6">
           <Input label="Pseudo" placeholder="Votre pseudo" {...register('pseudo')} />
           <Input label="Mot de passe" type="password" placeholder="••••••••" {...register('password')} />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             Se connecter
           </Button>
         </form>
         <p className="text-sm text-center mt-4">
           Pas encore de compte ?{' '}
-          <Link href="/register" className="text-blue-600 hover:underline">
+          <Link href="/register" className="text-primary hover:underline">
             S'inscrire
           </Link>
         </p>

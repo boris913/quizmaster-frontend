@@ -26,7 +26,7 @@ export function LiveLeaderboard({
           <Users className="w-4 h-4" />
           Classement ({totalParticipants} participants)
         </h3>
-        <span className="text-sm text-neutral-500">
+        <span className="text-sm text-ink-secondary">
           Q{currentQuestion + 1}/{totalQuestions}
         </span>
       </div>

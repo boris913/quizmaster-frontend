@@ -1,8 +1,8 @@
 'use client';
 
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { LeaderboardEntry } from '@/types';
 import { cn } from '@/lib/utils';
-import { Trophy, Medal } from 'lucide-react';
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];
@@ -21,37 +21,45 @@ export function Leaderboard({
   showGaps = true,
   className,
 }: LeaderboardProps) {
+  const shouldReduceMotion = useReducedMotion();
   const display = entries.slice(0, limit);
 
   return (
-    <div className={cn('space-y-1', className)}>
-      {display.map((entry) => {
-        const isCurrent = entry.participant_id === currentParticipantId;
-        return (
-          <div
-            key={entry.participant_id}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
-              isCurrent ? 'bg-neutral-100 border border-neutral-300' : 'hover:bg-neutral-50',
-              entry.on_podium && 'border-l-4 border-amber-400'
-            )}
-          >
-            <span className="w-8 text-sm font-medium text-neutral-500">
-              {entry.rank <= 3 ? rankEmojis[entry.rank - 1] : `#${entry.rank}`}
-            </span>
-            <span className={cn('flex-1 font-medium', isCurrent && 'font-bold')}>
-              {entry.pseudo}
-              {isCurrent && <span className="ml-2 text-xs text-neutral-500">(vous)</span>}
-            </span>
-            <span className="font-mono font-semibold">{entry.score}</span>
-            {showGaps && entry.rank > 1 && entry.gap_to_next !== null && (
-              <span className="text-xs text-neutral-400">
-                -{entry.gap_to_next}
+    <div className={cn('space-y-1.5', className)} role="list" aria-label="Classement">
+      <AnimatePresence initial={false}>
+        {display.map((entry) => {
+          const isCurrent = entry.participant_id === currentParticipantId;
+          return (
+            <motion.div
+              key={entry.participant_id}
+              layout={!shouldReduceMotion}
+              initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              role="listitem"
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors',
+                isCurrent ? 'bg-primary-50 border border-primary-200' : 'hover:bg-black/[0.02]',
+                entry.on_podium && 'border-l-4 border-warning'
+              )}
+            >
+              <span className="w-8 text-small font-semibold text-ink-secondary tabular-nums">
+                {entry.rank <= 3 ? rankEmojis[entry.rank - 1] : `#${entry.rank}`}
               </span>
-            )}
-          </div>
-        );
-      })}
+              <span className={cn('flex-1 text-body font-medium truncate', isCurrent && 'font-bold text-primary-700')}>
+                {entry.pseudo}
+                {isCurrent && <span className="ml-2 text-caption text-ink-secondary">(vous)</span>}
+              </span>
+              <span className="font-mono font-semibold tabular-nums">{entry.score}</span>
+              {showGaps && entry.rank > 1 && entry.gap_to_next !== null && (
+                <span className="text-caption text-ink-secondary/70 tabular-nums">
+                  -{entry.gap_to_next}
+                </span>
+              )}
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
     </div>
   );
 }

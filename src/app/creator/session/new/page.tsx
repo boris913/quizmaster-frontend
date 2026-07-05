@@ -46,16 +46,16 @@ export default function NewSessionPage() {
 
   if (quizLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-6 flex items-center justify-center">
-        <p className="text-neutral-500">Chargement...</p>
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <p className="text-ink-secondary">Chargement...</p>
       </div>
     );
   }
 
   if (!quizId || !currentQuiz) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-6 flex flex-col items-center justify-center">
-        <p className="text-neutral-500">Quiz introuvable</p>
+      <div className="min-h-screen bg-background p-6 flex flex-col items-center justify-center">
+        <p className="text-ink-secondary">Quiz introuvable</p>
         <Button asChild className="mt-4">
           <Link href="/creator/dashboard">Retour au tableau de bord</Link>
         </Button>
@@ -65,29 +65,29 @@ export default function NewSessionPage() {
 
   if (created && session) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <Card className="max-w-md w-full p-8 text-center space-y-6">
           <div className="text-5xl">🎉</div>
           <h2 className="text-2xl font-bold">Session créée !</h2>
-          <p className="text-neutral-600">
+          <p className="text-ink-secondary">
             Partagez ce mot de passe avec vos participants :
           </p>
-          <div className="flex items-center justify-center gap-3 bg-neutral-100 rounded-lg p-4">
+          <div className="flex items-center justify-center gap-3 bg-black/[0.05] rounded-lg p-4">
             <span className="text-3xl font-mono font-bold tracking-widest">
               {session.password}
             </span>
             <button
               onClick={handleCopyPassword}
-              className="p-2 hover:bg-neutral-200 rounded transition-colors"
+              className="p-2 hover:bg-black/[0.08] rounded transition-colors"
             >
               {copied ? (
-                <Check className="w-5 h-5 text-green-600" />
+                <Check className="w-5 h-5 text-success" />
               ) : (
-                <Copy className="w-5 h-5 text-neutral-600" />
+                <Copy className="w-5 h-5 text-ink-secondary" />
               )}
             </button>
           </div>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-ink-secondary">
             {currentQuiz.title} • {currentQuiz.total_questions} questions
           </p>
           <div className="flex flex-col gap-3">
@@ -104,7 +104,7 @@ export default function NewSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-6 flex items-center justify-center">
+    <div className="min-h-screen bg-background p-6 flex items-center justify-center">
       <Card className="max-w-md w-full p-8 space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
@@ -116,10 +116,10 @@ export default function NewSessionPage() {
         </div>
         <div className="space-y-2">
           <p className="font-medium">{currentQuiz.title}</p>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-ink-secondary">
             {currentQuiz.total_questions} questions
           </p>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-ink-secondary">
             Timer : {currentQuiz.use_global_timer ? `global (${currentQuiz.global_timer_seconds}s)` : 'personnalisé'}
           </p>
         </div>

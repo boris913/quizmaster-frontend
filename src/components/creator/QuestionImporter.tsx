@@ -36,7 +36,7 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-neutral-700">Questions.md</label>
+          <label className="block text-sm font-medium text-ink-secondary">Questions.md</label>
           <div className="mt-1 flex items-center gap-2">
             <input
               type="file"
@@ -51,13 +51,13 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
               className="text-sm"
             />
             {questionsFile && (
-              <span className="text-sm text-green-600">{questionsFile.name}</span>
+              <span className="text-sm text-success">{questionsFile.name}</span>
             )}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-neutral-700">Reponses.md (optionnel)</label>
+          <label className="block text-sm font-medium text-ink-secondary">Reponses.md (optionnel)</label>
           <div className="mt-1 flex items-center gap-2">
             <input
               type="file"
@@ -72,12 +72,12 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
               className="text-sm"
             />
             {answersFile && (
-              <span className="text-sm text-green-600">{answersFile.name}</span>
+              <span className="text-sm text-success">{answersFile.name}</span>
             )}
           </div>
         </div>
 
-        <div className="bg-neutral-50 p-4 rounded-lg text-sm text-neutral-600 space-y-1">
+        <div className="bg-background p-4 rounded-lg text-sm text-ink-secondary space-y-1">
           <p>Format attendu :</p>
           <pre className="bg-white p-2 rounded text-xs">
             {`Question 1 [timer:30] [points:100]\nQuelle est la capitale ?\nA) Londres\nB) Berlin\nC) Paris [correct]\nD) Madrid`}

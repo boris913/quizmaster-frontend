@@ -5,8 +5,11 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Leaderboard } from '../ui/Leaderboard';
 import { Podium } from '../ui/Podium';
+import { ScoreCounter } from '../ui/ScoreCounter';
+import { CircularStat } from '../ui/CircularStat';
+import { Confetti } from '../ui/Confetti';
 import { LeaderboardEntry } from '@/types';
-import { Trophy, Medal } from 'lucide-react';
+import { Trophy, RotateCcw } from 'lucide-react';
 
 interface FinalScreenProps {
   finalLeaderboard: LeaderboardEntry[];
@@ -30,51 +33,78 @@ export function FinalScreen({
   message,
   onPlayAgain,
 }: FinalScreenProps) {
+  const onPodium = yourRank > 0 && yourRank <= 3;
+  const beatenPercentage =
+    totalParticipants > 1 ? Math.round(((totalParticipants - yourRank) / (totalParticipants - 1)) * 100) : 100;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       className="max-w-2xl mx-auto space-y-6"
     >
-      <Card className="p-8 text-center">
-        <Trophy className="w-16 h-16 mx-auto text-amber-500" />
-        <h1 className="text-3xl font-bold mt-4">Quiz terminé !</h1>
-        <p className="text-xl mt-2">{message}</p>
-        <div className="mt-4 flex justify-center gap-6 text-sm">
+      <Card tier="primary" className="relative overflow-hidden p-8 text-center">
+        {isWinner && <Confetti />}
+
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 15, delay: 0.1 }}
+        >
+          <Trophy className="w-16 h-16 mx-auto text-warning" strokeWidth={1.5} />
+        </motion.div>
+
+        <h1 className="text-h1 mt-4">Quiz terminé !</h1>
+        <p className="text-body text-ink-secondary mt-2">{message}</p>
+
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-8">
           <div>
-            <span className="text-neutral-500">Votre score</span>
-            <p className="text-2xl font-bold">{yourScore} pts</p>
+            <p className="text-caption text-ink-secondary uppercase tracking-wide">Votre score</p>
+            <p className="text-display gradient-text tabular-nums">
+              <ScoreCounter value={yourScore} />
+            </p>
           </div>
-          <div>
-            <span className="text-neutral-500">Position</span>
-            <p className="text-2xl font-bold">#{yourRank}</p>
-          </div>
-          <div>
-            <span className="text-neutral-500">Participants</span>
-            <p className="text-2xl font-bold">{totalParticipants}</p>
-          </div>
+          <CircularStat
+            percentage={beatenPercentage}
+            label={`#${yourRank} sur ${totalParticipants}`}
+            sublabel={
+              totalParticipants > 1
+                ? `Devant ${beatenPercentage}% des joueurs`
+                : 'Seul participant'
+            }
+          />
         </div>
+
         {isWinner && (
-          <div className="mt-4 bg-amber-100 border border-amber-300 rounded-lg py-2 px-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="mt-6 bg-warning-50 border border-warning/30 rounded-md py-3 px-4 font-semibold text-warning"
+          >
             🏆 Félicitations, vous êtes le grand gagnant !
-          </div>
+          </motion.div>
         )}
         {winnerPseudo && !isWinner && (
-          <p className="text-sm text-neutral-500 mt-2">
-            Vainqueur : <strong>{winnerPseudo}</strong>
+          <p className="text-small text-ink-secondary mt-4">
+            Vainqueur : <strong className="text-ink">{winnerPseudo}</strong>
           </p>
+        )}
+        {onPodium && !isWinner && (
+          <p className="text-small font-medium text-success mt-2">🎉 Vous êtes sur le podium !</p>
         )}
       </Card>
 
       <Podium entries={finalLeaderboard} />
 
-      <Card className="p-4">
-        <h3 className="font-semibold mb-2">Classement final</h3>
+      <Card tier="secondary" className="p-5">
+        <h3 className="text-card-title mb-3">Classement final</h3>
         <Leaderboard entries={finalLeaderboard} showGaps={false} />
       </Card>
 
       {onPlayAgain && (
-        <Button onClick={onPlayAgain} className="w-full">
+        <Button onClick={onPlayAgain} size="lg" className="w-full">
+          <RotateCcw className="w-4 h-4 mr-2" />
           Rejouer
         </Button>
       )}

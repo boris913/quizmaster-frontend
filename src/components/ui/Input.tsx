@@ -7,24 +7,35 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, ...props }, ref) => {
+  ({ className, label, error, id, ...props }, ref) => {
+    const inputId = id || props.name;
     return (
       <div className="space-y-1.5">
         {label && (
-          <label className="text-sm font-medium text-neutral-700">
+          <label htmlFor={inputId} className="text-small font-medium text-ink">
             {label}
           </label>
         )}
         <input
           ref={ref}
+          id={inputId}
           className={cn(
-            'w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
-            error && 'border-red-500 focus:ring-red-500',
+            'w-full min-h-[44px] rounded-md border border-borderc bg-surface px-3 py-2 text-body placeholder:text-ink-secondary/60',
+            'transition-shadow duration-200',
+            'focus:outline-none focus:border-primary focus:shadow-glow',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+            error && 'border-danger focus:border-danger focus:shadow-none',
             className
           )}
+          aria-invalid={!!error}
+          aria-describedby={error && inputId ? `${inputId}-error` : undefined}
           {...props}
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <p id={inputId ? `${inputId}-error` : undefined} className="text-small text-danger">
+            {error}
+          </p>
+        )}
       </div>
     );
   }

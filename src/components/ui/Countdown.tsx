@@ -22,12 +22,12 @@ export function Countdown({ value, message, isVisible }: CountdownProps) {
         className="flex flex-col items-center justify-center py-8"
       >
         {value > 0 ? (
-          <span className="text-7xl font-bold text-neutral-900">{value}</span>
+          <span className="text-display gradient-text">{value}</span>
         ) : (
-          <span className="text-5xl font-bold text-green-600">{message}</span>
+          <span className="text-h1 font-bold text-success">{message}</span>
         )}
         {value > 0 && (
-          <span className="mt-2 text-sm text-neutral-500">Préparez-vous</span>
+          <span className="mt-2 text-small text-ink-secondary">Préparez-vous</span>
         )}
       </motion.div>
     </AnimatePresence>

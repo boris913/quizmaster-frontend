@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, Clock } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { Card } from './Card';
 import { cn } from '@/lib/utils';
 
@@ -24,54 +24,77 @@ export function AnswerResult({
   yourAnswers,
   status,
 }: AnswerResultProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const pop = shouldReduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 } }
+    : { initial: { scale: 0.85, opacity: 0 }, animate: { scale: 1, opacity: 1 } };
+
   if (status === 'timeout') {
     return (
-      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-        <Card className="p-6 text-center border-amber-300 bg-amber-50">
-          <Clock className="w-12 h-12 mx-auto text-amber-600" />
-          <h3 className="text-xl font-semibold mt-2">Temps écoulé !</h3>
-          <p className="text-neutral-600">Vous n'avez pas répondu à temps.</p>
-          <p className="text-sm text-neutral-500 mt-2">0 point</p>
+      <motion.div {...pop} transition={{ duration: 0.3, ease: 'easeOut' }}>
+        <Card tier="primary" className="p-8 text-center border-warning/30 bg-warning-50">
+          <Clock className="w-12 h-12 mx-auto text-warning" />
+          <h3 className="text-h3 mt-3">Temps écoulé !</h3>
+          <p className="text-ink-secondary mt-1">Vous n'avez pas répondu à temps.</p>
+          <p className="text-small text-ink-secondary mt-3">+0 pt</p>
         </Card>
       </motion.div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <motion.div {...pop} transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}>
       <Card
+        tier="primary"
         className={cn(
-          'p-6 text-center border-2',
-          isCorrect ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'
+          'p-8 text-center border-2',
+          isCorrect ? 'border-success/40 bg-success-50' : 'border-danger/40 bg-danger-50'
         )}
       >
-        <div className="flex justify-center">
+        <motion.div
+          initial={shouldReduceMotion ? false : { scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 300, damping: 15 }}
+          className="flex justify-center"
+        >
           {isCorrect ? (
-            <CheckCircle className="w-12 h-12 text-green-600" />
+            <CheckCircle2 className="w-14 h-14 text-success" strokeWidth={1.75} />
           ) : (
-            <XCircle className="w-12 h-12 text-red-600" />
+            <XCircle className="w-14 h-14 text-danger" strokeWidth={1.75} />
           )}
-        </div>
-        <h3 className="text-xl font-semibold mt-2">
-          {isCorrect ? 'Bonne réponse !' : 'Mauvaise réponse'}
+        </motion.div>
+
+        <h3 className="text-h3 mt-3">
+          {isCorrect ? 'Bonne réponse !' : 'Continuez comme ça 💪'}
         </h3>
-        <p className="text-sm text-neutral-600 mt-1">
-          Réponse en {(timeTakenMs / 1000).toFixed(1)} secondes
+        <p className="text-small text-ink-secondary mt-1">
+          Répondu en {(timeTakenMs / 1000).toFixed(1)}s
         </p>
-        <p className="text-lg font-bold mt-2">
-          {isCorrect ? `+${pointsEarned} pts` : '0 pt'}
-        </p>
-        <p className="text-xs text-neutral-500">
-          (max: {maxPoints} pts)
-        </p>
-        <div className="mt-4 text-sm text-neutral-700">
-          <p>Votre réponse : {yourAnswers.join(', ') || '—'}</p>
-          <p className="text-green-700">Réponse(s) attendue(s) : {correctAnswers.join(', ')}</p>
-        </div>
+
+        <motion.p
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className={cn(
+            'text-h1 font-bold mt-3',
+            isCorrect ? 'text-success' : 'text-ink-secondary'
+          )}
+        >
+          {isCorrect ? `+${pointsEarned}` : '+0'}
+          <span className="text-h3 font-medium ml-1">pts</span>
+        </motion.p>
+        <p className="text-caption text-ink-secondary/80">sur {maxPoints} pts max</p>
+
+        {!isCorrect && (
+          <div className="mt-5 text-small text-left bg-white/60 rounded-md p-3 space-y-1">
+            <p className="text-ink-secondary">
+              Votre réponse : <span className="font-medium text-ink">{yourAnswers.join(', ') || '—'}</span>
+            </p>
+            <p className="text-success">
+              Réponse attendue : <span className="font-medium">{correctAnswers.join(', ')}</span>
+            </p>
+          </div>
+        )}
       </Card>
     </motion.div>
   );

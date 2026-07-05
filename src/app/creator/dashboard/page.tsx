@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import { useQuiz } from '@/hooks/useQuiz';
 import { useSession } from '@/hooks/useSession';
@@ -10,6 +11,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Logo } from '@/components/ui/Logo';
+import { StatCard } from '@/components/ui/StatCard';
+import { SkeletonCardRow } from '@/components/ui/Skeleton';
 import {
   PlusCircle,
   List,
@@ -20,7 +23,15 @@ import {
   Play,
   ChevronRight,
   Sparkles,
+  ListChecks,
 } from 'lucide-react';
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Bonjour';
+  if (hour < 18) return 'Bon après-midi';
+  return 'Bonsoir';
+}
 
 export default function CreatorDashboardPage() {
   const router = useRouter();
@@ -36,7 +47,8 @@ export default function CreatorDashboardPage() {
 
   if (!isAuthenticated) return null;
 
-  const activeSessions = sessions?.filter(s => s.status !== 'finished') || [];
+  const activeSessions = sessions?.filter((s) => s.status !== 'finished') || [];
+  const totalQuestions = quizzes?.reduce((sum, q) => sum + (q.total_questions || 0), 0) || 0;
 
   const handleLogout = () => {
     logout();
@@ -44,36 +56,44 @@ export default function CreatorDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/80">
-      {/* Header avec logo et déconnexion */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="glass border-b border-borderc px-6 py-3 flex items-center justify-between sticky top-0 z-10">
         <Link href="/creator/dashboard" className="flex items-center gap-2 group">
           <Logo size={36} className="transition-transform group-hover:scale-105" />
-          <span className="text-xl font-bold text-slate-900">QuizMaster</span>
-          <span className="ml-2 text-xs font-medium text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/50">
+          <span className="text-h3 font-bold text-ink">QuizMaster</span>
+          <span className="ml-2 text-caption font-medium text-primary bg-primary-50 px-2 py-0.5 rounded-full border border-primary-200">
             Creator
           </span>
         </Link>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-600 font-medium hidden sm:inline">
+          <span className="text-small text-ink-secondary font-medium hidden sm:inline">
             {user?.pseudo}
           </span>
-          <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-500 hover:text-slate-700">
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
             <LogOut className="w-4 h-4 mr-1" />
             <span className="hidden sm:inline">Déconnexion</span>
           </Button>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* En-tête avec actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="max-w-content mx-auto px-6 py-10">
+        {/* Hero greeting — the primary, largest element on this screen */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-10"
+        >
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Tableau de bord</h1>
-            <p className="text-slate-500 mt-1">Gérez vos quiz et lancez des sessions en direct</p>
+            <p className="text-small text-ink-secondary font-medium">{getGreeting()},</p>
+            <h1 className="text-h1 sm:text-display leading-tight text-ink">
+              {user?.pseudo} <span className="gradient-text">👋</span>
+            </h1>
+            <p className="text-ink-secondary mt-2">Gérez vos quiz et lancez des sessions en direct.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button asChild className="shadow-sm hover:shadow transition-shadow">
+            <Button asChild>
               <Link href="/creator/quiz/new">
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Nouveau quiz
@@ -86,56 +106,55 @@ export default function CreatorDashboardPage() {
               </Link>
             </Button>
           </div>
+        </motion.div>
+
+        {/* KPI cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+          <StatCard
+            icon={<FileQuestion className="w-5 h-5" />}
+            value={quizzes?.length || 0}
+            label="Quiz créés"
+            tone="primary"
+            delay={0}
+          />
+          <StatCard
+            icon={<Play className="w-5 h-5" />}
+            value={activeSessions.length}
+            label="Sessions actives"
+            tone="success"
+            delay={0.05}
+          />
+          <StatCard
+            icon={<Calendar className="w-5 h-5" />}
+            value={sessions?.length || 0}
+            label="Sessions totales"
+            tone="accent"
+            delay={0.1}
+          />
+          <StatCard
+            icon={<ListChecks className="w-5 h-5" />}
+            value={totalQuestions}
+            label="Questions au total"
+            tone="warning"
+            delay={0.15}
+          />
         </div>
 
-        {/* Cartes statistiques modernisées */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
-          <Card className="p-5 border-slate-100 shadow-sm shadow-slate-100/50 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className="p-2.5 bg-blue-50/80 rounded-xl text-blue-600">
-                <FileQuestion className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-slate-900">{quizzes?.length || 0}</p>
-                <p className="text-sm text-slate-500 font-medium">Quiz créés</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-5 border-slate-100 shadow-sm shadow-slate-100/50 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className="p-2.5 bg-emerald-50/80 rounded-xl text-emerald-600">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-slate-900">{activeSessions.length}</p>
-                <p className="text-sm text-slate-500 font-medium">Sessions actives</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-5 border-slate-100 shadow-sm shadow-slate-100/50 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className="p-2.5 bg-amber-50/80 rounded-xl text-amber-600">
-                <Calendar className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-slate-900">{sessions?.length || 0}</p>
-                <p className="text-sm text-slate-500 font-medium">Sessions totales</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Grille Quiz / Sessions */}
+        {/* Quiz / Sessions grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Section Quiz */}
+          {/* Quiz section */}
           <div>
-            <h2 className="text-xl font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <FileQuestion className="w-5 h-5 text-slate-400" />
+            <h2 className="text-h3 mb-4 flex items-center gap-2">
+              <FileQuestion className="w-5 h-5 text-ink-secondary" />
               Mes quiz
             </h2>
             <div className="space-y-3">
               {quizzesLoading ? (
-                <p className="text-slate-400 text-sm">Chargement...</p>
+                <div className="space-y-3">
+                  <SkeletonCardRow />
+                  <SkeletonCardRow />
+                  <SkeletonCardRow />
+                </div>
               ) : quizzes?.length === 0 ? (
                 <EmptyState
                   icon={<FileQuestion className="w-8 h-8" />}
@@ -149,48 +168,46 @@ export default function CreatorDashboardPage() {
                       </Link>
                     </Button>
                   }
-                  className="bg-white rounded-xl border border-slate-200/60 shadow-sm"
+                  className="bg-surface rounded-lg border border-borderc"
                 />
               ) : (
                 quizzes.slice(0, 5).map((quiz) => (
-                  <Link
-                    key={quiz.id}
-                    href={`/creator/quiz/${quiz.id}`}
-                    className="block group"
-                  >
-                    <Card className="p-4 border-slate-100 shadow-sm shadow-slate-100/50 hover:shadow-md transition-all hover:border-slate-300/80 hover:scale-[1.01] duration-200">
+                  <Link key={quiz.id} href={`/creator/quiz/${quiz.id}`} className="block group">
+                    <Card interactive className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-medium text-slate-800 group-hover:text-slate-900 transition-colors">
-                            {quiz.title}
-                          </h3>
-                          <p className="text-sm text-slate-500">
+                          <h3 className="text-card-title text-ink">{quiz.title}</h3>
+                          <p className="text-small text-ink-secondary">
                             {quiz.total_questions} questions
                           </p>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-600 transition-colors" />
+                        <ChevronRight className="w-5 h-5 text-ink-secondary/50 group-hover:text-primary transition-colors" />
                       </div>
                     </Card>
                   </Link>
                 ))
               )}
               {quizzes && quizzes.length > 5 && (
-                <p className="text-sm text-slate-400 text-center pt-2">
+                <p className="text-small text-ink-secondary/70 text-center pt-2">
                   + {quizzes.length - 5} autres quiz
                 </p>
               )}
             </div>
           </div>
 
-          {/* Section Sessions */}
+          {/* Sessions section */}
           <div>
-            <h2 className="text-xl font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <Play className="w-5 h-5 text-slate-400" />
+            <h2 className="text-h3 mb-4 flex items-center gap-2">
+              <Play className="w-5 h-5 text-ink-secondary" />
               Sessions récentes
             </h2>
             <div className="space-y-3">
               {sessionsLoading ? (
-                <p className="text-slate-400 text-sm">Chargement...</p>
+                <div className="space-y-3">
+                  <SkeletonCardRow />
+                  <SkeletonCardRow />
+                  <SkeletonCardRow />
+                </div>
               ) : sessions?.length === 0 ? (
                 <EmptyState
                   icon={<Sparkles className="w-8 h-8" />}
@@ -204,42 +221,38 @@ export default function CreatorDashboardPage() {
                       </Link>
                     </Button>
                   }
-                  className="bg-white rounded-xl border border-slate-200/60 shadow-sm"
+                  className="bg-surface rounded-lg border border-borderc"
                 />
               ) : (
                 sessions.slice(0, 5).map((session) => (
-                  <Link
-                    key={session.id}
-                    href={`/creator/session/${session.id}`}
-                    className="block group"
-                  >
-                    <Card className="p-4 border-slate-100 shadow-sm shadow-slate-100/50 hover:shadow-md transition-all hover:border-slate-300/80 hover:scale-[1.01] duration-200">
+                  <Link key={session.id} href={`/creator/session/${session.id}`} className="block group">
+                    <Card interactive className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-medium text-slate-800 group-hover:text-slate-900 transition-colors">
+                          <h3 className="text-card-title text-ink">
                             {session.quiz_title || 'Quiz sans titre'}
                           </h3>
-                          <div className="flex items-center gap-2 text-sm mt-0.5">
+                          <div className="flex items-center gap-2 text-small mt-0.5">
                             <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium ${
                                 session.status === 'active'
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
+                                  ? 'bg-success-50 text-success border border-success/20'
                                   : session.status === 'paused'
-                                  ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
+                                  ? 'bg-warning-50 text-warning border border-warning/20'
                                   : session.status === 'finished'
-                                  ? 'bg-slate-100 text-slate-500 border border-slate-200/50'
-                                  : 'bg-blue-50 text-blue-700 border border-blue-200/50'
+                                  ? 'bg-black/[0.04] text-ink-secondary border border-borderc'
+                                  : 'bg-primary-50 text-primary-700 border border-primary-200'
                               }`}
                             >
                               {session.status}
                             </span>
-                            <span className="text-slate-400">•</span>
-                            <span className="font-mono text-xs text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/60">
+                            <span className="text-ink-secondary/40">•</span>
+                            <span className="font-mono text-caption text-ink-secondary bg-black/[0.03] px-1.5 py-0.5 rounded border border-borderc">
                               {session.password}
                             </span>
                           </div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-600 transition-colors" />
+                        <ChevronRight className="w-5 h-5 text-ink-secondary/50 group-hover:text-primary transition-colors" />
                       </div>
                     </Card>
                   </Link>

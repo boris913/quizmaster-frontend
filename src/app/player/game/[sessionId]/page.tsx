@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
 import { usePlayerStore } from '@/store/playerStore';
 import { QuestionView } from '@/components/player/QuestionView';
@@ -11,6 +12,13 @@ import { WaitingScreen } from '@/components/player/WaitingScreen';
 import { FinalScreen } from '@/components/player/FinalScreen';
 import { Question, WsQuestionStartPayload, WsAnswerResultPayload, LeaderboardEntry } from '@/types';
 import { Card } from '@/components/ui/Card';
+
+const pageTransition = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+  transition: { duration: 0.25 },
+};
 
 export default function GamePage() {
   const params = useParams();
@@ -199,7 +207,7 @@ export default function GamePage() {
   // Écran de fin
   if (finished) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <FinalScreen
           finalLeaderboard={finalLeaderboard}
           yourRank={rankState}
@@ -218,7 +226,7 @@ export default function GamePage() {
   // Écran d'attente
   if (waiting || paused) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <WaitingScreen
           message={paused ? 'Le quiz est en pause...' : 'En attente du début du quiz...'}
           isPaused={paused}
@@ -230,13 +238,11 @@ export default function GamePage() {
   // Écran de résultat après une question
   if (showResult && result) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-6">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-neutral-500">
-              Question {questionNumber}/{totalQuestions}
-            </span>
-            <span className="text-sm text-neutral-500">
+      <div className="min-h-screen bg-background p-6">
+        <motion.div key="result" {...pageTransition} className="max-w-2xl mx-auto space-y-6">
+          <div className="flex justify-between items-center text-small text-ink-secondary">
+            <span>Question {questionNumber}/{totalQuestions}</span>
+            <span className="font-medium">
               {result.is_correct ? '✅' : '❌'} {result.points_earned} pts
             </span>
           </div>
@@ -259,10 +265,10 @@ export default function GamePage() {
             gapToPodium={gapToPodium}
             onPodium={onPodium}
           />
-          <p className="text-center text-sm text-neutral-500">
+          <p className="text-center text-small text-ink-secondary">
             En attente de la prochaine question...
           </p>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -270,13 +276,13 @@ export default function GamePage() {
   // Écran de question
   if (question) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-6">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-sm text-neutral-500">
+      <div className="min-h-screen bg-background p-6">
+        <motion.div key={question.id} {...pageTransition} className="max-w-2xl mx-auto">
+          <div className="flex justify-between items-center mb-4 text-small">
+            <span className="text-ink-secondary">
               Question {questionNumber}/{totalQuestions}
             </span>
-            <span className="text-sm font-medium">
+            <span className="font-semibold text-ink bg-surface border border-borderc rounded-full px-3 py-1">
               {participant?.pseudo} • {scoreState} pts
             </span>
           </div>
@@ -290,15 +296,15 @@ export default function GamePage() {
             isSubmitting={isSubmitting}
             isAnswered={isAnsweredLocal}
           />
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-6 flex items-center justify-center">
-      <Card className="p-8 text-center">
-        <p className="text-neutral-500">Chargement du quiz...</p>
+    <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+      <Card tier="primary" className="p-8 text-center">
+        <p className="text-ink-secondary">Chargement du quiz...</p>
       </Card>
     </div>
   );

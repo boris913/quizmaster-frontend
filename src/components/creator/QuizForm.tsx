@@ -68,7 +68,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
             <input
               type="checkbox"
               {...register('use_global_timer')}
-              className="rounded border-neutral-300"
+              className="rounded border-borderc"
             />
             Utiliser un timer global
           </label>

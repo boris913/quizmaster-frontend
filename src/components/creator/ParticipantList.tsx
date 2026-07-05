@@ -12,11 +12,11 @@ interface ParticipantListProps {
 }
 
 const statusIcon = {
-  waiting: <Clock className="w-3 h-3 text-neutral-400" />,
-  answering: <Clock className="w-3 h-3 text-amber-500 animate-pulse" />,
+  waiting: <Clock className="w-3 h-3 text-ink-secondary/70" />,
+  answering: <Clock className="w-3 h-3 text-warning animate-pulse" />,
   answered: <CheckCircle className="w-3 h-3 text-green-500" />,
   timeout: <UserX className="w-3 h-3 text-red-500" />,
-  disconnected: <UserX className="w-3 h-3 text-neutral-400" />,
+  disconnected: <UserX className="w-3 h-3 text-ink-secondary/70" />,
 };
 
 const statusLabel = {
@@ -41,17 +41,17 @@ export function ParticipantList({ participants, progressMap = {} }: ParticipantL
           const progress = progressMap[p.id] || 0;
           return (
             <div key={p.id} className="flex items-center gap-3 text-sm">
-              <span className="w-5 text-neutral-400 font-mono">
+              <span className="w-5 text-ink-secondary/70 font-mono">
                 {statusIcon[p.status]}
               </span>
               <span className="flex-1 font-medium">{p.pseudo}</span>
-              <span className="text-xs text-neutral-500">
+              <span className="text-xs text-ink-secondary">
                 {statusLabel[p.status]}
               </span>
               <span className="font-mono font-semibold min-w-12 text-right">
                 {p.score}
               </span>
-              <ProgressBar value={progress} max={100} className="w-24" barClassName="bg-blue-500" />
+              <ProgressBar value={progress} max={100} className="w-24" barClassName="bg-primary" />
             </div>
           );
         })}

@@ -47,7 +47,7 @@ export function QuestionBuilder({
   };
 
   return (
-    <Card className="p-4 space-y-4 border-neutral-200">
+    <Card className="p-4 space-y-4 border-borderc">
       <div className="flex justify-between items-start">
         <h3 className="font-medium">Question {index + 1}</h3>
         <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
@@ -98,8 +98,8 @@ export function QuestionBuilder({
               className={cn(
                 'px-2 py-1 text-xs rounded border transition-colors',
                 correctAnswers.includes(opt.id)
-                  ? 'bg-green-100 border-green-500 text-green-700'
-                  : 'bg-white border-neutral-300 text-neutral-400'
+                  ? 'bg-success-50 border-success text-success'
+                  : 'bg-white border-borderc text-ink-secondary/70'
               )}
             >
               {correctAnswers.includes(opt.id) ? '✓ Correct' : 'Marquer'}
@@ -107,10 +107,10 @@ export function QuestionBuilder({
           </div>
         ))}
         {errors?.options && (
-          <p className="text-sm text-red-600">Au moins 2 options requises</p>
+          <p className="text-sm text-danger">Au moins 2 options requises</p>
         )}
         {errors?.correct_answers && (
-          <p className="text-sm text-red-600">Au moins une bonne réponse</p>
+          <p className="text-sm text-danger">Au moins une bonne réponse</p>
         )}
       </div>
 
@@ -130,7 +130,7 @@ export function QuestionBuilder({
           />
         )}
         {useGlobalTimer && (
-          <div className="text-sm text-neutral-500 flex items-center">
+          <div className="text-sm text-ink-secondary flex items-center">
             Timer global: {globalTimer}s
           </div>
         )}

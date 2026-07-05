@@ -43,22 +43,22 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-8">
         <h1 className="text-2xl font-bold text-center">Créer un compte</h1>
-        <p className="text-neutral-600 text-center mt-1">Devenez créateur de quiz</p>
+        <p className="text-ink-secondary text-center mt-1">Devenez créateur de quiz</p>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-6">
           <Input label="Pseudo" placeholder="Votre pseudo unique" {...register('pseudo')} />
           <Input label="Mot de passe" type="password" placeholder="••••••••" {...register('password')} />
           <Input label="Confirmer le mot de passe" type="password" placeholder="••••••••" {...register('confirmPassword')} />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             S'inscrire
           </Button>
         </form>
         <p className="text-sm text-center mt-4">
           Déjà un compte ?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link href="/login" className="text-primary hover:underline">
             Se connecter
           </Link>
         </p>

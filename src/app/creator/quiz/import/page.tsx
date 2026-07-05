@@ -39,7 +39,7 @@ export default function ImportQuizPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-3xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold">Importer un quiz</h1>
 
@@ -62,7 +62,7 @@ export default function ImportQuizPage() {
                 type="checkbox"
                 checked={useGlobalTimer}
                 onChange={(e) => setUseGlobalTimer(e.target.checked)}
-                className="rounded border-neutral-300"
+                className="rounded border-borderc"
               />
               Timer global
             </label>

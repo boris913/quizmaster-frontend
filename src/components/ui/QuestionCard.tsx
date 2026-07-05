@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Card } from './Card';
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface QuestionCardProps {
   question: {
@@ -28,6 +29,7 @@ export function QuestionCard({
   isDisabled = false,
   selectedAnswers = [],
 }: QuestionCardProps) {
+  const shouldReduceMotion = useReducedMotion();
   const [selected, setSelected] = useState<string[]>(selectedAnswers);
 
   const handleSelect = (optionId: string) => {
@@ -37,7 +39,7 @@ export function QuestionCard({
       newSelected = [optionId];
     } else {
       newSelected = selected.includes(optionId)
-        ? selected.filter(id => id !== optionId)
+        ? selected.filter((id) => id !== optionId)
         : [...selected, optionId];
     }
     setSelected(newSelected);
@@ -45,50 +47,70 @@ export function QuestionCard({
   };
 
   return (
-    <Card className="p-6 space-y-6">
-      <div className="flex justify-between items-start">
-        <div>
-          <span className="text-sm text-neutral-500">
-            Question {questionNumber} / {totalQuestions}
-          </span>
-          <h2 className="text-xl font-semibold mt-1">{question.text}</h2>
-        </div>
-        <span className="text-sm font-medium text-neutral-600">
+    <Card tier="primary" className="p-6 sm:p-8 space-y-7">
+      <div className="flex justify-between items-start gap-4">
+        <span className="text-caption font-semibold text-primary uppercase tracking-wide">
+          Question {questionNumber} / {totalQuestions}
+        </span>
+        <span className="text-caption font-medium text-ink-secondary bg-black/[0.04] px-2.5 py-1 rounded-full whitespace-nowrap">
           {question.max_points} pts
         </span>
       </div>
 
-      <div className="space-y-2">
-        {question.options.map((option) => {
+      {/* The question is the single largest, most important element on screen */}
+      <h2 className="text-h1 sm:text-display leading-tight text-ink text-balance">
+        {question.text}
+      </h2>
+
+      <div className="space-y-3" role={question.type === 'single' ? 'radiogroup' : 'group'}>
+        {question.options.map((option, i) => {
           const isSelected = selected.includes(option.id);
           return (
-            <button
+            <motion.button
               key={option.id}
               onClick={() => handleSelect(option.id)}
               disabled={isDisabled}
+              role={question.type === 'single' ? 'radio' : 'checkbox'}
+              aria-checked={isSelected}
+              initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: shouldReduceMotion ? 0 : i * 0.05, duration: 0.25 }}
+              whileHover={isDisabled || shouldReduceMotion ? undefined : { y: -2 }}
+              whileTap={isDisabled || shouldReduceMotion ? undefined : { scale: 0.99 }}
               className={cn(
-                'w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center gap-3',
+                'w-full min-h-[44px] text-left px-5 py-4 rounded-md border-2 transition-colors flex items-center gap-3',
                 isSelected && !isDisabled
-                  ? 'border-neutral-900 bg-neutral-100'
-                  : 'border-neutral-200 hover:border-neutral-400',
-                isDisabled && 'cursor-default opacity-70',
-                'disabled:opacity-50'
+                  ? 'border-primary bg-primary-50'
+                  : 'border-borderc hover:border-primary/40 bg-surface',
+                isDisabled && isSelected && 'opacity-90',
+                isDisabled && !isSelected && 'opacity-50'
               )}
             >
-              <span className="font-mono text-sm font-medium text-neutral-500 min-w-6">
+              <span
+                className={cn(
+                  'font-mono text-small font-semibold min-w-8 h-8 flex items-center justify-center rounded-md',
+                  isSelected ? 'bg-primary text-white' : 'bg-black/[0.05] text-ink-secondary'
+                )}
+              >
                 {option.id}
               </span>
-              <span>{option.text}</span>
+              <span className="text-body flex-1">{option.text}</span>
               {isSelected && !isDisabled && (
-                <Check className="ml-auto w-4 h-4 text-neutral-900" />
+                <motion.span
+                  initial={shouldReduceMotion ? false : { scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                >
+                  <Check className="w-5 h-5 text-primary" />
+                </motion.span>
               )}
-            </button>
+            </motion.button>
           );
         })}
       </div>
 
       {question.type === 'multiple' && !isDisabled && (
-        <p className="text-sm text-neutral-500">
+        <p className="text-caption text-ink-secondary">
           Sélectionnez plusieurs réponses (cliquez à nouveau pour désélectionner)
         </p>
       )}

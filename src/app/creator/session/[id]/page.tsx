@@ -139,8 +139,8 @@ export default function SessionControlPage() {
 
   if (!currentSession) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-6 flex items-center justify-center">
-        <p className="text-neutral-500">Chargement...</p>
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <p className="text-ink-secondary">Chargement...</p>
       </div>
     );
   }
@@ -149,7 +149,7 @@ export default function SessionControlPage() {
   const currentQIndex = currentSession.current_question_index ?? -1;
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-4">
@@ -163,7 +163,7 @@ export default function SessionControlPage() {
               <h1 className="text-2xl font-bold">
                 {(currentSession as any).quizzes?.title || 'Session'}
               </h1>
-              <div className="flex items-center gap-3 text-sm text-neutral-500">
+              <div className="flex items-center gap-3 text-sm text-ink-secondary">
                 <span>Code: <strong className="font-mono">{currentSession.password}</strong></span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
@@ -175,7 +175,7 @@ export default function SessionControlPage() {
               </div>
             </div>
           </div>
-          <div className="text-sm text-neutral-500">
+          <div className="text-sm text-ink-secondary">
             {isConnected ? '🟢 Connecté' : '🔴 Déconnecté'}
           </div>
         </div>
