@@ -12,6 +12,7 @@ import { WaitingScreen } from '@/components/player/WaitingScreen';
 import { FinalScreen } from '@/components/player/FinalScreen';
 import { Question, WsQuestionStartPayload, WsAnswerResultPayload, LeaderboardEntry } from '@/types';
 import { Card } from '@/components/ui/Card';
+import { ScoreCounter } from '@/components/ui/ScoreCounter';
 
 const pageTransition = {
   initial: { opacity: 0, y: 8 },
@@ -81,6 +82,7 @@ export default function GamePage() {
     // Écouter les événements
     socket.on('participant:join:success', (data: any) => {
       setParticipant(data.participant);
+      setScore(data.participant?.score || 0);
       setWaiting(false);
     });
 
@@ -161,6 +163,9 @@ export default function GamePage() {
       setFinalMessage(data.message);
       setScoreState(data.your_score);
       setRankState(data.your_rank);
+      setScore(data.your_score);
+      setRank(data.your_rank);
+      setTotalParticipants(data.total_participants);
       setIsFinished(true);
     });
 
@@ -283,7 +288,7 @@ export default function GamePage() {
               Question {questionNumber}/{totalQuestions}
             </span>
             <span className="font-semibold text-ink bg-surface border border-borderc rounded-full px-3 py-1">
-              {participant?.pseudo} • {scoreState} pts
+              {participant?.pseudo} • <ScoreCounter value={scoreState} durationMs={500} /> pts
             </span>
           </div>
           <QuestionView

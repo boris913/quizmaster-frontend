@@ -10,17 +10,14 @@ import { useSession } from '@/hooks/useSession';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Logo } from '@/components/ui/Logo';
 import { StatCard } from '@/components/ui/StatCard';
 import { SkeletonCardRow } from '@/components/ui/Skeleton';
 import {
   PlusCircle,
   List,
-  Users,
-  Calendar,
-  LogOut,
-  FileQuestion,
   Play,
+  Calendar,
+  FileQuestion,
   ChevronRight,
   Sparkles,
   ListChecks,
@@ -35,7 +32,7 @@ function getGreeting() {
 
 export default function CreatorDashboardPage() {
   const router = useRouter();
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { quizzes, isLoading: quizzesLoading } = useQuiz();
   const { sessions, isLoading: sessionsLoading } = useSession();
 
@@ -50,33 +47,8 @@ export default function CreatorDashboardPage() {
   const activeSessions = sessions?.filter((s) => s.status !== 'finished') || [];
   const totalQuestions = quizzes?.reduce((sum, q) => sum + (q.total_questions || 0), 0) || 0;
 
-  const handleLogout = () => {
-    logout();
-    router.push('/');
-  };
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="glass border-b border-borderc px-6 py-3 flex items-center justify-between sticky top-0 z-10">
-        <Link href="/creator/dashboard" className="flex items-center gap-2 group">
-          <Logo size={36} className="transition-transform group-hover:scale-105" />
-          <span className="text-h3 font-bold text-ink">QuizMaster</span>
-          <span className="ml-2 text-caption font-medium text-primary bg-primary-50 px-2 py-0.5 rounded-full border border-primary-200">
-            Creator
-          </span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <span className="text-small text-ink-secondary font-medium hidden sm:inline">
-            {user?.pseudo}
-          </span>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-1" />
-            <span className="hidden sm:inline">Déconnexion</span>
-          </Button>
-        </div>
-      </header>
-
       <div className="max-w-content mx-auto px-6 py-10">
         {/* Hero greeting — the primary, largest element on this screen */}
         <motion.div

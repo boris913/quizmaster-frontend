@@ -148,6 +148,15 @@ export default function SessionControlPage() {
   const totalQuestions = (currentSession as any).quizzes?.total_questions || 0;
   const currentQIndex = currentSession.current_question_index ?? -1;
 
+  // Carte des scores en direct, dérivée du classement temps réel (mis à jour par
+  // useLeaderboard via les événements socket 'leaderboard:update' / 'question:ended').
+  // Cela permet à la liste des participants de se rafraîchir automatiquement
+  // dès qu'un joueur répond, sans recharger la page.
+  const liveScores = leaderboard.reduce<Record<string, number>>((acc, entry) => {
+    acc[entry.participant_id] = entry.score;
+    return acc;
+  }, {});
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
@@ -207,6 +216,7 @@ export default function SessionControlPage() {
             <ParticipantList
               participants={participants || []}
               progressMap={progressMap}
+              liveScores={liveScores}
             />
           </div>
         </div>
