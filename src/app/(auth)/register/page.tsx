@@ -53,7 +53,7 @@ export default function RegisterPage() {
           <Input label="Confirmer le mot de passe" type="password" placeholder="••••••••" {...register('confirmPassword')} />
           {error && <p className="text-sm text-danger">{error}</p>}
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            S'inscrire
+            S&apos;inscrire
           </Button>
         </form>
         <p className="text-sm text-center mt-4">
