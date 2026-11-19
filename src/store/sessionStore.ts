@@ -17,6 +17,8 @@ interface SessionState {
   createSession: (quizId: string) => Promise<Session>;
   joinSession: (password: string, pseudo: string) => Promise<{ participant: Participant; session: Session }>;
   endSession: (id: string) => Promise<void>;
+  /** Supprime définitivement la session et ses données (participants, réponses). 404 si non-créateur. */
+  deleteSession: (id: string) => Promise<void>;
   updateLeaderboard: (entries: LeaderboardEntry[]) => void;
 }
 
@@ -69,6 +71,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   endSession: async (id) => {
+    await api.delete(`/sessions/${id}`);
+    set((state) => ({
+      sessions: state.sessions.filter((s) => s.id !== id),
+      currentSession: state.currentSession?.id === id ? null : state.currentSession,
+    }));
+  },
+
+  deleteSession: async (id) => {
     await api.delete(`/sessions/${id}`);
     set((state) => ({
       sessions: state.sessions.filter((s) => s.id !== id),

@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatCard } from '@/components/ui/StatCard';
 import { SkeletonCardRow } from '@/components/ui/Skeleton';
+import { DeleteSessionButton } from '@/components/creator/DeleteSessionButton';
 import {
   PlusCircle,
   List,
@@ -197,37 +198,42 @@ export default function CreatorDashboardPage() {
                 />
               ) : (
                 sessions.slice(0, 5).map((session) => (
-                  <Link key={session.id} href={`/creator/session/${session.id}`} className="block group">
-                    <Card interactive className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-card-title text-ink">
-                            {session.quiz_title || 'Quiz sans titre'}
-                          </h3>
-                          <div className="flex items-center gap-2 text-small mt-0.5">
-                            <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium ${
-                                session.status === 'active'
-                                  ? 'bg-success-50 text-success border border-success/20'
-                                  : session.status === 'paused'
-                                  ? 'bg-warning-50 text-warning border border-warning/20'
-                                  : session.status === 'finished'
-                                  ? 'bg-black/[0.04] text-ink-secondary border border-borderc'
-                                  : 'bg-primary-50 text-primary-700 border border-primary-200'
-                              }`}
-                            >
-                              {session.status}
-                            </span>
-                            <span className="text-ink-secondary/40">•</span>
-                            <span className="font-mono text-caption text-ink-secondary bg-black/[0.03] px-1.5 py-0.5 rounded border border-borderc">
-                              {session.password}
-                            </span>
-                          </div>
+                  <Card key={session.id} interactive className="p-4 flex items-center gap-2">
+                    <Link
+                      href={`/creator/session/${session.id}`}
+                      className="group flex flex-1 min-w-0 items-center justify-between"
+                    >
+                      <div>
+                        <h3 className="text-card-title text-ink">
+                          {session.quiz_title || 'Quiz sans titre'}
+                        </h3>
+                        <div className="flex items-center gap-2 text-small mt-0.5">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium ${
+                              session.status === 'active'
+                                ? 'bg-success-50 text-success border border-success/20'
+                                : session.status === 'paused'
+                                ? 'bg-warning-50 text-warning border border-warning/20'
+                                : session.status === 'finished'
+                                ? 'bg-black/[0.04] text-ink-secondary border border-borderc'
+                                : 'bg-primary-50 text-primary-700 border border-primary-200'
+                            }`}
+                          >
+                            {session.status}
+                          </span>
+                          <span className="text-ink-secondary/40">•</span>
+                          <span className="font-mono text-caption text-ink-secondary bg-black/[0.03] px-1.5 py-0.5 rounded border border-borderc">
+                            {session.password}
+                          </span>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-ink-secondary/50 group-hover:text-primary transition-colors" />
                       </div>
-                    </Card>
-                  </Link>
+                      <ChevronRight className="w-5 h-5 text-ink-secondary/50 group-hover:text-primary transition-colors" />
+                    </Link>
+                    <DeleteSessionButton
+                      sessionId={session.id}
+                      sessionLabel={session.quiz_title || 'Quiz sans titre'}
+                    />
+                  </Card>
                 ))
               )}
             </div>
