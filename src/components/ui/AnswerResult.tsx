@@ -35,7 +35,7 @@ export function AnswerResult({
         <Card tier="primary" className="p-8 text-center border-warning/30 bg-warning-50">
           <Clock className="w-12 h-12 mx-auto text-warning" />
           <h3 className="text-h3 mt-3">Temps écoulé !</h3>
-          <p className="text-ink-secondary mt-1">Vous n'avez pas répondu à temps.</p>
+          <p className="text-ink-secondary mt-1">Vous n&apos;avez pas répondu à temps.</p>
           <p className="text-small text-ink-secondary mt-3">+0 pt</p>
         </Card>
       </motion.div>
