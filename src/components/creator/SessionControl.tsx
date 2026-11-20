@@ -1,7 +1,8 @@
 'use client';
 
 import { Button } from '../ui/Button';
-import { Play, Pause, Square, SkipForward, Trophy } from 'lucide-react';
+import Link from 'next/link';
+import { Play, Pause, Square, SkipForward, Trophy, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 // --- Résultats de la question (#5) ---
 import { AnswerHistogram, histogramOptions } from '../ui/AnswerHistogram';
@@ -16,6 +17,8 @@ interface SessionControlProps {
   onResume: () => void;
   onEnd: () => void;
   isStarting?: boolean;
+  /** Lien vers le rapport post-session, affiché une fois le quiz terminé. */
+  reportHref?: string;
   className?: string;
   // --- Résultats de la question (#5) ---
   /** Statistiques de la question clôturée : affiche l'étape « résultats » entre la question et le classement. */
@@ -33,6 +36,7 @@ export function SessionControl({
   onResume,
   onEnd,
   isStarting = false,
+  reportHref,
   className,
   questionResults = null,
   onShowLeaderboard,
@@ -120,7 +124,17 @@ export function SessionControl({
       )}
 
       {isFinished && (
-        <span className="text-sm text-ink-secondary">Quiz terminé</span>
+        <>
+          <span className="text-sm text-ink-secondary">Quiz terminé</span>
+          {reportHref && (
+            <Button asChild>
+              <Link href={reportHref}>
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Voir le rapport
+              </Link>
+            </Button>
+          )}
+        </>
       )}
     </div>
   );

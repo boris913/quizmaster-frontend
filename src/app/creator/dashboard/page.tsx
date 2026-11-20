@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Sparkles,
   ListChecks,
+  BarChart3,
 } from 'lucide-react';
 
 function getGreeting() {
@@ -197,7 +198,9 @@ export default function CreatorDashboardPage() {
                   className="bg-surface rounded-lg border border-borderc"
                 />
               ) : (
-                sessions.slice(0, 5).map((session) => (
+                sessions.slice(0, 5).map((session) => {
+                  const title = session.quiz_title || session.quizzes?.title || 'Quiz sans titre';
+                  return (
                   <Card key={session.id} interactive className="p-4 flex items-center gap-2">
                     <Link
                       href={`/creator/session/${session.id}`}
@@ -205,7 +208,7 @@ export default function CreatorDashboardPage() {
                     >
                       <div>
                         <h3 className="text-card-title text-ink">
-                          {session.quiz_title || 'Quiz sans titre'}
+                          {title}
                         </h3>
                         <div className="flex items-center gap-2 text-small mt-0.5">
                           <span
@@ -229,12 +232,26 @@ export default function CreatorDashboardPage() {
                       </div>
                       <ChevronRight className="w-5 h-5 text-ink-secondary/50 group-hover:text-primary transition-colors" />
                     </Link>
-                    <DeleteSessionButton
-                      sessionId={session.id}
-                      sessionLabel={session.quiz_title || 'Quiz sans titre'}
-                    />
+                    {session.status !== 'waiting' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="text-primary-700 hover:bg-primary-50"
+                      >
+                        <Link
+                          href={`/creator/session/${session.id}/results`}
+                          aria-label={`Voir le rapport : ${title}`}
+                          title="Voir le rapport"
+                        >
+                          <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                        </Link>
+                      </Button>
+                    )}
+                    <DeleteSessionButton sessionId={session.id} sessionLabel={title} />
                   </Card>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
