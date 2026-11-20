@@ -400,6 +400,12 @@ export async function submitAssignmentAnswer(
 // Erreurs
 // ------------------------------------------------------------
 
+/** Vrai si `POST /sessions/join` a refusé un code de devoir (404 avec `mode: 'async'`). */
+export function isAssignmentCodeError(err: unknown): boolean {
+  const response = (err as { response?: { status?: number; data?: { mode?: unknown } } } | undefined)?.response;
+  return response?.status === 404 && response.data?.mode === 'async';
+}
+
 export type AssignmentErrorKind =
   | 'notFound'
   | 'expired'

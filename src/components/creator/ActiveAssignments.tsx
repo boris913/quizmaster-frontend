@@ -110,7 +110,8 @@ function AssignmentRow({ session }: { session: Session }) {
               ? `${completion.completed} / ${completion.started} élève${completion.started > 1 ? 's' : ''} ${
                   completion.completed > 1 ? 'ont' : 'a'
                 } terminé`
-              : 'Complétion : voir le rapport'}
+              : // Contrat backend #10 : GET /sessions ne fournit pas la complétion (voir le rapport).
+                'Complétion détaillée dans le rapport'}
             <span className="text-ink-secondary/40"> • </span>
             <span className="font-mono text-caption">{session.password}</span>
           </p>
