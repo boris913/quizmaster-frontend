@@ -13,11 +13,11 @@ export function Logo({ className, size = 40 }: LogoProps) {
       className={cn(className)}
       width={size}
       height={size}
-      aria-label="QuizMaster"
+      aria-label="Kwizora"
     >
       <rect width="100" height="100" rx="20" fill="#1a1a1a" />
       <text x="50" y="72" fontFamily="Arial, sans-serif" fontSize="70" fontWeight="bold" fill="#ffffff" textAnchor="middle">
-        Q
+        K
       </text>
       <circle cx="50" cy="50" r="40" stroke="#f5a623" strokeWidth="4" fill="none" />
     </svg>

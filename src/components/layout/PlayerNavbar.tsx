@@ -25,7 +25,7 @@ export function PlayerNavbar() {
       <div className="max-w-content mx-auto px-6 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 group shrink-0">
           <Logo size={34} className="transition-transform group-hover:scale-105" />
-          <span className="text-card-title font-bold text-ink hidden sm:inline">QuizMaster</span>
+          <span className="text-card-title font-bold text-ink hidden sm:inline">Kwizora</span>
           <span className="text-caption font-medium text-accent bg-accent-50 px-2 py-0.5 rounded-full border border-accent/20">
             Joueur
           </span>

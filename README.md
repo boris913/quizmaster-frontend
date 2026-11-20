@@ -1,6 +1,6 @@
-# QuizMaster — frontend
+# Kwizora — frontend
 
-Application Next.js 14 (App Router) de QuizMaster : création de quiz, sessions en direct et participation des joueurs.
+Application Next.js 14 (App Router) de Kwizora : création de quiz, sessions en direct et participation des joueurs.
 
 Stack : Next.js 14.0.3, React 18, TypeScript, Zustand, Tailwind CSS, framer-motion, socket.io-client.
 

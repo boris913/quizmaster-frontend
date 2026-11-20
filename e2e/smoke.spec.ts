@@ -3,8 +3,8 @@ import { expect, test } from '@playwright/test';
 test.describe('fumée', () => {
   test("la page d'accueil se charge", async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/QuizMaster/);
-    await expect(page.getByRole('heading', { level: 1, name: 'QuizMaster' })).toBeVisible();
+    await expect(page).toHaveTitle(/Kwizora/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Kwizora' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Rejoindre un quiz' })).toHaveAttribute(
       'href',
       '/player/join'

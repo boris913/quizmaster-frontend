@@ -32,7 +32,7 @@ export function CreatorNavbar() {
           className="flex items-center gap-2 group shrink-0"
         >
           <Logo size={34} className="transition-transform group-hover:scale-105" />
-          <span className="text-card-title font-bold text-ink hidden sm:inline">QuizMaster</span>
+          <span className="text-card-title font-bold text-ink hidden sm:inline">Kwizora</span>
           <span className="text-caption font-medium text-primary bg-primary-50 px-2 py-0.5 rounded-full border border-primary-200">
             Creator
           </span>

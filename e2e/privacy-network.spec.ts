@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
  *
  * Origines autorisées :
  * - l'origine de l'application elle-même ;
- * - l'origine du backend QuizMaster (NEXT_PUBLIC_API_URL / NEXT_PUBLIC_WS_URL) : c'est notre propre
+ * - l'origine du backend Kwizora (NEXT_PUBLIC_API_URL / NEXT_PUBLIC_WS_URL) : c'est notre propre
  *   API, pas un tiers. Le SocketProvider racine ouvre une connexion WebSocket dès le chargement.
  *   Si le backend n'est pas lancé, la tentative échoue, mais elle est tout de même observée ici.
  */

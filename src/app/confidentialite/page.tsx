@@ -4,7 +4,7 @@ import Link from 'next/link';
 /*
  * AVERTISSEMENT INTERNE — À FAIRE RELIRE PAR UN DPO AVANT TOUTE COMMUNICATION.
  *
- * Ce texte décrit le fonctionnement technique de QuizMaster en langage clair. Ce n'est pas un
+ * Ce texte décrit le fonctionnement technique de Kwizora en langage clair. Ce n'est pas un
  * avis juridique : il ne permet pas, à lui seul, d'affirmer que l'outil est « conforme RGPD ».
  *
  * Points à compléter / vérifier par le mainteneur :
@@ -21,9 +21,9 @@ const DERNIERE_MISE_A_JOUR = '[date à compléter]';
 const DUREE_CONSERVATION_JOURS = 30;
 
 export const metadata: Metadata = {
-  title: 'Confidentialité — QuizMaster',
+  title: 'Confidentialité — Kwizora',
   description:
-    'Quelles données QuizMaster traite sur les élèves et les enseignants, combien de temps elles sont conservées et comment les supprimer.',
+    'Quelles données Kwizora traite sur les élèves et les enseignants, combien de temps elles sont conservées et comment les supprimer.',
 };
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -44,13 +44,13 @@ export default function ConfidentialitePage() {
         <header className="space-y-3">
           <p className="text-small font-medium text-primary-700">
             <Link href="/" className="hover:underline">
-              QuizMaster
+              Kwizora
             </Link>
           </p>
           <h1 className="text-h1 text-ink">Confidentialité et données des élèves</h1>
           <p className="text-body text-ink-secondary">
             Cette page s&apos;adresse aux enseignants, aux établissements et aux délégués à la
-            protection des données (DPO). Elle explique simplement quelles données QuizMaster
+            protection des données (DPO). Elle explique simplement quelles données Kwizora
             traite, pourquoi, combien de temps, et comment les faire supprimer.
           </p>
           <p className="text-small text-ink-secondary">
@@ -90,7 +90,7 @@ export default function ConfidentialitePage() {
         </section>
 
         <Section id="donnees-eleves" title="Données collectées sur les élèves">
-          <p>Quand un élève rejoint une session, QuizMaster enregistre :</p>
+          <p>Quand un élève rejoint une session, Kwizora enregistre :</p>
           <ul className="list-disc pl-5 space-y-1.5">
             <li>
               <strong className="text-ink">le pseudo</strong> qu&apos;il a choisi (nous
@@ -114,7 +114,7 @@ export default function ConfidentialitePage() {
           </ul>
           <p>
             Il n&apos;y a <strong className="text-ink">aucun compte élève</strong> : pas
-            d&apos;inscription, pas de mot de passe, pas d&apos;adresse e-mail. QuizMaster ne
+            d&apos;inscription, pas de mot de passe, pas d&apos;adresse e-mail. Kwizora ne
             demande ni nom, ni prénom, ni date de naissance, ni classe, ni établissement.
             L&apos;application n&apos;enregistre rien sur l&apos;appareil de l&apos;élève (pas de
             cookie ni de stockage local côté élève).
@@ -173,7 +173,7 @@ export default function ConfidentialitePage() {
         <Section id="hebergement" title="Hébergement">
           <p>{HEBERGEMENT}</p>
           <p>
-            Les polices de caractères sont servies directement par QuizMaster : l&apos;affichage
+            Les polices de caractères sont servies directement par Kwizora : l&apos;affichage
             des pages élèves ne déclenche aucune requête vers un service tiers (polices,
             statistiques, réseaux sociaux ou publicité).
           </p>
