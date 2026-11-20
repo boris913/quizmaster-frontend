@@ -3,15 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useSocket } from './useSocket';
 import { useAuthStore } from '@/store/authStore';
-import type {
-  LeaderboardEntry,
-  Participant,
-  WsQuestionCountdownPayload,
-  WsQuestionEndPayload,
-  WsQuestionStartPayload,
+import {
+  normalizeQuestionStats,
+  type LeaderboardEntry,
+  type Participant,
+  type WsQuestionCountdownPayload,
+  type WsQuestionEndPayload,
+  type WsQuestionStartPayload,
+  type WsQuestionStatsPayload,
 } from '@/types';
 
-export type ProjectionPhase = 'lobby' | 'countdown' | 'question' | 'ended' | 'finished';
+export type ProjectionPhase = 'lobby' | 'countdown' | 'question' | 'ended' | 'results' | 'finished';
 
 export interface ProjectionQuestion {
   id: string;
@@ -32,6 +34,8 @@ export interface ProjectionState {
   /** Participants connectés, indexés par id (ordre d'arrivée conservé). */
   participants: { id: string; pseudo: string }[];
   leaderboard: LeaderboardEntry[];
+  /** Statistiques agrégées de la question clôturée (`question:stats`), jamais nominatives. */
+  stats: WsQuestionStatsPayload | null;
 }
 
 const initialState: ProjectionState = {
@@ -41,6 +45,7 @@ const initialState: ProjectionState = {
   question: null,
   participants: [],
   leaderboard: [],
+  stats: null,
 };
 
 function upsert(list: ProjectionState['participants'], p: { id: string; pseudo: string }) {
@@ -119,6 +124,7 @@ export function useProjectionFeed(sessionId: string, initialParticipants?: Parti
         phase: 'question',
         paused: false,
         countdown: null,
+        stats: null,
         question: {
           id: q.id,
           text: q.text,
@@ -134,7 +140,8 @@ export function useProjectionFeed(sessionId: string, initialParticipants?: Parti
     const onQuestionEnded = (data: WsQuestionEndPayload) => {
       setState((s) => ({
         ...s,
-        phase: s.phase === 'finished' ? s.phase : 'ended',
+        // `question:stats` peut arriver avant `question:ended` : on reste sur les résultats.
+        phase: s.phase === 'finished' || s.phase === 'results' ? s.phase : 'ended',
         leaderboard: Array.isArray(data?.leaderboard) ? data.leaderboard : s.leaderboard,
         question: s.question ? { ...s.question, endsAt: Math.min(s.question.endsAt, Date.now()) } : null,
       }));
@@ -144,6 +151,17 @@ export function useProjectionFeed(sessionId: string, initialParticipants?: Parti
       if (Array.isArray(data?.leaderboard)) {
         setState((s) => ({ ...s, leaderboard: data.leaderboard! }));
       }
+    };
+
+    const onQuestionStats = (raw: unknown) => {
+      const stats = normalizeQuestionStats(raw);
+      if (!stats) return;
+      setState((s) => ({
+        ...s,
+        phase: s.phase === 'finished' ? s.phase : 'results',
+        stats,
+        question: s.question ? { ...s.question, endsAt: Math.min(s.question.endsAt, Date.now()) } : null,
+      }));
     };
 
     const onPaused = () => setState((s) => ({ ...s, paused: true }));
@@ -165,6 +183,7 @@ export function useProjectionFeed(sessionId: string, initialParticipants?: Parti
       ['question:countdown', onCountdown],
       ['question:start', onQuestionStart],
       ['question:ended', onQuestionEnded],
+      ['question:stats', onQuestionStats],
       ['leaderboard:update', onLeaderboard],
       ['session:paused', onPaused],
       ['session:resumed', onResumed],
