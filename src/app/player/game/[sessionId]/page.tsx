@@ -14,9 +14,12 @@ import { KickedScreen } from '@/components/player/KickedScreen';
 import {
   Question,
   WsQuestionStartPayload,
-  WsAnswerResultPayload,
   WsQuestionRevealPayload,
   LeaderboardEntry,
+  PlayerAnswerResult,
+  normalizeAnswerResult,
+  normalizePlayerQuizFinished,
+  normalizePlayerScore,
   normalizeQuestionReveal,
 } from '@/types';
 import { Card } from '@/components/ui/Card';
@@ -55,7 +58,7 @@ export default function GamePage() {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isAnsweredLocal, setIsAnsweredLocal] = useState(false);  // ✅ renommé
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<WsAnswerResultPayload | null>(null);
+  const [result, setResult] = useState<PlayerAnswerResult | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [reveal, setReveal] = useState<WsQuestionRevealPayload | null>(null);
   const [waiting, setWaiting] = useState(true);
@@ -65,12 +68,17 @@ export default function GamePage() {
   const [finalMessage, setFinalMessage] = useState('');
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [scoreState, setScoreState] = useState(0);  // ✅ renommé
-  const [rankState, setRankState] = useState(0);    // ✅ renommé
+  const [rankState, setRankState] = useState<number | null>(null);
   const [totalParts, setTotalParts] = useState(0);
   const [gapToNext, setGapToNext] = useState<number | null>(null);
   const [gapToPodium, setGapToPodium] = useState<number | null>(null);
   const [onPodium, setOnPodium] = useState(false);
   const [kicked, setKicked] = useState(false);
+  // Classement masqué aux élèves (backend #8) : déduit des payloads reçus (`player:score`,
+  // `answer:result` sans rang, `quiz:finished` sans classement). Une fois vu, il le reste.
+  const [leaderboardHidden, setLeaderboardHidden] = useState(false);
+  const [classAccuracy, setClassAccuracy] = useState<number | null>(null);
+  const [correctCount, setCorrectCount] = useState<number | null>(null);
   const questionStartTimeRef = useRef<number>(0);
 
   // Réinitialiser l'état du joueur au montage
@@ -117,20 +125,43 @@ export default function GamePage() {
       setScoreState(participant?.score || 0);
     });
 
-    socket.on('answer:result', (data: WsAnswerResultPayload) => {
+    socket.on('answer:result', (raw: unknown) => {
+      const data = normalizeAnswerResult(raw);
+      if (!data) return;
       setResult(data);
       setShowResult(true);
       setIsAnsweredLocal(true);
       setScoreState(data.total_score);
+      setScore(data.total_score);
+      setIsAnswered(true);
+      if (data.rank === null) {
+        // Classement masqué : ni rang, ni écarts, ni podium dans le payload.
+        setLeaderboardHidden(true);
+        setRankState(null);
+        setGapToNext(null);
+        setGapToPodium(null);
+        setOnPodium(false);
+        return;
+      }
       setRankState(data.rank);
-      setTotalParts(data.total_participants);
+      setTotalParts(data.total_participants ?? 0);
       setGapToNext(data.gap_to_next);
       setGapToPodium(data.gap_to_podium);
       setOnPodium(data.on_podium);
-      setScore(data.total_score);
       setRank(data.rank);
-      setTotalParticipants(data.total_participants);
-      setIsAnswered(true);
+      setTotalParticipants(data.total_participants ?? 0);
+    });
+
+    // Classement masqué (backend #8) : score personnel et précision de la classe à la clôture.
+    socket.on('player:score', (raw: unknown) => {
+      const data = normalizePlayerScore(raw);
+      if (!data) return;
+      setLeaderboardHidden(true);
+      setScoreState(data.score);
+      setScore(data.score);
+      setCorrectCount(data.correctCount);
+      setClassAccuracy(data.classAccuracy);
+      setRankState(null);
     });
 
     socket.on('answer:too_late', () => {
@@ -145,7 +176,7 @@ export default function GamePage() {
         your_answer: [],
         total_score: scoreState,
         rank: rankState,
-        total_participants: totalParts,
+        total_participants: totalParts || null,
         gap_to_next: null,
         gap_to_podium: null,
         on_podium: false,
@@ -178,16 +209,28 @@ export default function GamePage() {
       setPaused(false);
     });
 
-    socket.on('quiz:finished', (data: any) => {
+    socket.on('quiz:finished', (raw: unknown) => {
+      const data = normalizePlayerQuizFinished(raw);
       setFinished(true);
-      setFinalLeaderboard(data.final_leaderboard);
-      setFinalMessage(data.message);
-      setScoreState(data.your_score);
-      setRankState(data.your_rank);
-      setScore(data.your_score);
-      setRank(data.your_rank);
-      setTotalParticipants(data.total_participants);
       setIsFinished(true);
+      setScoreState(data.yourScore);
+      setScore(data.yourScore);
+      if (data.kind === 'hidden') {
+        // Classement masqué : précision de la classe et score personnel, sans podium.
+        setLeaderboardHidden(true);
+        setClassAccuracy(data.classAccuracy);
+        setFinalLeaderboard([]);
+        setRankState(null);
+        return;
+      }
+      setFinalLeaderboard(data.finalLeaderboard);
+      setFinalMessage(data.message);
+      setRankState(data.yourRank);
+      setRank(data.yourRank ?? 0);
+      if (data.totalParticipants !== null) {
+        setTotalParts(data.totalParticipants);
+        setTotalParticipants(data.totalParticipants);
+      }
     });
 
     socket.on('error', (data: any) => {
@@ -208,6 +251,7 @@ export default function GamePage() {
       socket.off('question:start');
       socket.off('answer:result');
       socket.off('answer:too_late');
+      socket.off('player:score');
       socket.off('question:ended');
       socket.off('question:reveal');
       socket.off('question:in_progress');
@@ -253,8 +297,10 @@ export default function GamePage() {
     return (
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <FinalScreen
+          hideRanking={leaderboardHidden}
+          classAccuracy={classAccuracy}
           finalLeaderboard={finalLeaderboard}
-          yourRank={rankState}
+          yourRank={rankState ?? 0}
           yourScore={scoreState}
           isWinner={rankState === 1}
           winnerPseudo={finalLeaderboard[0]?.pseudo || null}
@@ -312,10 +358,13 @@ export default function GamePage() {
           <ScoreDisplay
             score={scoreState}
             rank={rankState}
-            totalParticipants={totalParts || 1}
+            totalParticipants={totalParts || null}
             gapToNext={gapToNext}
             gapToPodium={gapToPodium}
             onPodium={onPodium}
+            hideRanking={leaderboardHidden}
+            classAccuracy={classAccuracy}
+            correctCount={correctCount}
           />
           <p className="text-center text-small text-ink-secondary">
             {reveal ? 'En attente de la prochaine question...' : 'Correction à la fin de la question...'}

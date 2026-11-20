@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { Session, Participant, LeaderboardEntry } from '@/types';
+import { Session, Participant, LeaderboardEntry, SessionScoringOptions } from '@/types';
 import api from '@/lib/api';
 
 interface SessionState {
@@ -14,7 +14,10 @@ interface SessionState {
   fetchSession: (id: string) => Promise<void>;
   fetchParticipants: (id: string) => Promise<void>;
   fetchLeaderboard: (id: string) => Promise<void>;
-  createSession: (quizId: string, options?: { nicknameMode?: 'free' | 'generated' }) => Promise<Session>;
+  createSession: (
+    quizId: string,
+    options?: { nicknameMode?: 'free' | 'generated' } & Partial<SessionScoringOptions>
+  ) => Promise<Session>;
   joinSession: (password: string, pseudo: string) => Promise<{ participant: Participant; session: Session }>;
   endSession: (id: string) => Promise<void>;
   /** Supprime définitivement la session et ses données (participants, réponses). 404 si non-créateur. */
@@ -65,6 +68,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const { data } = await api.post('/sessions', {
       quiz_id: quizId,
       ...(options.nicknameMode ? { nicknameMode: options.nicknameMode } : {}),
+      ...(options.scoringMode ? { scoringMode: options.scoringMode } : {}),
+      ...(typeof options.showLeaderboard === 'boolean' ? { showLeaderboard: options.showLeaderboard } : {}),
     });
     set((state) => ({ sessions: [data, ...state.sessions] }));
     return data;

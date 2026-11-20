@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/Card';
 import { ArrowLeft, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { NicknameMode } from '@/lib/nickname';
+import type { ScoringMode } from '@/types';
 
 const NICKNAME_MODE_OPTIONS: { value: NicknameMode; label: string; description: string }[] = [
   {
@@ -24,6 +25,20 @@ const NICKNAME_MODE_OPTIONS: { value: NicknameMode; label: string; description: 
   },
 ];
 
+const SCORING_MODE_OPTIONS: { value: ScoringMode; label: string; badge?: string; description: string }[] = [
+  {
+    value: 'speed',
+    label: 'Vitesse',
+    description: 'Plus l’élève répond vite et juste, plus il marque de points.',
+  },
+  {
+    value: 'accuracy',
+    label: 'Précision',
+    badge: 'recommandé pour réviser',
+    description: 'Toute bonne réponse donnée dans le temps rapporte le maximum : inutile de se précipiter.',
+  },
+];
+
 export default function NewSessionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -34,6 +49,8 @@ export default function NewSessionPage() {
   const [session, setSession] = useState<any>(null);
   const [copied, setCopied] = useState(false);
   const [nicknameMode, setNicknameMode] = useState<NicknameMode>('free');
+  const [scoringMode, setScoringMode] = useState<ScoringMode>('speed');
+  const [hideLeaderboard, setHideLeaderboard] = useState(false);
 
   useEffect(() => {
     if (quizId) {
@@ -44,7 +61,11 @@ export default function NewSessionPage() {
   const handleCreate = async () => {
     if (!quizId) return;
     try {
-      const s = await createSession(quizId, { nicknameMode });
+      const s = await createSession(quizId, {
+        nicknameMode,
+        scoringMode,
+        showLeaderboard: !hideLeaderboard,
+      });
       setSession(s);
       setCreated(true);
     } catch (error) {
@@ -108,6 +129,13 @@ export default function NewSessionPage() {
           </p>
           <p className="text-sm text-ink-secondary">
             {(session.nickname_mode ?? nicknameMode) === 'generated' ? 'Pseudos générés' : 'Pseudos libres'}
+          </p>
+          <p className="text-sm text-ink-secondary" data-testid="session-scoring-summary">
+            {(session.scoring_mode ?? scoringMode) === 'accuracy' ? 'Mode Précision' : 'Mode Vitesse'}
+            {' • '}
+            {(session.show_leaderboard ?? !hideLeaderboard) === false
+              ? 'Classement masqué aux élèves'
+              : 'Classement visible'}
           </p>
           <div className="flex flex-col gap-3">
             <Button onClick={() => router.push(`/creator/session/${session.id}`)}>
@@ -174,6 +202,68 @@ export default function NewSessionPage() {
             </label>
           ))}
         </fieldset>
+        <fieldset className="space-y-2">
+          <legend className="text-small font-medium text-ink mb-2">Mode de score</legend>
+          {SCORING_MODE_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className={cn(
+                'flex cursor-pointer gap-3 rounded-md border p-3 transition-colors',
+                'focus-within:ring-2 focus-within:ring-primary',
+                scoringMode === option.value ? 'border-primary bg-primary-50' : 'border-borderc'
+              )}
+            >
+              <input
+                type="radio"
+                name="scoringMode"
+                value={option.value}
+                checked={scoringMode === option.value}
+                onChange={() => setScoringMode(option.value)}
+                aria-labelledby={`scoring-mode-${option.value}-label`}
+                aria-describedby={`scoring-mode-${option.value}-desc`}
+                className="mt-1 accent-primary"
+              />
+              <span className="space-y-0.5">
+                <span id={`scoring-mode-${option.value}-label`} className="block font-medium">
+                  {option.label}
+                  {option.badge && (
+                    <span className="ml-2 rounded-full bg-success-50 px-2 py-0.5 text-caption font-medium text-success">
+                      {option.badge}
+                    </span>
+                  )}
+                </span>
+                <span id={`scoring-mode-${option.value}-desc`} className="block text-small text-ink-secondary">
+                  {option.description}
+                </span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+        <label
+          className={cn(
+            'flex cursor-pointer gap-3 rounded-md border p-3 transition-colors',
+            'focus-within:ring-2 focus-within:ring-primary',
+            hideLeaderboard ? 'border-primary bg-primary-50' : 'border-borderc'
+          )}
+        >
+          <input
+            type="checkbox"
+            name="hideLeaderboard"
+            checked={hideLeaderboard}
+            onChange={(e) => setHideLeaderboard(e.target.checked)}
+            aria-labelledby="hide-leaderboard-label"
+            aria-describedby="hide-leaderboard-desc"
+            className="mt-1 accent-primary"
+          />
+          <span className="space-y-0.5">
+            <span id="hide-leaderboard-label" className="block font-medium">
+              Masquer le classement aux élèves
+            </span>
+            <span id="hide-leaderboard-desc" className="block text-small text-ink-secondary">
+              Chaque élève ne voit que son score et la réussite de la classe ; vous gardez le classement complet.
+            </span>
+          </span>
+        </label>
         <Button onClick={handleCreate} isLoading={sessionLoading} className="w-full">
           Créer la session
         </Button>

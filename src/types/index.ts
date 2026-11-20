@@ -52,6 +52,10 @@ export interface QuizOption {
     quizzes?: { id?: string; title?: string | null; total_questions?: number } | null;
     /** Mode des pseudos : libres (filtrés côté serveur) ou générés (roulette). Défaut : "free". */
     nickname_mode?: 'free' | 'generated';
+    /** Mode de score (backend #8). Absent sur un ancien backend : "speed". */
+    scoring_mode?: 'speed' | 'accuracy';
+    /** Classement visible par les élèves (backend #8). Absent : visible. */
+    show_leaderboard?: boolean;
   }
   
   export interface Participant {
@@ -322,4 +326,171 @@ export interface SessionResults {
   perQuestion: SessionResultsQuestion[];
   /** Trié par score décroissant côté backend. */
   perParticipant: SessionResultsParticipant[];
+}
+
+// ============================================================
+// Modes de score et classement masqué
+// (contrat backend : boris913/quizmaster-backend#8)
+// Tout écart avec le backend se corrige ici et dans les normaliseurs ci-dessous.
+// ============================================================
+
+/** `speed` (défaut) : points dégressifs avec le temps. `accuracy` : toute bonne réponse vaut le maximum. */
+export type ScoringMode = 'speed' | 'accuracy';
+
+/** Réglages envoyés à `POST /api/sessions` (en plus de `quiz_id` et `nicknameMode`). */
+export interface SessionScoringOptions {
+  scoringMode: ScoringMode;
+  /** `false` : aucun classement ni rang n'est montré aux élèves (le créateur voit tout). */
+  showLeaderboard: boolean;
+}
+
+/** Vrai si la session masque le classement aux élèves. Champ absent (ancien backend) : visible. */
+export function isLeaderboardHidden(session: { show_leaderboard?: boolean | null } | null | undefined): boolean {
+  return session?.show_leaderboard === false;
+}
+
+/** Mode de score de la session, `speed` si absent ou inconnu. */
+export function getScoringMode(session: { scoring_mode?: string | null } | null | undefined): ScoringMode {
+  return session?.scoring_mode === 'accuracy' ? 'accuracy' : 'speed';
+}
+
+/** `player:score`, envoyé à chaque joueur à la clôture de chaque question quand le classement est masqué. */
+export interface WsPlayerScorePayload {
+  /** Score total du joueur. */
+  score: number;
+  /** Nombre de bonnes réponses du joueur sur les questions jouées. */
+  correctCount: number;
+  /** Précision de la classe, pourcentage entier 0-100. */
+  classAccuracy: number;
+}
+
+/** `quiz:finished` côté joueur quand le classement est masqué (remplace le podium). */
+export interface WsHiddenQuizFinishedPayload {
+  classAccuracy: number;
+  yourScore: number;
+}
+
+/**
+ * `answer:result` tel que consommé par l'écran joueur. Quand le classement est masqué, le
+ * backend n'envoie ni rang, ni écarts, ni podium : ces champs valent alors `null` / `false`.
+ */
+export interface PlayerAnswerResult {
+  is_correct: boolean;
+  points_earned: number;
+  max_points: number;
+  time_taken_ms: number;
+  correct_answers: string[];
+  your_answer: string[];
+  total_score: number;
+  /** Rang (>= 1) ou `null` si absent (classement masqué). */
+  rank: number | null;
+  total_participants: number | null;
+  gap_to_next: number | null;
+  gap_to_podium: number | null;
+  on_podium: boolean;
+  waiting_for_timer: boolean;
+}
+
+/** `quiz:finished` côté joueur, sous ses deux formes. */
+export type PlayerQuizFinished =
+  | {
+      kind: 'leaderboard';
+      finalLeaderboard: LeaderboardEntry[];
+      yourRank: number | null;
+      yourScore: number;
+      totalParticipants: number | null;
+      message: string;
+    }
+  | { kind: 'hidden'; classAccuracy: number; yourScore: number };
+
+function toFiniteOrNull(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function toPositiveIntOrNull(value: unknown): number | null {
+  const n = toFiniteOrNull(value);
+  return n !== null && n >= 1 ? Math.round(n) : null;
+}
+
+/** Lit un `answer:result` ; tolère l'absence de `rank` / `gap_to_*` / `on_podium` (classement masqué). */
+export function normalizeAnswerResult(raw: unknown): PlayerAnswerResult | null {
+  const data = raw as RawPayload;
+  if (!data || typeof data !== 'object') return null;
+  return {
+    is_correct: Boolean(pick(data, 'isCorrect', 'is_correct')),
+    points_earned: toCount(pick(data, 'pointsEarned', 'points_earned')),
+    max_points: toCount(pick(data, 'maxPoints', 'max_points')),
+    time_taken_ms: toCount(pick(data, 'timeTakenMs', 'time_taken_ms')),
+    correct_answers: toStringArray(pick(data, 'correctAnswers', 'correct_answers')),
+    your_answer: toStringArray(pick(data, 'yourAnswer', 'your_answer')),
+    total_score: toCount(pick(data, 'totalScore', 'total_score')),
+    rank: toPositiveIntOrNull(pick(data, 'rank', 'rank')),
+    total_participants: toPositiveIntOrNull(pick(data, 'totalParticipants', 'total_participants')),
+    gap_to_next: toFiniteOrNull(pick(data, 'gapToNext', 'gap_to_next')),
+    gap_to_podium: toFiniteOrNull(pick(data, 'gapToPodium', 'gap_to_podium')),
+    on_podium: pick(data, 'onPodium', 'on_podium') === true,
+    waiting_for_timer: Boolean(pick(data, 'waitingForTimer', 'waiting_for_timer')),
+  };
+}
+
+/** Lit un `player:score` (tolère la variante snake_case). */
+export function normalizePlayerScore(raw: unknown): WsPlayerScorePayload | null {
+  const data = raw as RawPayload;
+  if (!data || typeof data !== 'object') return null;
+  const classAccuracy = pick(data, 'classAccuracy', 'class_accuracy');
+  const score = pick(data, 'score', 'score');
+  if (classAccuracy === undefined && score === undefined) return null;
+  return {
+    score: toCount(score),
+    correctCount: toCount(pick(data, 'correctCount', 'correct_count')),
+    classAccuracy: accuracyToPercent(classAccuracy as number),
+  };
+}
+
+/**
+ * Lit un `quiz:finished` reçu par un joueur. Forme masquée (`{ classAccuracy, yourScore }`,
+ * sans `final_leaderboard`) ou forme habituelle avec classement.
+ */
+export function normalizePlayerQuizFinished(raw: unknown): PlayerQuizFinished {
+  const data = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const leaderboard = pick(data, 'finalLeaderboard', 'final_leaderboard');
+  const classAccuracy = pick(data, 'classAccuracy', 'class_accuracy');
+  if (!Array.isArray(leaderboard) && classAccuracy !== undefined) {
+    return {
+      kind: 'hidden',
+      classAccuracy: accuracyToPercent(classAccuracy as number),
+      yourScore: toCount(pick(data, 'yourScore', 'your_score')),
+    };
+  }
+  const message = pick(data, 'message', 'message');
+  return {
+    kind: 'leaderboard',
+    finalLeaderboard: Array.isArray(leaderboard) ? (leaderboard as LeaderboardEntry[]) : [],
+    yourRank: toPositiveIntOrNull(pick(data, 'yourRank', 'your_rank')),
+    yourScore: toCount(pick(data, 'yourScore', 'your_score')),
+    totalParticipants: toPositiveIntOrNull(pick(data, 'totalParticipants', 'total_participants')),
+    message: typeof message === 'string' ? message : '',
+  };
+}
+
+/**
+ * Précision de la classe (0-100) cumulée sur les questions clôturées, à partir des
+ * `question:stats` : bonnes réponses / réponses attendues (une par participant présent).
+ * Même définition que `classAccuracy` côté backend. `null` sans aucune donnée.
+ */
+export function cumulativeClassAccuracy(
+  stats: Pick<WsQuestionStatsPayload, 'accuracy' | 'totalParticipants'>[]
+): number | null {
+  let correct = 0;
+  let expected = 0;
+  stats.forEach((s) => {
+    const total = toCount(s.totalParticipants);
+    if (total === 0) return;
+    correct += (accuracyToPercent(s.accuracy) / 100) * total;
+    expected += total;
+  });
+  if (expected === 0) return null;
+  return Math.round((correct / expected) * 100);
 }
