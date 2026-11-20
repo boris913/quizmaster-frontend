@@ -108,6 +108,7 @@ describe('assignments : normalisation', () => {
           {
             questionId: 'q1',
             text: 'Q1',
+            type: null,
             options: [{ id: 'A', text: 'a' }],
             yourAnswers: ['A'],
             correctAnswers: ['A'],
@@ -185,5 +186,48 @@ describe('assignments : erreurs', () => {
       message: 'Pseudo inapproprié',
     });
     expect(getAssignmentError(err(400, ['a', 'b'] as unknown as string), 'start').message).toBe('a b');
+  });
+});
+
+describe('intégration types de questions (#6) × devoir (#9)', () => {
+  it('convertit imageUrl en image_url pour QuestionCard', () => {
+    const next = normalizeAssignmentNext({
+      done: false,
+      position: 1,
+      total: 1,
+      question: {
+        id: 'q1',
+        text: 'Quel organe ?',
+        type: 'single',
+        options: [{ id: 'A', text: 'Cœur' }, { id: 'B', text: 'Foie' }],
+        imageUrl: 'https://cdn.example/q1.png',
+        maxPoints: 100,
+        timerSeconds: 20,
+      },
+      timeRemainingMs: 20000,
+    });
+    expect(next.done).toBe(false);
+    if (!next.done) expect(next.question.image_url).toBe('https://cdn.example/q1.png');
+  });
+
+  it('conserve le type de question dans la correction finale (ordering ne se devine pas)', () => {
+    const next = normalizeAssignmentNext({
+      done: true,
+      score: 0,
+      maxScore: 100,
+      correctCount: 0,
+      review: [
+        {
+          position: 1,
+          question: { id: 'q2', text: 'Ordre ?', type: 'ordering', options: [{ id: 'C', text: '1' }] },
+          yourAnswers: ['C'],
+          correctAnswers: ['C'],
+          isCorrect: true,
+          explanation: null,
+        },
+      ],
+    });
+    expect(next.done).toBe(true);
+    if (next.done) expect(next.summary.review[0].type).toBe('ordering');
   });
 });

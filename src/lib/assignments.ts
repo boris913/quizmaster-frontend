@@ -270,6 +270,8 @@ function normalizeQuestion(raw: Raw): AssignmentQuestion {
     text: String(raw.text ?? ''),
     type: ((raw.type as string) || 'single') as AssignmentQuestion['type'],
     options: toOptions(raw.options),
+    // Image de question (#7) : le devoir envoie `imageUrl`, QuestionCard lit `image_url`.
+    image_url: toText(pick(raw, 'imageUrl', 'image_url')),
     max_points: toCount(pick(raw, 'maxPoints', 'max_points')),
     timer_seconds: toCount(pick(raw, 'timerSeconds', 'timer_seconds')),
   };
@@ -282,6 +284,8 @@ function normalizeReviewItem(raw: unknown): AssignmentReviewItem | null {
   return {
     questionId: String(questionId),
     text: String(pick(raw, 'text', 'text') ?? pick(question, 'text', 'text') ?? ''),
+    // Type de question (#7) : nécessaire à AnswerFeedback pour `ordering`, qui ne se devine pas.
+    type: toText(pick(raw, 'type', 'type') ?? pick(question, 'type', 'type')),
     options: toOptions(pick(raw, 'options', 'options') ?? pick(question, 'options', 'options')),
     yourAnswers: toStringArray(pick(raw, 'yourAnswers', 'your_answers') ?? pick(raw, 'answers', 'answers')),
     correctAnswers: toStringArray(pick(raw, 'correctAnswers', 'correct_answers')),

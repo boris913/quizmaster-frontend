@@ -131,6 +131,7 @@ function DoneScreen({ summary, pseudo }: { summary: AssignmentSummary; pseudo: s
                   isCorrect: item.isCorrect,
                 }}
                 options={item.options}
+                questionType={item.type ?? undefined}
               />
             </div>
           ))}
@@ -388,6 +389,7 @@ export function AssignmentPlayer({ code }: { code: string }) {
                   : null
               }
               options={step.question.options}
+              questionType={step.question.type}
             />
           )}
           {inlineError && (

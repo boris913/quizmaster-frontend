@@ -7,9 +7,10 @@ import { useSessionStore } from '@/store/sessionStore';
 import { useProjectionFeed, useRemainingSeconds } from '@/hooks/useProjectionFeed';
 import { JoinQrCode } from '@/components/ui/JoinQrCode';
 import { AnswerHistogram, histogramOptions } from '@/components/ui/AnswerHistogram';
+import { QuestionImage } from '@/components/ui/QuestionImage';
 import { getAppBaseUrl, normalizeSessionCode } from '@/lib/sessionCode';
 import { cn } from '@/lib/utils';
-import { cumulativeClassAccuracy, isLeaderboardHidden } from '@/types';
+import { QUESTION_TYPE_LABELS, cumulativeClassAccuracy, isLeaderboardHidden } from '@/types';
 
 /** Nombre maximum de pseudos affichés dans le nuage (les suivants sont résumés en « +N »). */
 const MAX_PSEUDOS = 80;
@@ -192,6 +193,9 @@ export default function SessionPresentPage() {
               <div className="min-w-0">
                 <p className="text-[clamp(1.25rem,2vw,2.25rem)] text-white/60">
                   Question {feed.question.number}/{feed.question.total}
+                  {feed.question.type !== 'single' && feed.question.type !== 'multiple' && (
+                    <span data-testid="question-type"> · {QUESTION_TYPE_LABELS[feed.question.type]}</span>
+                  )}
                 </p>
                 <h2
                   className="mt-2 text-[clamp(2rem,4vw,4.5rem)] font-bold leading-tight"
@@ -214,6 +218,26 @@ export default function SessionPresentPage() {
               </div>
             </div>
 
+            {feed.question.imageUrl && (
+              <QuestionImage
+                src={feed.question.imageUrl}
+                questionText={feed.question.text}
+                className="max-h-[35vh]"
+              />
+            )}
+
+            {feed.question.type === 'short_answer' && (
+              <p className="m-auto text-center text-[clamp(1.5rem,3vw,3rem)] text-white/80">
+                Tapez votre réponse sur votre appareil
+              </p>
+            )}
+
+            {feed.question.type === 'ordering' && feed.question.options.length > 0 && (
+              <p className="text-[clamp(1.25rem,2vw,2.25rem)] text-white/70">
+                Remettez ces éléments dans le bon ordre sur votre appareil :
+              </p>
+            )}
+
             {feed.question.options.length > 0 && (
               <ul className="grid flex-1 grid-cols-2 gap-[2vw]">
                 {feed.question.options.map((opt, i) => (
@@ -224,7 +248,9 @@ export default function SessionPresentPage() {
                       OPTION_COLORS[i % OPTION_COLORS.length]
                     )}
                   >
-                    <span className="font-mono opacity-80">{opt.id}</span>
+                    {feed.question?.type !== 'true_false' && (
+                      <span className="font-mono opacity-80">{opt.id}</span>
+                    )}
                     <span className="min-w-0 break-words">{opt.text}</span>
                   </li>
                 ))}
@@ -262,6 +288,7 @@ export default function SessionPresentPage() {
               variant="projection"
               options={histogramOptions(feed.question?.options, feed.stats)}
               stats={feed.stats}
+              questionType={feed.question?.type}
             />
           </div>
         )}
