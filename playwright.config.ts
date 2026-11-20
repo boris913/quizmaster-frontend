@@ -25,6 +25,8 @@ export default defineConfig({
   grepInvert: process.env.E2E_BACKEND ? undefined : /@backend/,
   use: {
     baseURL,
+    // Les tests vérifient le texte français : la langue suit Accept-Language (src/i18n/request.ts).
+    locale: 'fr-FR',
     trace: 'on-first-retry',
   },
   projects: [

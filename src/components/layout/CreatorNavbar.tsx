@@ -3,19 +3,22 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { Logo } from '@/components/ui/Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, PlusCircle, LogOut, User } from 'lucide-react';
 
 const navItems = [
-  { href: '/creator/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/creator/quiz/new', label: 'Nouveau quiz', icon: PlusCircle },
+  { href: '/creator/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
+  { href: '/creator/quiz/new', labelKey: 'newQuiz', icon: PlusCircle },
 ];
 
 export function CreatorNavbar() {
+  const t = useTranslations('nav');
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -34,7 +37,7 @@ export function CreatorNavbar() {
         >
           <Logo size={26} withWordmark />
           <span className="hidden sm:inline text-caption font-medium text-ink-secondary border border-borderc rounded-sm px-1.5 py-0.5">
-            Enseignant
+            {t('teacher')}
           </span>
         </Link>
 
@@ -53,7 +56,7 @@ export function CreatorNavbar() {
                     )}
                   >
                     <item.icon className="w-4 h-4" />
-                    {item.label}
+                    {t(item.labelKey)}
                     {isActive && (
                       <motion.span
                         layoutId="creator-nav-active"
@@ -71,24 +74,26 @@ export function CreatorNavbar() {
                 <User className="w-4 h-4" />
                 {user?.pseudo}
               </span>
+              <LanguageSwitcher className="hidden sm:inline-flex" />
               <ThemeToggle />
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Déconnexion</span>
+                <span className="hidden sm:inline">{t('logout')}</span>
               </Button>
             </div>
           </>
         ) : (
           <div className="flex items-center gap-2 shrink-0">
+            <LanguageSwitcher />
             <ThemeToggle />
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <Link href="/player/join">Rejoindre un quiz</Link>
+              <Link href="/player/join">{t('joinQuiz')}</Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/login">Se connecter</Link>
+              <Link href="/login">{t('login')}</Link>
             </Button>
             <Button size="sm" asChild className="hidden sm:inline-flex">
-              <Link href="/register">Créer un compte</Link>
+              <Link href="/register">{t('register')}</Link>
             </Button>
           </div>
         )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Leaderboard } from '../ui/Leaderboard';
@@ -42,6 +43,7 @@ export function FinalScreen({
   hideRanking = false,
   classAccuracy = null,
 }: FinalScreenProps) {
+  const t = useTranslations('player');
   if (hideRanking) {
     return <HiddenRankingFinalScreen yourScore={yourScore} classAccuracy={classAccuracy} onPlayAgain={onPlayAgain} />;
   }
@@ -67,12 +69,12 @@ export function FinalScreen({
           <Trophy className="w-16 h-16 mx-auto text-warning" strokeWidth={1.5} />
         </motion.div>
 
-        <h1 className="text-h1 mt-4">Quiz terminé !</h1>
+        <h1 className="text-h1 mt-4">{t('final.title')}</h1>
         <p className="text-body text-ink-secondary mt-2">{message}</p>
 
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-8">
           <div>
-            <p className="text-small text-ink-secondary">Votre score</p>
+            <p className="text-small text-ink-secondary">{t('score.yourScore')}</p>
             <p className="font-display text-display text-ink tabular-nums">
               <ScoreCounter value={yourScore} />
             </p>
@@ -80,11 +82,11 @@ export function FinalScreen({
           {yourRank > 0 && totalParticipants > 0 && (
             <CircularStat
               percentage={beatenPercentage}
-              label={`#${yourRank} sur ${totalParticipants}`}
+              label={t('final.rankOf', { rank: yourRank, total: totalParticipants })}
               sublabel={
                 totalParticipants > 1
-                  ? `Devant ${beatenPercentage}% des joueurs`
-                  : 'Seul participant'
+                  ? t('final.ahead', { percent: beatenPercentage })
+                  : t('final.alone')
               }
             />
           )}
@@ -97,23 +99,23 @@ export function FinalScreen({
             transition={{ delay: 0.3 }}
             className="mt-6 bg-warning-50 border border-warning-100 rounded-md py-3 px-4 font-semibold text-warning"
           >
-            Félicitations, vous êtes le grand gagnant !
+            {t('final.winner')}
           </motion.div>
         )}
         {winnerPseudo && !isWinner && (
           <p className="text-small text-ink-secondary mt-4">
-            Vainqueur : <strong className="text-ink">{winnerPseudo}</strong>
+            {t('final.winnerName')} <strong className="text-ink">{winnerPseudo}</strong>
           </p>
         )}
         {onPodium && !isWinner && (
-          <p className="text-small font-medium text-success mt-2">Vous êtes sur le podium !</p>
+          <p className="text-small font-medium text-success mt-2">{t('score.onPodium')}</p>
         )}
       </Card>
 
       <Podium entries={finalLeaderboard} />
 
       <Card tier="secondary" className="p-5">
-        <h3 className="text-card-title mb-3">Classement final</h3>
+        <h3 className="text-card-title mb-3">{t('final.ranking')}</h3>
         <Leaderboard entries={finalLeaderboard} showGaps={false} />
       </Card>
 
@@ -136,6 +138,7 @@ function HiddenRankingFinalScreen({
   classAccuracy: number | null;
   onPlayAgain?: () => void;
 }) {
+  const t = useTranslations('player');
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -152,12 +155,12 @@ function HiddenRankingFinalScreen({
           <Trophy className="w-16 h-16 mx-auto text-warning" strokeWidth={1.5} />
         </motion.div>
 
-        <h1 className="text-h1 mt-4">Quiz terminé !</h1>
-        <p className="text-body text-ink-secondary mt-2">Merci pour votre participation.</p>
+        <h1 className="text-h1 mt-4">{t('final.title')}</h1>
+        <p className="text-body text-ink-secondary mt-2">{t('final.thanks')}</p>
 
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-8">
           <div>
-            <p className="text-small text-ink-secondary">Votre score</p>
+            <p className="text-small text-ink-secondary">{t('score.yourScore')}</p>
             <p className="font-display text-display text-ink tabular-nums">
               <ScoreCounter value={yourScore} />
             </p>
@@ -165,8 +168,8 @@ function HiddenRankingFinalScreen({
           {typeof classAccuracy === 'number' && (
             <CircularStat
               percentage={classAccuracy}
-              label={`${classAccuracy} %`}
-              sublabel="de bonnes réponses dans la classe"
+              label={t('final.classAccuracyValue', { value: classAccuracy })}
+              sublabel={t('final.classAccuracyLabel')}
             />
           )}
         </div>

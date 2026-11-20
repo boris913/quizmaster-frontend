@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
 import { FileText, Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface QuestionImporterProps {
   onImport: (questionsContent: string, answersContent?: string) => Promise<void>;
@@ -12,6 +13,7 @@ interface QuestionImporterProps {
 }
 
 export function QuestionImporter({ onImport, isImporting }: QuestionImporterProps) {
+  const t = useTranslations('importer');
   const [questionsFile, setQuestionsFile] = useState<File | null>(null);
   const [answersFile, setAnswersFile] = useState<File | null>(null);
   const [questionsContent, setQuestionsContent] = useState('');
@@ -29,14 +31,14 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
 
   return (
     <Card className="p-6 space-y-6">
-      <div className="flex items-center gap-2 text-lg font-semibold">
-        <FileText className="w-5 h-5" />
-        Importer depuis un fichier
+      <div className="flex items-center gap-2 text-card-title">
+        <FileText className="w-5 h-5" aria-hidden />
+        {t('title')}
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-ink-secondary">Questions.md</label>
+          <label className="block text-small font-medium text-ink-secondary">{t('questionsFile')}</label>
           <div className="mt-1 flex items-center gap-2">
             <input
               type="file"
@@ -57,7 +59,7 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-ink-secondary">Reponses.md (optionnel)</label>
+          <label className="block text-small font-medium text-ink-secondary">{t('answersFile')}</label>
           <div className="mt-1 flex items-center gap-2">
             <input
               type="file"
@@ -77,20 +79,22 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
           </div>
         </div>
 
-        <div className="bg-background p-4 rounded-lg text-sm text-ink-secondary space-y-1">
-          <p>Format attendu :</p>
-          <pre className="bg-subtle p-2 rounded text-xs">
+        <div className="bg-subtle p-4 rounded-lg text-small text-ink-secondary space-y-2">
+          <p>{t('format')}</p>
+          <pre className="bg-surface border border-borderc p-2 rounded-sm text-caption overflow-x-auto">
             {`Question 1 [timer:30] [points:100]\nQuelle est la capitale ?\nA) Londres\nB) Berlin\nC) Paris [correct]\nD) Madrid\n> Explication : Paris est la capitale de la France.`}
           </pre>
           <p data-testid="import-explanation-help">
-            Ligne facultative <code className="font-mono">&gt; Explication : …</code> sous la question, par exemple après les options
-            (500 caractères maximum) : elle est montrée aux élèves après la clôture de la question.
+            {t.rich('explanationHelp', { code: (chunks) => <code className="font-mono">{chunks}</code> })}
+          </p>
+          <p>
+            {t('keywordsNote')}
           </p>
         </div>
 
         <Button onClick={handleSubmit} isLoading={isImporting} disabled={!questionsContent}>
-          <Upload className="w-4 h-4 mr-2" />
-          Importer
+          <Upload className="w-4 h-4" />
+          {t('submit')}
         </Button>
       </div>
     </Card>

@@ -3,14 +3,18 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { usePlayerStore } from '@/store/playerStore';
 import { Logo } from '@/components/ui/Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { Button } from '@/components/ui/Button';
 import { ScoreCounter } from '@/components/ui/ScoreCounter';
 import { Medal, LogOut } from 'lucide-react';
 
 export function PlayerNavbar() {
+  const t = useTranslations('nav');
+  const tc = useTranslations('common');
   const router = useRouter();
   const { participant, score, rank, isFinished, reset } = usePlayerStore();
 
@@ -43,7 +47,7 @@ export function PlayerNavbar() {
               <span className="font-display font-bold text-primary-700 tabular-nums text-small">
                 <ScoreCounter value={score} />
               </span>
-              <span className="text-caption text-primary-700/80 font-medium">pts</span>
+              <span className="text-caption text-primary-700/80 font-medium">{tc('points')}</span>
             </motion.div>
 
             <AnimatePresence>
@@ -64,15 +68,16 @@ export function PlayerNavbar() {
             {isFinished && (
               <Button variant="ghost" size="sm" onClick={handleLeave}>
                 <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Quitter</span>
+                <span className="hidden sm:inline">{t('leave')}</span>
               </Button>
             )}
           </div>
         ) : (
           <div className="flex items-center gap-2 shrink-0">
+            <LanguageSwitcher />
             <ThemeToggle />
             <Button variant="outline" size="sm" asChild>
-              <Link href="/">Accueil</Link>
+              <Link href="/">{t('home')}</Link>
             </Button>
           </div>
         )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { Control, UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -30,6 +31,7 @@ export function QuestionBuilder({
   useGlobalTimer,
   globalTimer,
 }: QuestionBuilderProps) {
+  const t = useTranslations('quizForm.question');
   const options = watch(`questions.${index}.options`) || [];
   const correctAnswers = watch(`questions.${index}.correct_answers`) || [];
   const type = watch(`questions.${index}.type`) || 'single';
@@ -52,46 +54,53 @@ export function QuestionBuilder({
   return (
     <Card className="p-4 space-y-4 border-borderc">
       <div className="flex justify-between items-start">
-        <h3 className="font-medium">Question {index + 1}</h3>
-        <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
-          <Trash2 className="w-4 h-4 text-danger" />
+        <h3 className="font-medium">{t('title', { number: index + 1 })}</h3>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onRemove}
+          aria-label={t('remove', { number: index + 1 })}
+          title={t('remove', { number: index + 1 })}
+        >
+          <Trash2 className="w-4 h-4 text-danger" aria-hidden />
         </Button>
       </div>
 
       <Input
-        label="Énoncé"
+        label={t('text')}
         {...register(`questions.${index}.text`)}
         error={errors?.text?.message}
       />
 
       <div className="flex gap-4">
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-small">
           <input
             type="radio"
             value="single"
             checked={type === 'single'}
             onChange={() => setValue(`questions.${index}.type`, 'single')}
           />
-          Réponse unique
+          {t('single')}
         </label>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-small">
           <input
             type="radio"
             value="multiple"
             checked={type === 'multiple'}
             onChange={() => setValue(`questions.${index}.type`, 'multiple')}
           />
-          Réponses multiples
+          {t('multiple')}
         </label>
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium">Options</p>
+        <p className="text-small font-medium">{t('options')}</p>
         {options.map((opt: any, optIndex: number) => (
           <div key={opt.id} className="flex items-center gap-2">
-            <span className="w-6 font-display tabular-nums text-sm">{opt.id}</span>
+            <span className="w-6 font-display font-semibold text-small">{opt.id}</span>
             <Input
-              placeholder={`Option ${opt.id}`}
+              placeholder={t('optionPlaceholder', { id: opt.id })}
               {...register(`questions.${index}.options.${optIndex}.text`)}
               className="flex-1"
             />
@@ -99,37 +108,37 @@ export function QuestionBuilder({
               type="button"
               onClick={() => toggleCorrect(opt.id)}
               className={cn(
-                'px-2 py-1 text-xs rounded border transition-colors',
+                'px-2 py-1 text-caption rounded-sm border transition-colors',
                 correctAnswers.includes(opt.id)
                   ? 'bg-success-50 border-success text-success'
                   : 'bg-surface border-borderc text-ink-tertiary'
               )}
             >
-              {correctAnswers.includes(opt.id) ? 'Correcte' : 'Marquer correcte'}
+              {correctAnswers.includes(opt.id) ? t('correct') : t('markCorrect')}
             </button>
           </div>
         ))}
         {errors?.options && (
-          <p className="text-sm text-danger">Au moins 2 options requises</p>
+          <p className="text-small text-danger">{t('minOptions')}</p>
         )}
         {errors?.correct_answers && (
-          <p className="text-sm text-danger">Au moins une bonne réponse</p>
+          <p className="text-small text-danger">{t('minCorrect')}</p>
         )}
       </div>
 
       <div className="space-y-1.5">
         <label htmlFor={explanationId} className="text-small font-medium text-ink">
-          Explication (facultatif)
+          {t('explanation')}
         </label>
         <textarea
           id={explanationId}
           rows={2}
           maxLength={QUESTION_EXPLANATION_MAX_LENGTH}
-          placeholder="Affichée aux élèves après la clôture de la question"
+          placeholder={t('explanationPlaceholder')}
           aria-describedby={`${explanationId}-count`}
           aria-invalid={!!errors?.explanation}
           className={cn(
-            'w-full rounded-md border border-borderc bg-surface px-3 py-2 text-body placeholder:text-ink-tertiary',
+            'w-full rounded-md border border-borderc-strong bg-surface px-3 py-2 text-body text-ink placeholder:text-ink-tertiary',
             'focus:outline-none focus:border-primary focus:shadow-glow',
             errors?.explanation && 'border-danger'
           )}
@@ -145,22 +154,22 @@ export function QuestionBuilder({
 
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Points max"
+          label={t('maxPoints')}
           type="number"
           {...register(`questions.${index}.max_points`, { valueAsNumber: true })}
           error={errors?.max_points?.message}
         />
         {!useGlobalTimer && (
           <Input
-            label="Timer (secondes)"
+            label={t('timer')}
             type="number"
             {...register(`questions.${index}.timer_seconds`, { valueAsNumber: true })}
             error={errors?.timer_seconds?.message}
           />
         )}
         {useGlobalTimer && (
-          <div className="text-sm text-ink-secondary flex items-center">
-            Timer global: {globalTimer}s
+          <div className="text-small text-ink-secondary flex items-center">
+            {t('globalTimer', { seconds: globalTimer })}
           </div>
         )}
       </div>

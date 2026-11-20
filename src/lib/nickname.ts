@@ -39,14 +39,20 @@ export async function fetchNicknameSuggestions(code: string): Promise<NicknameSu
   };
 }
 
-export const JOIN_ERROR_MESSAGES = {
+export type JoinErrorMessages = Record<
+  'kicked' | 'notFound' | 'invalidNickname' | 'nicknameTaken' | 'network' | 'generic',
+  string
+>;
+
+/** Messages par défaut (français). L'interface passe les messages traduits (`join.errors`). */
+export const JOIN_ERROR_MESSAGES: JoinErrorMessages = {
   kicked: "Tu as été exclu de cette session par l'enseignant : tu ne peux pas la rejoindre à nouveau.",
   notFound: 'Session introuvable ou terminée. Vérifie le code.',
   invalidNickname: "Ce pseudo n'est pas accepté. Choisis-en un autre.",
   nicknameTaken: 'Ce pseudo est déjà utilisé dans cette session. Choisis-en un autre.',
   network: 'Impossible de joindre le serveur. Vérifie ta connexion et réessaie.',
   generic: 'Erreur lors de la connexion. Réessaie.',
-} as const;
+};
 
 function serverMessage(data: unknown): string | null {
   const message = (data as { message?: unknown } | undefined)?.message;
@@ -65,21 +71,26 @@ function serverMessage(data: unknown): string | null {
  * - 403 : participant exclu par le créateur : message dédié ;
  * - 404 / 409 : message du serveur, sinon message par défaut.
  */
-export function getJoinErrorMessage(err: unknown): string {
+export function getJoinErrorMessage(
+  err: unknown,
+  messages: JoinErrorMessages = JOIN_ERROR_MESSAGES,
+  /** Le serveur répond en français : hors français, on préfère nos messages traduits. */
+  { preferServer = true }: { preferServer?: boolean } = {}
+): string {
   const response = (err as { response?: { status?: number; data?: unknown } } | undefined)?.response;
-  if (!response) return JOIN_ERROR_MESSAGES.network;
+  if (!response) return messages.network;
 
-  const fromServer = serverMessage(response.data);
+  const fromServer = preferServer ? serverMessage(response.data) : null;
   switch (response.status) {
     case 403:
-      return JOIN_ERROR_MESSAGES.kicked;
+      return messages.kicked;
     case 400:
-      return fromServer ?? JOIN_ERROR_MESSAGES.invalidNickname;
+      return fromServer ?? messages.invalidNickname;
     case 404:
-      return fromServer ?? JOIN_ERROR_MESSAGES.notFound;
+      return fromServer ?? messages.notFound;
     case 409:
-      return fromServer ?? JOIN_ERROR_MESSAGES.nicknameTaken;
+      return fromServer ?? messages.nicknameTaken;
     default:
-      return fromServer ?? JOIN_ERROR_MESSAGES.generic;
+      return fromServer ?? messages.generic;
   }
 }

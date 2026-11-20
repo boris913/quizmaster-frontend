@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Bricolage_Grotesque, Instrument_Sans } from 'next/font/google';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import './globals.css';
 import { Providers } from './providers';
 import { SiteFooter } from '@/components/layout/SiteFooter';
@@ -18,10 +20,10 @@ const body = Instrument_Sans({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: 'Kwizora',
-  description: 'Quiz en direct pour la classe : vos élèves répondent depuis leur téléphone, vous suivez les résultats en temps réel.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('meta');
+  return { title: 'Kwizora', description: t('description') };
+}
 
 export const viewport: Viewport = {
   themeColor: [
@@ -30,23 +32,27 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
   return (
     // suppressHydrationWarning : next-themes pose la classe `dark` avant l'hydratation.
-    <html lang="fr" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </head>
       <body className="font-sans flex min-h-screen flex-col">
-        <Providers>
-          <div className="flex-1">{children}</div>
-          {/* Pied de page (lien Confidentialité) sur toutes les pages : publiques, joueur et créateur. */}
-          <SiteFooter />
-        </Providers>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <Providers>
+            <div className="flex-1">{children}</div>
+            {/* Pied de page (lien Confidentialité) sur toutes les pages : publiques, joueur et créateur. */}
+            <SiteFooter />
+          </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

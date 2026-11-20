@@ -1,4 +1,7 @@
+'use client';
+
 import { Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { answerTone } from '@/lib/answerTone';
 import { accuracyToPercent, type QuizOption, type WsQuestionStatsPayload } from '@/types';
@@ -20,10 +23,6 @@ function percentOf(count: number, answered: number) {
   return answered > 0 ? Math.round((count / answered) * 100) : 0;
 }
 
-function plural(n: number, word: string) {
-  return `${n} ${word}${n > 1 ? 's' : ''}`;
-}
-
 /**
  * Histogramme des réponses à une question clôturée : une barre par option, bonne(s) réponse(s)
  * mise(s) en évidence, pourcentages. Ne reçoit que des agrégats : jamais de pseudo.
@@ -32,21 +31,19 @@ function plural(n: number, word: string) {
  * et la bonne réponse est signalée par un libellé, pas seulement par la couleur.
  */
 export function AnswerHistogram({ options, stats, variant = 'default', className }: AnswerHistogramProps) {
+  const t = useTranslations('histogram');
   const isProjection = variant === 'projection';
   const distribution = stats.distribution ?? {};
   const correct = new Set(stats.correctAnswers ?? []);
   const answered = Math.max(0, stats.answeredCount ?? 0);
   const total = Math.max(answered, stats.totalParticipants ?? 0);
   const accuracy = accuracyToPercent(stats.accuracy);
-  const summary =
-    answered === 0
-      ? `Aucune réponse sur ${plural(total, 'participant')}`
-      : `${plural(answered, 'réponse')} sur ${plural(total, 'participant')} · ${accuracy} % des participants ont répondu juste`;
+  const summary = answered === 0 ? t('none', { total }) : t('summary', { answered, total, accuracy });
 
   return (
     <figure
       className={cn('w-full', className)}
-      aria-label="Répartition des réponses"
+      aria-label={t('aria')}
       data-testid="answer-histogram"
     >
       <figcaption
@@ -91,14 +88,14 @@ export function AnswerHistogram({ options, stats, variant = 'default', className
                       )}
                     >
                       <Check className="h-[1em] w-[1em]" aria-hidden />
-                      Bonne réponse
+                      {t('correct')}
                     </span>
                   )}
                 </span>
                 <span className="shrink-0 tabular-nums">
-                  <span className="font-semibold">{pct} %</span>{' '}
+                  <span className="font-semibold">{t('percent', { value: pct })}</span>{' '}
                   <span className={isProjection ? 'text-ink-tertiary' : 'text-ink-secondary'}>
-                    ({plural(count, 'réponse')})
+                    {t('count', { count })}
                   </span>
                 </span>
               </div>

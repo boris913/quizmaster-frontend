@@ -17,7 +17,7 @@ test.describe('fumée', () => {
   test('la page /player/join affiche le formulaire et valide côté client', async ({ page }) => {
     await page.goto('/player/join');
     await expect(page.getByRole('heading', { name: 'Rejoindre un quiz' })).toBeVisible();
-    await expect(page.getByPlaceholder('Ex: ABC123')).toBeVisible();
+    await expect(page.getByPlaceholder('Ex : ABC123')).toBeVisible();
     await expect(page.getByPlaceholder('SuperJoueur')).toBeVisible();
 
     // Soumission vide : la validation zod s'affiche sans appel au backend.

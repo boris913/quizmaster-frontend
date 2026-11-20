@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useSocket } from '@/hooks/useSocket';
 import { useSession } from '@/hooks/useSession';
 import { useAuthStore } from '@/store/authStore';
@@ -26,6 +27,9 @@ import {
 import { useSessionStore } from '@/store/sessionStore';
 
 export default function SessionControlPage() {
+  const t = useTranslations('sessionPage');
+  const tc = useTranslations('common');
+  const ts = useTranslations('status');
   const params = useParams();
   const router = useRouter();
   const sessionId = params.id as string;
@@ -175,7 +179,7 @@ export default function SessionControlPage() {
 
   const handleEnd = () => {
     if (!socket || !isConnected) return;
-    if (confirm('Terminer le quiz définitivement ?')) {
+    if (confirm(t('confirmEnd'))) {
       socket.emit('quiz:end', { sessionId });
       // Filet de sécurité si quiz:finished n'arrive pas (backend plus ancien, événement perdu) :
       // relecture de la session après 3 s, annulée dès réception de l'événement.
@@ -190,7 +194,7 @@ export default function SessionControlPage() {
   if (!currentSession) {
     return (
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-        <p className="text-ink-secondary">Chargement...</p>
+        <p className="text-ink-secondary">{tc('loading')}</p>
       </div>
     );
   }
@@ -215,27 +219,27 @@ export default function SessionControlPage() {
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
               <Link href="/creator/dashboard">
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Retour
+                <ArrowLeft className="w-4 h-4" />
+                {tc('back')}
               </Link>
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">
-                {(currentSession as any).quizzes?.title || 'Session'}
+              <h1 className="text-h2">
+                {(currentSession as any).quizzes?.title || t('fallbackTitle')}
               </h1>
-              <div className="flex items-center gap-3 text-sm text-ink-secondary">
-                <span>Code: <strong className="font-display tracking-[0.08em]">{currentSession.password}</strong></span>
+              <div className="flex flex-wrap items-center gap-3 text-small text-ink-secondary">
+                <span>{t('code')} <strong className="font-display tracking-[0.08em]">{currentSession.password}</strong></span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
-                  {participantCount} participants
+                  {t('participants', { count: participantCount })}
                 </span>
                 <span>•</span>
-                <span>Statut: <span className="capitalize">{status}</span></span>
+                <span>{t('status', { status: ts(status) })}</span>
                 <span>•</span>
                 <span data-testid="session-scoring-mode">
-                  {getScoringMode(currentSession) === 'accuracy' ? 'Mode Précision' : 'Mode Vitesse'}
-                  {isLeaderboardHidden(currentSession) && ' · classement masqué aux élèves'}
+                  {getScoringMode(currentSession) === 'accuracy' ? t('modeAccuracy') : t('modeSpeed')}
+                  {isLeaderboardHidden(currentSession) && t('rankingHidden')}
                 </span>
               </div>
             </div>
@@ -246,18 +250,18 @@ export default function SessionControlPage() {
                 href={`/creator/session/${sessionId}/present`}
                 target="_blank"
                 rel="noopener"
-                title="Ouvre l'écran de projection dans un nouvel onglet"
+                title={t('projectionTitle')}
               >
-                <MonitorPlay className="w-4 h-4 mr-2" />
-                Mode projection
+                <MonitorPlay className="w-4 h-4" />
+                {t('projection')}
               </Link>
             </Button>
-            <div className="text-sm text-ink-secondary">
+            <div className="text-small text-ink-secondary">
               <span
                 aria-hidden
                 className={cn('mr-1.5 inline-block h-2 w-2 rounded-full', isConnected ? 'bg-success-solid' : 'bg-danger-solid')}
               />
-              {isConnected ? 'Connecté' : 'Déconnecté'}
+              {isConnected ? t('connected') : t('disconnected')}
             </div>
           </div>
         </div>
@@ -300,9 +304,9 @@ export default function SessionControlPage() {
               <Card className="p-4 flex items-center gap-4">
                 <JoinQrCode code={currentSession.password} size={112} />
                 <div className="min-w-0 space-y-1">
-                  <p className="text-small font-medium text-ink">Rejoindre la session</p>
+                  <p className="text-small font-medium text-ink">{t('joinTitle')}</p>
                   <p className="text-caption text-ink-secondary">
-                    Scanner le QR code ou saisir le code
+                    {t('joinHint')}
                   </p>
                   <p className="font-display text-h3 font-bold tracking-[0.12em] tabular-nums">{currentSession.password}</p>
                 </div>

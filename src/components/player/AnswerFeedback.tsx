@@ -1,6 +1,7 @@
 'use client';
 
 import { CheckCircle2, Lightbulb, XCircle, MinusCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { AnswerResult } from '../ui/AnswerResult';
 import { Card } from '../ui/Card';
 import { cn } from '@/lib/utils';
@@ -34,6 +35,7 @@ function describe(ids: string[], options: QuizOption[] | undefined) {
 }
 
 export function AnswerFeedback({ result, reveal, options }: AnswerFeedbackProps) {
+  const t = useTranslations('player.feedback');
   const answered = reveal ? reveal.yourAnswers.length > 0 : true;
 
   return (
@@ -70,17 +72,17 @@ export function AnswerFeedback({ result, reveal, options }: AnswerFeedbackProps)
             ) : (
               <XCircle className="w-6 h-6" aria-hidden />
             )}
-            {!answered ? 'Pas de réponse' : reveal.isCorrect ? 'Bonne réponse' : 'Mauvaise réponse'}
+            {!answered ? t('noAnswer') : reveal.isCorrect ? t('correct') : t('wrong')}
           </h3>
 
           <dl className="text-small space-y-1">
             <div className="flex gap-2">
-              <dt className="text-ink-secondary">Votre réponse :</dt>
+              <dt className="text-ink-secondary">{t('yourAnswer')}</dt>
               <dd className="font-medium text-ink">{describe(reveal.yourAnswers, options)}</dd>
             </div>
             <div className="flex gap-2">
               <dt className="text-ink-secondary">
-                {reveal.correctAnswers.length > 1 ? 'Bonnes réponses :' : 'Bonne réponse :'}
+                {t('correctAnswers', { count: reveal.correctAnswers.length })}
               </dt>
               <dd className="font-medium text-success">{describe(reveal.correctAnswers, options)}</dd>
             </div>
@@ -90,7 +92,7 @@ export function AnswerFeedback({ result, reveal, options }: AnswerFeedbackProps)
             <div className="rounded-md bg-primary-50 p-3 text-small" data-testid="answer-explanation">
               <p className="flex items-center gap-1.5 font-semibold text-ink">
                 <Lightbulb className="w-4 h-4" aria-hidden />
-                Explication
+                {t('explanation')}
               </p>
               <p className="mt-1 whitespace-pre-line text-ink">{reveal.explanation}</p>
             </div>

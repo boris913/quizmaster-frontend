@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Card } from './Card';
 import { Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { answerTone } from '@/lib/answerTone';
 
 interface QuestionCardProps {
@@ -30,6 +31,8 @@ export function QuestionCard({
   isDisabled = false,
   selectedAnswers = [],
 }: QuestionCardProps) {
+  const t = useTranslations('player.question');
+  const tc = useTranslations('common');
   const shouldReduceMotion = useReducedMotion();
   const [selected, setSelected] = useState<string[]>(selectedAnswers);
 
@@ -51,10 +54,10 @@ export function QuestionCard({
     <Card tier="primary" className="p-6 sm:p-8 space-y-7">
       <div className="flex justify-between items-start gap-4">
         <span className="text-small font-medium text-ink-secondary tabular-nums">
-          Question {questionNumber} / {totalQuestions}
+          {t('counter', { current: questionNumber, total: totalQuestions })}
         </span>
         <span className="text-caption font-medium text-ink-secondary bg-ink/[0.05] px-2 py-1 rounded-sm whitespace-nowrap tabular-nums">
-          {question.max_points} pts
+          {tc('pointsCount', { count: question.max_points })}
         </span>
       </div>
 
@@ -110,7 +113,7 @@ export function QuestionCard({
 
       {question.type === 'multiple' && !isDisabled && (
         <p className="text-caption text-ink-secondary">
-          Sélectionnez plusieurs réponses (cliquez à nouveau pour désélectionner)
+          {t('multipleHint')}
         </p>
       )}
     </Card>

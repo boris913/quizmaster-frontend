@@ -2,6 +2,7 @@
 
 import { Button } from '../ui/Button';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Play, Pause, Square, SkipForward, Trophy, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 // --- Résultats de la question (#5) ---
@@ -41,6 +42,7 @@ export function SessionControl({
   questionResults = null,
   onShowLeaderboard,
 }: SessionControlProps) {
+  const t = useTranslations('control');
   const isActive = status === 'active';
   const isPaused = status === 'paused';
   const isFinished = status === 'finished';
@@ -55,14 +57,14 @@ export function SessionControl({
       {isWaiting && (
         <Button onClick={onStartQuestion} disabled={isStarting}>
           <Play className="w-4 h-4 mr-2" />
-          Lancer la 1ère question
+          {t('startFirst')}
         </Button>
       )}
 
       {/* --- Résultats de la question (#5) --- */}
       {showResults && questionResults && (
-        <section aria-label="Résultats de la question" className="w-full space-y-4" data-testid="question-results">
-          <h3 className="font-semibold">Résultats de la question {currentQuestion + 1}</h3>
+        <section aria-label={t('resultsAria')} className="w-full space-y-4" data-testid="question-results">
+          <h3 className="font-semibold">{t('resultsTitle', { number: currentQuestion + 1 })}</h3>
           <AnswerHistogram
             options={histogramOptions(questionResults.options, questionResults.stats)}
             stats={questionResults.stats}
@@ -71,18 +73,18 @@ export function SessionControl({
             {onShowLeaderboard && (
               <Button variant="secondary" onClick={onShowLeaderboard}>
                 <Trophy className="w-4 h-4 mr-2" />
-                Afficher le classement
+                {t('showLeaderboard')}
               </Button>
             )}
             {hasMoreQuestions ? (
               <Button onClick={onStartQuestion} disabled={isStarting}>
                 <SkipForward className="w-4 h-4 mr-2" />
-                Question suivante
+                {t('next')}
               </Button>
             ) : (
               <Button variant="success" onClick={onEnd}>
                 <Square className="w-4 h-4 mr-2" />
-                Terminer le quiz
+                {t('endQuiz')}
               </Button>
             )}
           </div>
@@ -94,17 +96,17 @@ export function SessionControl({
         <>
           <Button variant="secondary" onClick={onPause}>
             <Pause className="w-4 h-4 mr-2" />
-            Pause
+            {t('pause')}
           </Button>
           {hasMoreQuestions ? (
             <Button variant="outline" onClick={onStartQuestion}>
               <SkipForward className="w-4 h-4 mr-2" />
-              Question suivante
+              {t('next')}
             </Button>
           ) : (
             <Button variant="success" onClick={onEnd}>
               <Square className="w-4 h-4 mr-2" />
-              Terminer le quiz
+              {t('endQuiz')}
             </Button>
           )}
         </>
@@ -114,23 +116,23 @@ export function SessionControl({
         <>
           <Button onClick={onResume}>
             <Play className="w-4 h-4 mr-2" />
-            Reprendre
+            {t('resume')}
           </Button>
           <Button variant="danger" onClick={onEnd}>
             <Square className="w-4 h-4 mr-2" />
-            Terminer
+            {t('end')}
           </Button>
         </>
       )}
 
       {isFinished && (
         <>
-          <span className="text-sm text-ink-secondary">Quiz terminé</span>
+          <span className="text-small text-ink-secondary">{t('finished')}</span>
           {reportHref && (
             <Button asChild>
               <Link href={reportHref}>
                 <BarChart3 className="w-4 h-4 mr-2" />
-                Voir le rapport
+                {t('report')}
               </Link>
             </Button>
           )}

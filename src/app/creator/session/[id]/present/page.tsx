@@ -10,6 +10,7 @@ import { AnswerHistogram, histogramOptions } from '@/components/ui/AnswerHistogr
 import { getAppBaseUrl, normalizeSessionCode } from '@/lib/sessionCode';
 import { cn } from '@/lib/utils';
 import { answerTone } from '@/lib/answerTone';
+import { useTranslations } from 'next-intl';
 import { cumulativeClassAccuracy, isLeaderboardHidden } from '@/types';
 
 /** Nombre maximum de pseudos affichés dans le nuage (les suivants sont résumés en « +N »). */
@@ -48,6 +49,8 @@ function useFullscreen() {
  * Avant le jeu : code géant, QR, compteur et nuage des pseudos. Pendant : question et minuteur.
  */
 export default function SessionPresentPage() {
+  const t = useTranslations('present');
+  const tc = useTranslations('common');
   const params = useParams();
   const sessionId = params?.id as string;
   const { currentSession, participants: restParticipants, fetchSession, fetchParticipants } =
@@ -71,7 +74,7 @@ export default function SessionPresentPage() {
   const remaining = useRemainingSeconds(feed.phase === 'question' ? feed.question?.endsAt : null);
 
   const code = normalizeSessionCode(session?.password ?? '');
-  const title = (session as any)?.quizzes?.title || session?.quiz_title || 'Quiz';
+  const title = (session as any)?.quizzes?.title || session?.quiz_title || t('fallbackTitle');
   const phase = feed.phase === 'lobby' && session?.status === 'finished' ? 'finished' : feed.phase;
   const count = feed.participants.length;
   const visible = feed.participants.slice(-MAX_PSEUDOS);
@@ -92,7 +95,7 @@ export default function SessionPresentPage() {
         <div className="flex shrink-0 items-center gap-6">
           <span
             className="flex items-center gap-3 text-[clamp(1.5rem,2.6vw,3rem)] font-semibold tabular-nums"
-            aria-label={`${count} participant${count > 1 ? 's' : ''}`}
+            aria-label={t('participantsAria', { count })}
           >
             <Users className="h-[1em] w-[1em]" aria-hidden />
             <span data-testid="participant-count">{count}</span>
@@ -104,14 +107,14 @@ export default function SessionPresentPage() {
               className="flex items-center gap-2 rounded-md border border-ink/30 px-4 py-2 text-body hover:bg-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
             >
               <Maximize className="h-4 w-4" aria-hidden />
-              Plein écran
+              {t('fullscreen')}
             </button>
           )}
           {supported && isFullscreen && (
             <button
               type="button"
               onClick={toggle}
-              aria-label="Quitter le plein écran"
+              aria-label={t('exitFullscreen')}
               className="rounded-md p-2 text-ink-tertiary hover:bg-ink/10 hover:text-ink"
             >
               <Minimize className="h-5 w-5" aria-hidden />
@@ -123,7 +126,7 @@ export default function SessionPresentPage() {
       <main className="relative flex min-h-0 flex-1 flex-col px-[3vw] pb-[3vh]">
         {!session && (
           <div className="m-auto text-[clamp(1.5rem,3vw,3rem)] text-ink-secondary">
-            {loadError ? 'Session introuvable.' : 'Chargement…'}
+            {loadError ? t('notFound') : tc('loading')}
           </div>
         )}
 
@@ -132,10 +135,10 @@ export default function SessionPresentPage() {
             <div className="flex flex-1 items-center justify-center gap-[5vw]">
               <div className="flex flex-col items-center text-center">
                 <p className="text-[clamp(1.5rem,2.4vw,2.75rem)] text-ink-secondary">
-                  Rejoignez sur <strong className="text-ink">{joinHost}</strong>
+                  {t.rich('joinOn', { host: joinHost, b: (chunks) => <strong className="text-ink">{chunks}</strong> })}
                 </p>
                 <p className="mt-[2vh] text-[clamp(1.25rem,2vw,2.25rem)] text-ink-tertiary">
-                  Code
+                  {t('code')}
                 </p>
                 <p
                   className="font-display tabular-nums text-[clamp(7.5rem,13vw,15rem)] font-bold leading-none tracking-[0.12em]"
@@ -149,10 +152,10 @@ export default function SessionPresentPage() {
               )}
             </div>
 
-            <section aria-label="Participants" className="min-h-[18vh]">
+            <section aria-label={t('participants')} className="min-h-[18vh]">
               {count === 0 ? (
                 <p className="text-center text-[clamp(1.25rem,2vw,2.25rem)] text-ink-tertiary">
-                  En attente des participants…
+                  {t('waitingPlayers')}
                 </p>
               ) : (
                 <ul className="flex flex-wrap justify-center gap-3" data-testid="pseudo-cloud">
@@ -177,7 +180,7 @@ export default function SessionPresentPage() {
 
         {session && phase === 'countdown' && (
           <div className="m-auto text-center">
-            <p className="text-[clamp(1.5rem,3vw,3rem)] text-ink-secondary">Prêts ?</p>
+            <p className="text-[clamp(1.5rem,3vw,3rem)] text-ink-secondary">{t('ready')}</p>
             <p
               key={feed.countdown ?? 0}
               className="animate-countdown font-display tabular-nums text-[clamp(10rem,25vw,24rem)] font-bold leading-none"
@@ -192,7 +195,7 @@ export default function SessionPresentPage() {
             <div className="flex items-start justify-between gap-[3vw]">
               <div className="min-w-0">
                 <p className="text-[clamp(1.25rem,2vw,2.25rem)] text-ink-tertiary">
-                  Question {feed.question.number}/{feed.question.total}
+                  {t('questionOf', { current: feed.question.number, total: feed.question.total })}
                 </p>
                 <h2
                   className="mt-2 text-[clamp(2rem,4vw,4.5rem)] font-bold leading-tight"
@@ -204,7 +207,7 @@ export default function SessionPresentPage() {
               <div
                 role="timer"
                 aria-live="off"
-                aria-label={`${remaining} secondes restantes`}
+                aria-label={t('secondsLeft', { seconds: remaining })}
                 className={cn(
                   'flex aspect-square w-[clamp(7rem,12vw,13rem)] shrink-0 items-center justify-center rounded-full border-[0.6rem] font-display text-[clamp(3rem,6vw,6.5rem)] font-bold tabular-nums',
                   remaining > 10 ? 'border-success-solid' : remaining > 5 ? 'border-warning-solid' : 'border-danger-solid'
@@ -233,18 +236,18 @@ export default function SessionPresentPage() {
             )}
 
             {phase === 'ended' && (
-              <p className="text-center text-[clamp(1.5rem,3vw,3rem)] font-bold">Temps écoulé !</p>
+              <p className="text-center text-[clamp(1.5rem,3vw,3rem)] font-bold">{t('timeUp')}</p>
             )}
 
             {/* Rappel discret du code pour les retardataires */}
             <p className="text-right text-[clamp(1rem,1.5vw,1.75rem)] text-ink-tertiary">
-              {joinHost} · code <strong className="font-display text-ink">{code}</strong>
+              {t.rich('reminder', { host: joinHost, code, b: (chunks) => <strong className="font-display text-ink">{chunks}</strong> })}
             </p>
           </div>
         )}
 
         {session && (phase === 'question' || phase === 'ended') && !feed.question && (
-          <div className="m-auto text-[clamp(1.5rem,3vw,3rem)] text-ink-secondary">Question en cours…</div>
+          <div className="m-auto text-[clamp(1.5rem,3vw,3rem)] text-ink-secondary">{t('inProgress')}</div>
         )}
 
         {session && phase === 'results' && feed.stats && (
@@ -252,11 +255,11 @@ export default function SessionPresentPage() {
             <div className="min-w-0">
               {feed.question && (
                 <p className="text-[clamp(1.25rem,2vw,2.25rem)] text-ink-tertiary">
-                  Question {feed.question.number}/{feed.question.total} · Résultats
+                  {t('resultsOf', { current: feed.question.number, total: feed.question.total })}
                 </p>
               )}
               <h2 className="mt-2 text-[clamp(2rem,4vw,4.5rem)] font-bold leading-tight">
-                {feed.question?.text ?? 'Résultats de la question'}
+                {feed.question?.text ?? t('resultsTitle')}
               </h2>
             </div>
             <AnswerHistogram
@@ -269,20 +272,20 @@ export default function SessionPresentPage() {
 
         {session && phase === 'finished' && (
           <div className="m-auto w-full max-w-4xl text-center">
-            <h2 className="text-[clamp(2.5rem,5vw,5rem)] font-bold">Quiz terminé !</h2>
+            <h2 className="text-[clamp(2.5rem,5vw,5rem)] font-bold">{t('finished')}</h2>
             {leaderboardHidden && (
               <div className="mt-[4vh]" data-testid="final-class-accuracy">
                 {classAccuracy !== null ? (
                   <>
                     <p className="font-display text-[clamp(6rem,12vw,12rem)] font-bold leading-none tabular-nums">
-                      {classAccuracy} %
+                      {t('classAccuracy', { value: classAccuracy })}
                     </p>
                     <p className="mt-[2vh] text-[clamp(1.5rem,2.8vw,3rem)] text-ink-secondary">
-                      de bonnes réponses pour la classe
+                      {t('classAccuracyLabel')}
                     </p>
                   </>
                 ) : (
-                  <p className="text-[clamp(1.5rem,2.8vw,3rem)] text-ink-secondary">Bravo à toute la classe !</p>
+                  <p className="text-[clamp(1.5rem,2.8vw,3rem)] text-ink-secondary">{t('bravo')}</p>
                 )}
               </div>
             )}
@@ -296,7 +299,7 @@ export default function SessionPresentPage() {
                     <span>
                       {e.rank}. {e.pseudo}
                     </span>
-                    <span className="tabular-nums">{e.score} pts</span>
+                    <span className="tabular-nums">{tc('pointsCount', { count: e.score })}</span>
                   </li>
                 ))}
               </ol>
@@ -311,7 +314,7 @@ export default function SessionPresentPage() {
           >
             <p className="flex items-center gap-4 text-[clamp(3rem,6vw,6rem)] font-bold">
               <Pause className="h-[1em] w-[1em]" aria-hidden />
-              Pause
+              {t('pause')}
             </p>
           </div>
         )}

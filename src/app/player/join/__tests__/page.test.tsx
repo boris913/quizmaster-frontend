@@ -23,8 +23,8 @@ const joinSession = vi.fn();
 async function submit(pseudo = 'Alice') {
   const user = userEvent.setup();
   render(<JoinPage />);
-  await user.type(screen.getByLabelText('Mot de passe de la session'), 'ABC123');
-  await user.type(screen.getByLabelText('Votre pseudo'), pseudo);
+  await user.type(screen.getByLabelText('Code de la session'), 'ABC123');
+  await user.type(screen.getByLabelText('Ton pseudo'), pseudo);
   await user.click(screen.getByRole('button', { name: 'Rejoindre le quiz' }));
 }
 

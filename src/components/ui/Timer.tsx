@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 interface TimerProps {
@@ -13,6 +14,7 @@ interface TimerProps {
 }
 
 export function Timer({ duration, onComplete, isActive, className, variant = 'ring' }: TimerProps) {
+  const t = useTranslations('player.timer');
   const [timeLeft, setTimeLeft] = useState(duration);
   const progress = duration > 0 ? (timeLeft / duration) * 100 : 0;
 
@@ -66,7 +68,7 @@ export function Timer({ duration, onComplete, isActive, className, variant = 'ri
       className={cn('relative inline-flex items-center justify-center', className)}
       role="timer"
       aria-live="polite"
-      aria-label={`${timeLeft} secondes restantes sur ${duration}`}
+      aria-label={t('aria', { left: timeLeft, total: duration })}
     >
       <svg width={size} height={size} className="-rotate-90">
         <circle

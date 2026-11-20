@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { buildJoinUrl, normalizeSessionCode } from '@/lib/sessionCode';
 
@@ -23,6 +24,7 @@ interface JoinQrCodeProps {
 export function JoinQrCode({ code, size = 160, showUrl = false, className, urlClassName }: JoinQrCodeProps) {
   // L'URL dépend de window.location quand NEXT_PUBLIC_APP_URL n'est pas défini :
   // on la calcule après le montage pour éviter un écart d'hydratation SSR / client.
+  const t = useTranslations('session');
   const [url, setUrl] = useState<string | null>(null);
   const normalized = normalizeSessionCode(code);
 
@@ -44,7 +46,7 @@ export function JoinQrCode({ code, size = 160, showUrl = false, className, urlCl
             size={size}
             level="M"
             role="img"
-            aria-label={`QR code pour rejoindre la session ${normalized}`}
+            aria-label={t('qrAria', { code: normalized })}
           />
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Card } from './Card';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,8 @@ export function AnswerResult({
   status,
   showRecap = true,
 }: AnswerResultProps) {
+  const t = useTranslations('player.result');
+  const tc = useTranslations('common');
   const shouldReduceMotion = useReducedMotion();
   const pop = shouldReduceMotion
     ? { initial: { opacity: 0 }, animate: { opacity: 1 } }
@@ -37,9 +40,9 @@ export function AnswerResult({
       <motion.div {...pop} transition={{ duration: 0.3, ease: 'easeOut' }}>
         <Card tier="primary" className="p-8 text-center border-warning/30 bg-warning-50">
           <Clock className="w-12 h-12 mx-auto text-warning" />
-          <h3 className="text-h3 mt-3">Temps écoulé !</h3>
-          <p className="text-ink-secondary mt-1">Vous n&apos;avez pas répondu à temps.</p>
-          <p className="text-small text-ink-secondary mt-3">+0 pt</p>
+          <h3 className="text-h3 mt-3">{t('timeoutTitle')}</h3>
+          <p className="text-ink-secondary mt-1">{t('timeoutText')}</p>
+          <p className="text-small text-ink-secondary mt-3">{t('zeroPoints')}</p>
         </Card>
       </motion.div>
     );
@@ -68,10 +71,10 @@ export function AnswerResult({
         </motion.div>
 
         <h3 className="text-h3 mt-3">
-          {isCorrect ? 'Bonne réponse !' : 'Continuez comme ça'}
+          {isCorrect ? t('correct') : t('wrong')}
         </h3>
         <p className="text-small text-ink-secondary mt-1">
-          Répondu en {(timeTakenMs / 1000).toFixed(1)}s
+          {t('answeredIn', { seconds: (timeTakenMs / 1000).toFixed(1) })}
         </p>
 
         <motion.p
@@ -84,17 +87,17 @@ export function AnswerResult({
           )}
         >
           {isCorrect ? `+${pointsEarned}` : '+0'}
-          <span className="text-h3 font-medium ml-1">pts</span>
+          <span className="text-h3 font-medium ml-1">{tc('points')}</span>
         </motion.p>
-        {maxPoints > 0 && <p className="text-caption text-ink-tertiary">sur {maxPoints} pts max</p>}
+        {maxPoints > 0 && <p className="text-caption text-ink-tertiary">{t('maxPoints', { max: maxPoints })}</p>}
 
         {showRecap && !isCorrect && correctAnswers.length > 0 && (
           <div className="mt-5 text-small text-left bg-surface/70 rounded-md p-3 space-y-1">
             <p className="text-ink-secondary">
-              Votre réponse : <span className="font-medium text-ink">{yourAnswers.join(', ') || '—'}</span>
+              {t('yourAnswer')} <span className="font-medium text-ink">{yourAnswers.join(', ') || '—'}</span>
             </p>
             <p className="text-success">
-              Réponse attendue : <span className="font-medium">{correctAnswers.join(', ')}</span>
+              {t('expected')} <span className="font-medium">{correctAnswers.join(', ')}</span>
             </p>
           </div>
         )}

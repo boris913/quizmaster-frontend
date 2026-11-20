@@ -1,6 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '../ui/Button';
@@ -10,33 +12,41 @@ import { QuestionBuilder } from './QuestionBuilder';
 import { Plus } from 'lucide-react';
 import { QUESTION_EXPLANATION_MAX_LENGTH } from '@/types';
 
-const questionSchema = z.object({
-  text: z.string().min(1, 'Texte requis'),
-  type: z.enum(['single', 'multiple']),
-  options: z.array(z.object({
-    id: z.string(),
-    text: z.string().min(1, 'Option requise'),
-  })).min(2, 'Au moins 2 options'),
-  correct_answers: z.array(z.string()).min(1, 'Au moins une bonne réponse'),
-  max_points: z.number().min(10).max(1000),
-  timer_seconds: z.number().min(5).max(300).optional(),
-  // Facultative : une chaîne vide n'est pas envoyée au backend.
-  explanation: z
-    .string()
-    .max(QUESTION_EXPLANATION_MAX_LENGTH, `${QUESTION_EXPLANATION_MAX_LENGTH} caractères maximum`)
-    .optional()
-    .transform((v) => (v && v.trim() ? v.trim() : undefined)),
-});
+type Translator = ReturnType<typeof useTranslations<'quizForm'>>;
 
-const quizSchema = z.object({
-  title: z.string().min(3, 'Titre requis (3 caractères min)').max(200),
-  description: z.string().max(1000).optional(),
-  global_timer_seconds: z.number().min(5).max(300),
-  use_global_timer: z.boolean(),
-  questions: z.array(questionSchema),
-});
+function buildQuizSchema(t: Translator) {
+  const questionSchema = z.object({
+    text: z.string().min(1, t('errors.textRequired')),
+    type: z.enum(['single', 'multiple']),
+    options: z
+      .array(
+        z.object({
+          id: z.string(),
+          text: z.string().min(1, t('errors.optionRequired')),
+        })
+      )
+      .min(2, t('errors.minOptions')),
+    correct_answers: z.array(z.string()).min(1, t('errors.minCorrect')),
+    max_points: z.number().min(10, t('errors.pointsRange')).max(1000, t('errors.pointsRange')),
+    timer_seconds: z.number().min(5, t('errors.timerRange')).max(300, t('errors.timerRange')).optional(),
+    // Facultative : une chaîne vide n'est pas envoyée au backend.
+    explanation: z
+      .string()
+      .max(QUESTION_EXPLANATION_MAX_LENGTH, t('errors.maxChars', { count: QUESTION_EXPLANATION_MAX_LENGTH }))
+      .optional()
+      .transform((v) => (v && v.trim() ? v.trim() : undefined)),
+  });
 
-type QuizFormData = z.infer<typeof quizSchema>;
+  return z.object({
+    title: z.string().min(3, t('errors.titleRequired')).max(200),
+    description: z.string().max(1000).optional(),
+    global_timer_seconds: z.number().min(5, t('errors.timerRange')).max(300, t('errors.timerRange')),
+    use_global_timer: z.boolean(),
+    questions: z.array(questionSchema),
+  });
+}
+
+type QuizFormData = z.infer<ReturnType<typeof buildQuizSchema>>;
 
 interface QuizFormProps {
   initialData?: Partial<QuizFormData>;
@@ -45,6 +55,8 @@ interface QuizFormProps {
 }
 
 export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps) {
+  const t = useTranslations('quizForm');
+  const quizSchema = useMemo(() => buildQuizSchema(t), [t]);
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<QuizFormData>({
     resolver: zodResolver(quizSchema),
     defaultValues: {
@@ -67,22 +79,22 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       <Card className="p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Informations générales</h2>
-        <Input label="Titre" {...register('title')} error={errors.title?.message} />
-        <Input label="Description" {...register('description')} />
+        <h2 className="text-card-title">{t('general')}</h2>
+        <Input label={t('title')} {...register('title')} error={errors.title?.message} />
+        <Input label={t('description')} {...register('description')} />
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-small">
             <input
               type="checkbox"
               {...register('use_global_timer')}
               className="rounded border-borderc"
             />
-            Utiliser un timer global
+            {t('useGlobalTimer')}
           </label>
         </div>
         {useGlobalTimer && (
           <Input
-            label="Timer global (secondes)"
+            label={t('globalTimer')}
             type="number"
             {...register('global_timer_seconds', { valueAsNumber: true })}
             error={errors.global_timer_seconds?.message}
@@ -92,7 +104,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Questions ({fields.length})</h2>
+          <h2 className="text-card-title">{t('questions', { count: fields.length })}</h2>
           <Button
             type="button"
             size="sm"
@@ -111,7 +123,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
               explanation: '',
             })}
           >
-            <Plus className="w-4 h-4 mr-1" /> Ajouter une question
+            <Plus className="w-4 h-4" /> {t('addQuestion')}
           </Button>
         </div>
 
@@ -132,7 +144,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
       </div>
 
       <Button type="submit" isLoading={isSubmitting} className="w-full">
-        Créer le quiz
+        {t('submit')}
       </Button>
     </form>
   );

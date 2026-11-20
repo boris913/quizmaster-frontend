@@ -50,14 +50,17 @@ export function sortParticipants(
 }
 
 /** Ratio 0..1 -> pourcentage entier lisible (« 67 % »). */
-export function formatPercent(ratio: number): string {
-  return `${Math.round(ratio * 100)} %`;
+export function formatPercent(ratio: number, locale = 'fr'): string {
+  const value = Math.round(ratio * 100);
+  // Typographie française : espace avant %. Anglais : collé.
+  return locale === 'fr' ? `${value} %` : `${value}%`;
 }
 
 /** Millisecondes -> secondes avec une décimale, virgule française (« 3,2 s »). */
-export function formatSeconds(ms: number): string {
+export function formatSeconds(ms: number, locale = 'fr'): string {
   if (!ms) return '—';
-  return `${(Math.round(ms / 100) / 10).toLocaleString('fr-FR')} s`;
+  const value = (Math.round(ms / 100) / 10).toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-GB');
+  return locale === 'fr' ? `${value} s` : `${value}s`;
 }
 
 /**

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,37 +15,56 @@ import {
   normalizeSessionCode,
 } from '@/lib/sessionCode';
 import {
-  JOIN_ERROR_MESSAGES,
+  JoinErrorMessages,
   NICKNAME_MAX_LENGTH,
   NICKNAME_MIN_LENGTH,
   NICKNAME_PATTERN,
-  NICKNAME_PATTERN_MESSAGE,
   NicknameMode,
   fetchNicknameSuggestions,
 } from '@/lib/nickname';
 
-const joinSchema = z.object({
-  // Le code est normalisé (majuscules, sans espaces) avant validation. On ne fige pas sa longueur
-  // exacte : c'est le backend qui fait foi sur le format.
-  password: z.preprocess(
-    normalizeSessionCode,
-    z
-      .string()
-      .min(1, 'Entrez le code de la session')
-      .min(SESSION_CODE_MIN_LENGTH, 'Code de session trop court')
-      .max(SESSION_CODE_MAX_LENGTH, 'Code de session trop long')
-      .regex(/^[A-Z0-9]+$/, 'Le code ne contient que des lettres et des chiffres')
-  ),
-  // Même règle que le backend (JoinSessionDto) : accents et espaces simples autorisés.
-  pseudo: z.preprocess(
-    (value) => (typeof value === 'string' ? value.trim() : value),
-    z
-      .string()
-      .min(NICKNAME_MIN_LENGTH, `Minimum ${NICKNAME_MIN_LENGTH} caractères`)
-      .max(NICKNAME_MAX_LENGTH, `Maximum ${NICKNAME_MAX_LENGTH} caractères`)
-      .regex(NICKNAME_PATTERN, NICKNAME_PATTERN_MESSAGE)
-  ),
-});
+type Translator = ReturnType<typeof useTranslations<'join'>>;
+
+function buildJoinSchema(t: Translator) {
+  return z.object({
+    // Le code est normalisé (majuscules, sans espaces) avant validation. On ne fige pas sa longueur
+    // exacte : c'est le backend qui fait foi sur le format.
+    password: z.preprocess(
+      normalizeSessionCode,
+      z
+        .string()
+        .min(1, t('errors.codeRequired'))
+        .min(SESSION_CODE_MIN_LENGTH, t('errors.codeTooShort'))
+        .max(SESSION_CODE_MAX_LENGTH, t('errors.codeTooLong'))
+        .regex(/^[A-Z0-9]+$/, t('errors.codePattern'))
+    ),
+    // Même règle que le backend (JoinSessionDto) : accents et espaces simples autorisés.
+    pseudo: z.preprocess(
+      (value) => (typeof value === 'string' ? value.trim() : value),
+      z
+        .string()
+        .min(NICKNAME_MIN_LENGTH, t('errors.minChars', { count: NICKNAME_MIN_LENGTH }))
+        .max(NICKNAME_MAX_LENGTH, t('errors.maxChars', { count: NICKNAME_MAX_LENGTH }))
+        .regex(NICKNAME_PATTERN, t('errors.nicknamePattern'))
+    ),
+  });
+}
+
+/** Messages d'échec du join, traduits. */
+export function useJoinErrorMessages(): JoinErrorMessages {
+  const t = useTranslations('join.errors');
+  return useMemo(
+    () => ({
+      kicked: t('kicked'),
+      notFound: t('notFound'),
+      invalidNickname: t('invalidNickname'),
+      nicknameTaken: t('nicknameTaken'),
+      network: t('network'),
+      generic: t('generic'),
+    }),
+    [t]
+  );
+}
 
 type JoinFormData = { password: string; pseudo: string };
 
@@ -63,6 +83,8 @@ type SessionLookup =
   | { status: 'not-found' };
 
 export function JoinForm({ onSubmit, isSubmitting, error }: JoinFormProps) {
+  const t = useTranslations('join');
+  const joinSchema = useMemo(() => buildJoinSchema(t), [t]);
   const {
     register,
     handleSubmit,
@@ -148,19 +170,17 @@ export function JoinForm({ onSubmit, isSubmitting, error }: JoinFormProps) {
   }, [error, isGenerated]);
 
   const passwordField = register('password');
-  const lookupError = lookup.status === 'not-found' ? JOIN_ERROR_MESSAGES.notFound : undefined;
+  const lookupError = lookup.status === 'not-found' ? t('errors.notFound') : undefined;
 
   return (
     <Card className="p-6 w-full max-w-md space-y-4">
-      <h2 className="text-xl font-bold text-center">Rejoindre un quiz</h2>
-      <p className="text-sm text-ink-secondary text-center">
-        Entrez le mot de passe de la session et votre pseudo
-      </p>
+      <h1 className="text-h3 text-center">{t('title')}</h1>
+      <p className="text-small text-ink-secondary text-center">{t('subtitle')}</p>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div className="space-y-1">
           <Input
-            label="Mot de passe de la session"
-            placeholder="Ex: ABC123"
+            label={t('codeLabel')}
+            placeholder={t('codePlaceholder')}
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}
@@ -175,7 +195,7 @@ export function JoinForm({ onSubmit, isSubmitting, error }: JoinFormProps) {
           />
           {isLookingUp && (
             <p role="status" className="text-caption text-ink-secondary">
-              Recherche de la session…
+              {t('lookingUp')}
             </p>
           )}
         </div>
@@ -187,13 +207,13 @@ export function JoinForm({ onSubmit, isSubmitting, error }: JoinFormProps) {
             suggestions={lookup.suggestions}
             value={pseudo}
             onChange={(nickname) => setValue('pseudo', nickname, { shouldValidate: isSubmitted })}
-            error={errors.pseudo ? 'Lance la roulette pour obtenir ton pseudo' : undefined}
+            error={errors.pseudo ? t('errors.spinFirst') : undefined}
             disabled={isSubmitting}
           />
         ) : (
           <Input
-            label="Votre pseudo"
-            placeholder="SuperJoueur"
+            label={t('pseudoLabel')}
+            placeholder={t('pseudoPlaceholder')}
             autoComplete="nickname"
             maxLength={NICKNAME_MAX_LENGTH}
             {...register('pseudo')}
@@ -202,12 +222,12 @@ export function JoinForm({ onSubmit, isSubmitting, error }: JoinFormProps) {
         )}
 
         {error && (
-          <p role="alert" className="text-sm text-danger">
+          <p role="alert" className="text-small text-danger">
             {error}
           </p>
         )}
         <Button type="submit" className="w-full" isLoading={isSubmitting}>
-          Rejoindre le quiz
+          {t('submit')}
         </Button>
       </form>
     </Card>

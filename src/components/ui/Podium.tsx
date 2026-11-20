@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { LeaderboardEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { Crown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { RankBadge } from './RankBadge';
 
 interface PodiumProps {
@@ -12,12 +13,14 @@ interface PodiumProps {
 }
 
 export function Podium({ entries, currentParticipantId }: PodiumProps) {
+  const t = useTranslations('player');
+  const tc = useTranslations('common');
   const shouldReduceMotion = useReducedMotion();
   const top3 = entries.slice(0, 3);
   const podiumOrder = [top3[1], top3[0], top3[2]]; // 2nd, 1st, 3rd
 
   return (
-    <div className="flex items-end justify-center gap-4 py-6" aria-label="Podium">
+    <div className="flex items-end justify-center gap-4 py-6" aria-label={t('podium')}>
       {podiumOrder.map((entry, index) => {
         if (!entry) return null;
         const isCurrent = entry.participant_id === currentParticipantId;
@@ -59,8 +62,8 @@ export function Podium({ entries, currentParticipantId }: PodiumProps) {
             </div>
             <div className="mt-2 text-center">
               <p className="text-small font-semibold text-ink truncate max-w-[6rem]">{entry.pseudo}</p>
-              <p className="text-caption text-ink-secondary tabular-nums">{entry.score} pts</p>
-              {isCurrent && <span className="text-caption text-primary font-medium">vous</span>}
+              <p className="text-caption text-ink-secondary tabular-nums">{tc('pointsCount', { count: entry.score })}</p>
+              {isCurrent && <span className="text-caption text-primary font-medium">{tc('you')}</span>}
             </div>
           </motion.div>
         );
