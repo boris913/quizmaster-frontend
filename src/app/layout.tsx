@@ -7,7 +7,7 @@ import { SiteFooter } from '@/components/layout/SiteFooter';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'QuizMaster',
+  title: 'Kwizora',
   description: 'Plateforme de quiz interactif en temps réel',
 };
 

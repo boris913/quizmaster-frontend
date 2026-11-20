@@ -16,7 +16,7 @@ export default function HomePage() {
           transition={{ duration: 0.4 }}
           className="text-center space-y-6"
         >
-          <h1 className="text-display gradient-text">QuizMaster</h1>
+          <h1 className="text-display gradient-text">Kwizora</h1>
           <p className="text-body sm:text-h3 text-ink-secondary max-w-2xl mx-auto font-normal">
             Créez, gérez et participez à des quiz en temps réel avec vos amis ou votre public.
           </p>
