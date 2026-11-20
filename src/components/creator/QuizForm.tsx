@@ -8,25 +8,14 @@ import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
 import { QuestionBuilder } from './QuestionBuilder';
 import { Plus } from 'lucide-react';
-import { QUESTION_EXPLANATION_MAX_LENGTH } from '@/types';
-
-const questionSchema = z.object({
-  text: z.string().min(1, 'Texte requis'),
-  type: z.enum(['single', 'multiple']),
-  options: z.array(z.object({
-    id: z.string(),
-    text: z.string().min(1, 'Option requise'),
-  })).min(2, 'Au moins 2 options'),
-  correct_answers: z.array(z.string()).min(1, 'Au moins une bonne réponse'),
-  max_points: z.number().min(10).max(1000),
-  timer_seconds: z.number().min(5).max(300).optional(),
-  // Facultative : une chaîne vide n'est pas envoyée au backend.
-  explanation: z
-    .string()
-    .max(QUESTION_EXPLANATION_MAX_LENGTH, `${QUESTION_EXPLANATION_MAX_LENGTH} caractères maximum`)
-    .optional()
-    .transform((v) => (v && v.trim() ? v.trim() : undefined)),
-});
+import {
+  emptyQuestion,
+  questionSchema,
+  questionToFormValues,
+  toPendingQuestion,
+  type PendingQuestion,
+} from './questionSchema';
+import type { QuestionPayload } from '@/types';
 
 const quizSchema = z.object({
   title: z.string().min(3, 'Titre requis (3 caractères min)').max(200),
@@ -36,24 +25,43 @@ const quizSchema = z.object({
   questions: z.array(questionSchema),
 });
 
-type QuizFormData = z.infer<typeof quizSchema>;
+type QuizFormInput = z.input<typeof quizSchema>;
+type QuizFormOutput = z.output<typeof quizSchema>;
 
-interface QuizFormProps {
-  initialData?: Partial<QuizFormData>;
-  onSubmit: (data: QuizFormData) => Promise<void>;
-  isSubmitting?: boolean;
+/**
+ * Données soumises : les questions sont déjà au format API (sémantique de `correct_answers`
+ * par type). Une question peut porter un `image_file` à téléverser une fois le quiz créé.
+ */
+export interface QuizFormSubmitData {
+  title: string;
+  description?: string;
+  global_timer_seconds: number;
+  use_global_timer: boolean;
+  questions: PendingQuestion[];
 }
 
-export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps) {
-  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<QuizFormData>({
+interface QuizFormProps {
+  initialData?: Partial<Omit<QuizFormSubmitData, 'questions'>> & {
+    questions?: (Partial<QuestionPayload> & { image_url?: string | null })[];
+  };
+  onSubmit: (data: QuizFormSubmitData) => Promise<void> | void;
+  isSubmitting?: boolean;
+  /** Quiz existant : les images sont envoyées dès leur sélection. */
+  quizId?: string;
+  submitLabel?: string;
+}
+
+export function QuizForm({ initialData, onSubmit, isSubmitting, quizId, submitLabel = 'Créer le quiz' }: QuizFormProps) {
+  const { questions: initialQuestions, ...initialQuiz } = initialData ?? {};
+  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<QuizFormInput, unknown, QuizFormOutput>({
     resolver: zodResolver(quizSchema),
     defaultValues: {
       title: '',
       description: '',
       global_timer_seconds: 30,
       use_global_timer: true,
-      questions: [],
-      ...initialData,
+      ...initialQuiz,
+      questions: (initialQuestions ?? []).map(questionToFormValues),
     },
   });
 
@@ -64,8 +72,11 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
 
   const useGlobalTimer = watch('use_global_timer');
 
+  const submit = (data: QuizFormOutput) =>
+    onSubmit({ ...data, questions: data.questions.map(toPendingQuestion) });
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(submit)} className="space-y-8">
       <Card className="p-6 space-y-4">
         <h2 className="text-lg font-semibold">Informations générales</h2>
         <Input label="Titre" {...register('title')} error={errors.title?.message} />
@@ -93,24 +104,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">Questions ({fields.length})</h2>
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => append({
-              text: '',
-              type: 'single',
-              options: [
-                { id: 'A', text: '' },
-                { id: 'B', text: '' },
-                { id: 'C', text: '' },
-                { id: 'D', text: '' },
-              ],
-              correct_answers: [],
-              max_points: 100,
-              timer_seconds: 30,
-              explanation: '',
-            })}
-          >
+          <Button type="button" size="sm" onClick={() => append(emptyQuestion())}>
             <Plus className="w-4 h-4 mr-1" /> Ajouter une question
           </Button>
         </div>
@@ -119,7 +113,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
           <QuestionBuilder
             key={field.id}
             index={index}
-            control={control as any} // ✅ résout l'incompatibilité de type
+            control={control as any}
             register={register}
             setValue={setValue}
             watch={watch}
@@ -127,12 +121,13 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
             onRemove={() => remove(index)}
             useGlobalTimer={useGlobalTimer}
             globalTimer={watch('global_timer_seconds')}
+            quizId={quizId}
           />
         ))}
       </div>
 
       <Button type="submit" isLoading={isSubmitting} className="w-full">
-        Créer le quiz
+        {submitLabel}
       </Button>
     </form>
   );
