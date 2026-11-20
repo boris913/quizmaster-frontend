@@ -28,6 +28,20 @@ export default function SessionControlPage() {
   const [isStarting, setIsStarting] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
   const joinedRef = useRef(false);
+  // Fin de partie reçue en direct (quiz:finished, aussi émis vers la salle créateur) :
+  // le CTA « Voir le rapport » s'affiche sans attendre la relecture de la session.
+  const [quizFinished, setQuizFinished] = useState(false);
+  const endFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearEndFallback = () => {
+    if (endFallbackRef.current) {
+      clearTimeout(endFallbackRef.current);
+      endFallbackRef.current = null;
+    }
+  };
+
+  // Annule la relecture de secours au démontage.
+  useEffect(() => clearEndFallback, []);
 
   useEffect(() => {
     if (sessionId) {
@@ -89,6 +103,8 @@ export default function SessionControlPage() {
     });
 
     socket.on('quiz:finished', () => {
+      clearEndFallback();
+      setQuizFinished(true);
       fetchSession(sessionId);
     });
 
@@ -135,9 +151,13 @@ export default function SessionControlPage() {
     if (!socket || !isConnected) return;
     if (confirm('Terminer le quiz définitivement ?')) {
       socket.emit('quiz:end', { sessionId });
-      // Le backend n'émet pas d'événement de fin vers la salle créateur (quiz:finished ne
-      // vise que les participants) : on relit la session pour afficher « Voir le rapport ».
-      setTimeout(() => fetchSession(sessionId), 1500);
+      // Filet de sécurité si quiz:finished n'arrive pas (backend plus ancien, événement perdu) :
+      // relecture de la session après 3 s, annulée dès réception de l'événement.
+      clearEndFallback();
+      endFallbackRef.current = setTimeout(() => {
+        endFallbackRef.current = null;
+        fetchSession(sessionId);
+      }, 3000);
     }
   };
 
@@ -150,6 +170,7 @@ export default function SessionControlPage() {
   }
 
   const totalQuestions = (currentSession as any).quizzes?.total_questions || 0;
+  const status = quizFinished ? 'finished' : currentSession.status;
   const currentQIndex = currentSession.current_question_index ?? -1;
 
   // Carte des scores en direct, dérivée du classement temps réel (mis à jour par
@@ -184,7 +205,7 @@ export default function SessionControlPage() {
                   {participantCount} participants
                 </span>
                 <span>•</span>
-                <span>Statut: <span className="capitalize">{currentSession.status}</span></span>
+                <span>Statut: <span className="capitalize">{status}</span></span>
               </div>
             </div>
           </div>
@@ -210,7 +231,7 @@ export default function SessionControlPage() {
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-4">
               <SessionControl
-                status={currentSession.status}
+                status={status}
                 currentQuestion={currentQIndex}
                 totalQuestions={totalQuestions}
                 onStartQuestion={handleStartQuestion}
@@ -231,7 +252,7 @@ export default function SessionControlPage() {
           </div>
 
           <div className="space-y-6">
-            {currentSession.status !== 'finished' && currentSession.password && (
+            {status !== 'finished' && currentSession.password && (
               <Card className="p-4 flex items-center gap-4">
                 <JoinQrCode code={currentSession.password} size={112} />
                 <div className="min-w-0 space-y-1">
