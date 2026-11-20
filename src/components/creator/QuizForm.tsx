@@ -42,7 +42,7 @@ export interface QuizFormSubmitData {
 
 interface QuizFormProps {
   initialData?: Partial<Omit<QuizFormSubmitData, 'questions'>> & {
-    questions?: (Partial<QuestionPayload> & { image_url?: string | null })[];
+    questions?: (Partial<Omit<QuestionPayload, 'image_url'>> & { image_url?: string | null })[];
   };
   onSubmit: (data: QuizFormSubmitData) => Promise<void> | void;
   isSubmitting?: boolean;

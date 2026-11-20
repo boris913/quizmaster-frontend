@@ -12,6 +12,9 @@ import Link from 'next/link';
  *   l'API). Ne rien inventer : laisser « à confirmer » tant que ce n'est pas vérifié.
  * - CONTACT : adresse de contact pour les demandes de suppression et l'exercice des droits.
  * - DERNIERE_MISE_A_JOUR : date de validation du texte.
+ * - FOURNISSEUR_IA : fournisseur d'IA de la génération de quiz (boris913/quizmaster-backend#11),
+ *   région de traitement et conservation des requêtes chez lui. Le « cours non conservé par
+ *   Kwizora » suppose que le backend ne stocke ni le texte ni le PDF reçus.
  * - La durée de conservation (30 jours puis anonymisation) reprend boris913/quizmaster-backend#9 :
  *   elle n'est vraie que si la purge planifiée décrite dans cette issue est déployée et active.
  */
@@ -19,6 +22,9 @@ const HEBERGEMENT = 'À confirmer (hébergeur et région des données non encore
 const CONTACT = '[adresse de contact à compléter]';
 const DERNIERE_MISE_A_JOUR = '[date à compléter]';
 const DUREE_CONSERVATION_JOURS = 30;
+/** Fournisseur IA, région et durée de rétention côté fournisseur : à confirmer (backend#11). */
+const FOURNISSEUR_IA =
+  '[fournisseur, région de traitement et durée de conservation côté fournisseur à confirmer].';
 
 export const metadata: Metadata = {
   title: 'Confidentialité — Kwizora',
@@ -168,6 +174,33 @@ export default function ConfidentialitePage() {
             s&apos;adresser à l&apos;enseignant qui a organisé la session, ou nous écrire à
             l&apos;adresse indiquée ci-dessous.
           </p>
+        </Section>
+
+        <Section id="generation-ia" title="Génération de questions par IA">
+          <p>
+            Un enseignant peut, s&apos;il le souhaite, générer un brouillon de quiz à partir
+            d&apos;un cours (texte collé ou PDF). Dans ce cas seulement, le contenu du cours est
+            transmis à un fournisseur d&apos;intelligence artificielle, qui rédige des
+            propositions de questions. Ce fournisseur est un sous-traitant : {FOURNISSEUR_IA}
+          </p>
+          <ul className="list-disc pl-5 space-y-1.5">
+            <li>
+              <strong className="text-ink">aucune donnée d&apos;élève</strong> n&apos;est envoyée :
+              ni pseudo, ni réponse, ni résultat. Seul le contenu du cours choisi par
+              l&apos;enseignant est transmis, et nous lui demandons de n&apos;y laisser aucune
+              information personnelle ;
+            </li>
+            <li>
+              le cours n&apos;est pas conservé par Kwizora après la génération : seules les
+              questions que l&apos;enseignant relit puis enregistre sont gardées, comme un quiz
+              créé à la main ;
+            </li>
+            <li>
+              rien n&apos;est enregistré sans action de l&apos;enseignant, qui doit relire et
+              corriger le brouillon avant de l&apos;utiliser ;
+            </li>
+            <li>le nombre de générations est limité chaque mois par compte enseignant.</li>
+          </ul>
         </Section>
 
         <Section id="hebergement" title="Hébergement">

@@ -103,7 +103,7 @@ export function changeQuestionType(
 }
 
 /** Question existante (API) -> valeurs du formulaire, pour l'édition. */
-export function questionToFormValues(question: Partial<QuestionPayload> & { image_url?: string | null }): QuestionFormValues {
+export function questionToFormValues(question: Partial<Omit<QuestionPayload, 'image_url'>> & { image_url?: string | null }): QuestionFormValues {
   const base = emptyQuestion();
   const type = (QUESTION_TYPES as readonly string[]).includes(String(question.type))
     ? (question.type as QuestionType)

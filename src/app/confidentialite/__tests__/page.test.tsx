@@ -35,6 +35,14 @@ describe('page /confidentialite', () => {
     expect(text).toMatch(/anonymisées/);
   });
 
+  it('décrit la génération par IA : cours envoyé à un fournisseur, aucune donnée élève, fournisseur à confirmer', () => {
+    render(<ConfidentialitePage />);
+    const section = screen.getByRole('region', { name: 'Génération de questions par IA' });
+    expect(section).toHaveTextContent(/fournisseur d'intelligence artificielle/);
+    expect(section).toHaveTextContent(/aucune donnée d'élève/);
+    expect(section).toHaveTextContent('à confirmer');
+  });
+
   it("garde l'hébergement et le contact en placeholders (rien d'inventé)", () => {
     render(<ConfidentialitePage />);
     const hebergement = screen.getByRole('region', { name: 'Hébergement' });
