@@ -1,7 +1,8 @@
 'use client';
 
 import { Button } from '../ui/Button';
-import { Play, Pause, Square, SkipForward } from 'lucide-react';
+import Link from 'next/link';
+import { Play, Pause, Square, SkipForward, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SessionControlProps {
@@ -13,6 +14,8 @@ interface SessionControlProps {
   onResume: () => void;
   onEnd: () => void;
   isStarting?: boolean;
+  /** Lien vers le rapport post-session, affiché une fois le quiz terminé. */
+  reportHref?: string;
   className?: string;
 }
 
@@ -25,6 +28,7 @@ export function SessionControl({
   onResume,
   onEnd,
   isStarting = false,
+  reportHref,
   className,
 }: SessionControlProps) {
   const isActive = status === 'active';
@@ -77,7 +81,17 @@ export function SessionControl({
       )}
 
       {isFinished && (
-        <span className="text-sm text-ink-secondary">Quiz terminé</span>
+        <>
+          <span className="text-sm text-ink-secondary">Quiz terminé</span>
+          {reportHref && (
+            <Button asChild>
+              <Link href={reportHref}>
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Voir le rapport
+              </Link>
+            </Button>
+          )}
+        </>
       )}
     </div>
   );

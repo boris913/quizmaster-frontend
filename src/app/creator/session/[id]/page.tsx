@@ -135,6 +135,9 @@ export default function SessionControlPage() {
     if (!socket || !isConnected) return;
     if (confirm('Terminer le quiz définitivement ?')) {
       socket.emit('quiz:end', { sessionId });
+      // Le backend n'émet pas d'événement de fin vers la salle créateur (quiz:finished ne
+      // vise que les participants) : on relit la session pour afficher « Voir le rapport ».
+      setTimeout(() => fetchSession(sessionId), 1500);
     }
   };
 
@@ -215,6 +218,7 @@ export default function SessionControlPage() {
                 onResume={handleResume}
                 onEnd={handleEnd}
                 isStarting={isStarting}
+                reportHref={`/creator/session/${sessionId}/results`}
               />
             </Card>
 
