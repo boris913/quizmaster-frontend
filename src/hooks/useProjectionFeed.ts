@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { useSocket } from './useSocket';
 import { useAuthStore } from '@/store/authStore';
 import {
+  normalizePlayerQuestion,
   normalizeQuestionStats,
+  type QuestionType,
   type LeaderboardEntry,
   type Participant,
   type WsQuestionCountdownPayload,
@@ -19,6 +21,10 @@ export interface ProjectionQuestion {
   id: string;
   text: string;
   options: { id: string; text: string }[];
+  /** Type de question (backend #7). */
+  type: QuestionType;
+  /** Image d'illustration, ou null. */
+  imageUrl: string | null;
   number: number;
   total: number;
   timerSeconds: number;
@@ -122,8 +128,8 @@ export function useProjectionFeed(sessionId: string, initialParticipants?: Parti
     };
 
     const onQuestionStart = (data: WsQuestionStartPayload) => {
-      const q = data?.question;
-      if (!q) return;
+      if (!data?.question) return;
+      const q = normalizePlayerQuestion(data.question);
       const timerSeconds = Number(data.timer_seconds ?? q.timer_seconds ?? 0);
       setState((s) => ({
         ...s,
@@ -134,7 +140,9 @@ export function useProjectionFeed(sessionId: string, initialParticipants?: Parti
         question: {
           id: q.id,
           text: q.text,
-          options: Array.isArray(q.options) ? q.options : [],
+          options: q.options,
+          type: q.type,
+          imageUrl: q.image_url,
           number: data.question_number,
           total: data.total_questions,
           timerSeconds,

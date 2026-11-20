@@ -1,11 +1,13 @@
 import type { SessionResults, SessionResultsParticipant, SessionResultsQuestion } from '@/types';
+import { UNGRADED_QUESTION_TYPES } from '@/types';
 
 /**
  * Types de question sans bonne réponse : le backend renvoie `accuracy: 0` pour eux,
  * il ne faut donc jamais l'afficher comme un score. Aligné sur
- * `UNGRADED_QUESTION_TYPES` (quizmaster-backend, src/session/results/session-results.ts).
+ * `UNGRADED_QUESTION_TYPES` (quizmaster-backend, src/session/results/session-results.ts) ;
+ * la liste vit dans `@/types` avec les autres types de question (backend #7).
  */
-export const UNGRADED_QUESTION_TYPES: readonly string[] = ['poll'];
+export { UNGRADED_QUESTION_TYPES };
 
 export function isGradedQuestion(question: Pick<SessionResultsQuestion, 'type'>): boolean {
   return !UNGRADED_QUESTION_TYPES.includes(question.type);
