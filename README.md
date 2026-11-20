@@ -20,8 +20,18 @@ Variables d'environnement (voir `src/constants/index.ts`) :
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | URL HTTP du backend | `http://localhost:3001` |
 | `NEXT_PUBLIC_WS_URL` | URL WebSocket (socket.io) du backend | `ws://localhost:3001` |
+| `NEXT_PUBLIC_APP_URL` | URL publique du frontend, utilisée pour le QR code et le lien direct `/player/join?code=XXXXXX` (voir `src/lib/sessionCode.ts`) | origine du navigateur |
+
+`NEXT_PUBLIC_APP_URL` est inlinée au build (comme toute variable `NEXT_PUBLIC_*`). Si les élèves n'atteignent pas l'application par la même adresse que le poste du prof (par exemple `localhost` chez le prof, IP du réseau local pour les élèves), renseignez-la avec l'adresse accessible par les élèves.
 
 Ne jamais commiter `.env.local`.
+
+## Rejoindre une session : QR code, lien direct, projection
+
+- Le tableau de bord d'une session (`/creator/session/[id]`) affiche un QR code compact et un bouton **Mode projection**.
+- Le QR code et le lien direct mènent à `/player/join?code=XXXXXX` : le code est pré-rempli (normalisé en majuscules, sans espaces) et le focus est placé sur le pseudo.
+- **Mode projection** (`/creator/session/[id]/present`, ouvert dans un nouvel onglet) : écran plein écran pour le vidéoprojecteur, en lecture seule. Avant le jeu : code géant, QR code, compteur et nuage des pseudos en direct ; pendant le jeu : question en cours et minuteur, sans aucun contrôle (les commandes restent sur le tableau de bord).
+- Composant réutilisable : `src/components/ui/JoinQrCode.tsx`.
 
 ## Scripts
 

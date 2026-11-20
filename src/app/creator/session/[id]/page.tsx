@@ -12,7 +12,8 @@ import { LiveLeaderboard } from '@/components/creator/LiveLeaderboard';
 import { ParticipantList } from '@/components/creator/ParticipantList';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ArrowLeft, Users } from 'lucide-react';
+import { JoinQrCode } from '@/components/ui/JoinQrCode';
+import { ArrowLeft, MonitorPlay, Users } from 'lucide-react';
 import { LeaderboardEntry, WsParticipantProgressPayload } from '@/types';
 
 export default function SessionControlPage() {
@@ -160,7 +161,7 @@ export default function SessionControlPage() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
               <Link href="/creator/dashboard">
@@ -184,8 +185,21 @@ export default function SessionControlPage() {
               </div>
             </div>
           </div>
-          <div className="text-sm text-ink-secondary">
-            {isConnected ? '🟢 Connecté' : '🔴 Déconnecté'}
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                href={`/creator/session/${sessionId}/present`}
+                target="_blank"
+                rel="noopener"
+                title="Ouvre l'écran de projection dans un nouvel onglet"
+              >
+                <MonitorPlay className="w-4 h-4 mr-2" />
+                Mode projection
+              </Link>
+            </Button>
+            <div className="text-sm text-ink-secondary">
+              {isConnected ? '🟢 Connecté' : '🔴 Déconnecté'}
+            </div>
           </div>
         </div>
 
@@ -212,7 +226,19 @@ export default function SessionControlPage() {
             />
           </div>
 
-          <div>
+          <div className="space-y-6">
+            {currentSession.status !== 'finished' && currentSession.password && (
+              <Card className="p-4 flex items-center gap-4">
+                <JoinQrCode code={currentSession.password} size={112} />
+                <div className="min-w-0 space-y-1">
+                  <p className="text-small font-medium text-ink">Rejoindre la session</p>
+                  <p className="text-caption text-ink-secondary">
+                    Scanner le QR code ou saisir le code
+                  </p>
+                  <p className="font-mono text-h3 tracking-widest">{currentSession.password}</p>
+                </div>
+              </Card>
+            )}
             <ParticipantList
               participants={participants || []}
               progressMap={progressMap}
