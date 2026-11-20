@@ -54,6 +54,7 @@ test('roulette : 3 tirages au clavier, puis envoi du dernier pseudo tiré', asyn
   await expect(page.getByRole('button', { name: /0 essai restant/ })).toBeDisabled();
 
   await page.getByRole('button', { name: 'Rejoindre le quiz' }).click();
-  await expect(page.getByRole('alert')).toContainText('Tu as été exclu de cette session');
+  // Scope sur le formulaire : Next.js ajoute son propre role="alert" (annonceur de route).
+  await expect(page.locator('form').getByRole('alert')).toContainText('Tu as été exclu de cette session');
   expect(body).toEqual({ password: 'K7M2P9', pseudo: 'Panda Rapide' });
 });
