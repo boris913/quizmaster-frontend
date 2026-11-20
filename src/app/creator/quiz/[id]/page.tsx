@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { useQuiz } from '@/hooks/useQuiz';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ArrowLeft, Trash2, Plus, Play } from 'lucide-react';
+import { AssignHomeworkDialog } from '@/components/creator/AssignHomeworkDialog';
+import { ArrowLeft, Trash2, Plus, Play, CalendarClock } from 'lucide-react';
 
 export default function QuizDetailPage() {
   const params = useParams();
@@ -14,6 +15,7 @@ export default function QuizDetailPage() {
   const quizId = params.id as string;
   const { currentQuiz, fetchQuiz, deleteQuiz, isLoading } = useQuiz();
   const [showAddQuestion, setShowAddQuestion] = useState(false);
+  const [showAssign, setShowAssign] = useState(false);
 
   useEffect(() => {
     if (quizId) {
@@ -43,7 +45,7 @@ export default function QuizDetailPage() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-4 mb-6">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/creator/dashboard">
               <ArrowLeft className="w-4 h-4 mr-1" />
@@ -55,10 +57,22 @@ export default function QuizDetailPage() {
             <Play className="w-4 h-4 mr-1" />
             Lancer une session
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowAssign(true)}>
+            <CalendarClock className="w-4 h-4 mr-1" aria-hidden="true" />
+            Assigner en devoir
+          </Button>
           <Button variant="danger" size="sm" onClick={handleDelete}>
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
+
+        {showAssign && (
+          <AssignHomeworkDialog
+            quizId={quizId}
+            quizTitle={currentQuiz.title}
+            onClose={() => setShowAssign(false)}
+          />
+        )}
 
         <Card className="p-6 mb-6">
           <p className="text-ink-secondary">{currentQuiz.description || 'Aucune description'}</p>

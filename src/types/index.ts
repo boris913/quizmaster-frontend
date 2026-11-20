@@ -56,6 +56,16 @@ export interface QuizOption {
     scoring_mode?: 'speed' | 'accuracy';
     /** Classement visible par les élèves (backend #8). Absent : visible. */
     show_leaderboard?: boolean;
+    /** `live` (défaut) ou `async` (devoir à faire à son rythme, backend #10). */
+    mode?: SessionMode;
+    /** Échéance d'un devoir (ISO 8601), `null` pour une session en direct. */
+    due_at?: string | null;
+    /** Devoir : correction après chaque question (`each`) ou à la fin (`end`). */
+    show_explanations?: ExplanationTiming;
+    /** Devoir : participants ayant terminé (si le backend le fournit). */
+    completed_count?: number;
+    /** Devoir : participants ayant commencé (si le backend le fournit). */
+    participant_count?: number;
   }
   
   export interface Participant {
@@ -493,4 +503,80 @@ export function cumulativeClassAccuracy(
   });
   if (expected === 0) return null;
   return Math.round((correct / expected) * 100);
+}
+
+// ============================================================
+// Mode devoir (sessions asynchrones)
+// (contrat backend : boris913/quizmaster-backend#10)
+// Tout écart avec le backend se corrige ici et dans src/lib/assignments.ts.
+// ============================================================
+
+export type SessionMode = 'live' | 'async';
+
+/** Moment où l'élève voit la correction et l'explication : après chaque question ou à la fin. */
+export type ExplanationTiming = 'each' | 'end';
+
+/** Réglages d'un devoir envoyés à `POST /api/sessions` avec `mode: 'async'`. */
+export interface AssignmentOptions {
+  /** Échéance ISO 8601 (au moins maintenant + 15 min côté interface). */
+  dueAt: string;
+  scoringMode: ScoringMode;
+  showExplanations: ExplanationTiming;
+}
+
+/** `POST /api/assignments/:code/start` */
+export interface AssignmentStartResponse {
+  participantId: string;
+  resumeToken: string;
+}
+
+/** Question envoyée à l'élève : ni bonne réponse ni explication. */
+export type AssignmentQuestion = Omit<Question, 'correct_answers' | 'explanation'>;
+
+/** Correction d'une question (après la réponse en mode `each`, à la fin en mode `end`). */
+export interface AssignmentReviewItem {
+  questionId: string;
+  text: string;
+  options: QuizOption[];
+  yourAnswers: string[];
+  correctAnswers: string[];
+  isCorrect: boolean;
+  explanation: string | null;
+}
+
+export interface AssignmentSummary {
+  score: number;
+  correctCount: number | null;
+  totalQuestions: number | null;
+  /** Correction complète, fournie à la fin quand `show_explanations = 'end'`. */
+  review: AssignmentReviewItem[];
+}
+
+/** `GET /api/assignments/:code/next` normalisé. */
+export type AssignmentNext =
+  | {
+      done: false;
+      question: AssignmentQuestion;
+      questionNumber: number;
+      totalQuestions: number;
+      timerSeconds: number;
+      dueAt: string | null;
+    }
+  | { done: true; summary: AssignmentSummary; dueAt: string | null };
+
+/** `POST /api/assignments/:code/answer` normalisé. */
+export interface AssignmentAnswerResult {
+  /** `null` si le backend ne renvoie pas le verdict (correction différée). */
+  isCorrect: boolean | null;
+  pointsEarned: number;
+  maxPoints: number;
+  timeTakenMs: number;
+  /** Vide quand la correction est différée à la fin. */
+  correctAnswers: string[];
+  explanation: string | null;
+  totalScore: number | null;
+  /** Réponse arrivée après le chrono (0 point). */
+  timedOut: boolean;
+  /** Vrai si c'était la dernière question. */
+  done: boolean;
 }
