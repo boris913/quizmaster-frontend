@@ -62,7 +62,7 @@ export default function CreatorDashboardPage() {
           <div>
             <p className="text-small text-ink-secondary font-medium">{getGreeting()},</p>
             <h1 className="text-h1 sm:text-display leading-tight text-ink">
-              {user?.pseudo} <span className="gradient-text">👋</span>
+              {user?.pseudo}
             </h1>
             <p className="text-ink-secondary mt-2">Gérez vos quiz et lancez des sessions en direct.</p>
           </div>
@@ -155,14 +155,14 @@ export default function CreatorDashboardPage() {
                             {quiz.total_questions} questions
                           </p>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-ink-secondary/50 group-hover:text-primary transition-colors" />
+                        <ChevronRight className="w-5 h-5 text-ink-tertiary group-hover:text-primary transition-colors" />
                       </div>
                     </Card>
                   </Link>
                 ))
               )}
               {quizzes && quizzes.length > 5 && (
-                <p className="text-small text-ink-secondary/70 text-center pt-2">
+                <p className="text-small text-ink-tertiary text-center pt-2">
                   + {quizzes.length - 5} autres quiz
                 </p>
               )}
@@ -218,19 +218,19 @@ export default function CreatorDashboardPage() {
                                 : session.status === 'paused'
                                 ? 'bg-warning-50 text-warning border border-warning/20'
                                 : session.status === 'finished'
-                                ? 'bg-black/[0.04] text-ink-secondary border border-borderc'
+                                ? 'bg-ink/[0.04] text-ink-secondary border border-borderc'
                                 : 'bg-primary-50 text-primary-700 border border-primary-200'
                             }`}
                           >
                             {session.status}
                           </span>
-                          <span className="text-ink-secondary/40">•</span>
-                          <span className="font-mono text-caption text-ink-secondary bg-black/[0.03] px-1.5 py-0.5 rounded border border-borderc">
+                          <span className="text-ink-tertiary">•</span>
+                          <span className="font-display font-semibold tracking-[0.08em] text-caption text-ink-secondary bg-subtle px-1.5 py-0.5 rounded-sm border border-borderc">
                             {session.password}
                           </span>
                         </div>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-ink-secondary/50 group-hover:text-primary transition-colors" />
+                      <ChevronRight className="w-5 h-5 text-ink-tertiary group-hover:text-primary transition-colors" />
                     </Link>
                     {session.status !== 'waiting' && (
                       <Button

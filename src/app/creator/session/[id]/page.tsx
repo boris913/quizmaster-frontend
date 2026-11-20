@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { JoinQrCode } from '@/components/ui/JoinQrCode';
 import { ArrowLeft, MonitorPlay, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   LeaderboardEntry,
   Participant,
@@ -223,7 +224,7 @@ export default function SessionControlPage() {
                 {(currentSession as any).quizzes?.title || 'Session'}
               </h1>
               <div className="flex items-center gap-3 text-sm text-ink-secondary">
-                <span>Code: <strong className="font-mono">{currentSession.password}</strong></span>
+                <span>Code: <strong className="font-display tracking-[0.08em]">{currentSession.password}</strong></span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
@@ -252,7 +253,11 @@ export default function SessionControlPage() {
               </Link>
             </Button>
             <div className="text-sm text-ink-secondary">
-              {isConnected ? '🟢 Connecté' : '🔴 Déconnecté'}
+              <span
+                aria-hidden
+                className={cn('mr-1.5 inline-block h-2 w-2 rounded-full', isConnected ? 'bg-success-solid' : 'bg-danger-solid')}
+              />
+              {isConnected ? 'Connecté' : 'Déconnecté'}
             </div>
           </div>
         </div>
@@ -299,7 +304,7 @@ export default function SessionControlPage() {
                   <p className="text-caption text-ink-secondary">
                     Scanner le QR code ou saisir le code
                   </p>
-                  <p className="font-mono text-h3 tracking-widest">{currentSession.password}</p>
+                  <p className="font-display text-h3 font-bold tracking-[0.12em] tabular-nums">{currentSession.password}</p>
                 </div>
               </Card>
             )}

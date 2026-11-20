@@ -22,7 +22,7 @@ export function Countdown({ value, message, isVisible }: CountdownProps) {
         className="flex flex-col items-center justify-center py-8"
       >
         {value > 0 ? (
-          <span className="text-display gradient-text">{value}</span>
+          <span className="font-display text-display text-primary tabular-nums">{value}</span>
         ) : (
           <span className="text-h1 font-bold text-success">{message}</span>
         )}

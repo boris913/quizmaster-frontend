@@ -103,7 +103,7 @@ export default function QuizDetailPage() {
                           className={`px-2 py-0.5 text-xs rounded ${
                             q.correct_answers.includes(opt.id)
                               ? 'bg-success-50 text-success'
-                              : 'bg-black/[0.05] text-ink-secondary'
+                              : 'bg-ink/[0.05] text-ink-secondary'
                           }`}
                         >
                           {opt.id}: {opt.text}

@@ -52,8 +52,8 @@ function AnswerHistogram({ question }: { question: SessionResultsQuestion }) {
         const correct = question.correctAnswers.includes(optionId);
         return (
           <div key={optionId} className="flex items-center gap-2 text-small">
-            <span className="w-6 shrink-0 font-mono font-semibold text-ink">{optionId}</span>
-            <div className="h-3 flex-1 overflow-hidden rounded-full bg-black/[0.06]">
+            <span className="w-6 shrink-0 font-display tabular-nums font-semibold text-ink">{optionId}</span>
+            <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink/[0.06]">
               <div
                 className={cn('h-full rounded-full', correct ? 'bg-success' : 'bg-ink-secondary/40')}
                 style={{ width: `${(count / max) * 100}%` }}

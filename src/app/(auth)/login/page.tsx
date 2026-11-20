@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
-import { useAuthStore } from '@/store/authStore'; // ✅ utiliser le store
+import { useAuthStore } from '@/store/authStore';
 
 const loginSchema = z.object({
   pseudo: z.string().min(1, 'Pseudo requis'),

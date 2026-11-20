@@ -109,13 +109,13 @@ export default function NewSessionPage() {
           <p className="text-ink-secondary">
             Partagez ce mot de passe avec vos participants :
           </p>
-          <div className="flex items-center justify-center gap-3 bg-black/[0.05] rounded-lg p-4">
-            <span className="text-3xl font-mono font-bold tracking-widest">
+          <div className="flex items-center justify-center gap-3 bg-ink/[0.05] rounded-lg p-4">
+            <span className="font-display text-3xl font-bold tracking-[0.12em] tabular-nums">
               {session.password}
             </span>
             <button
               onClick={handleCopyPassword}
-              className="p-2 hover:bg-black/[0.08] rounded transition-colors"
+              className="p-2 hover:bg-ink/[0.08] rounded transition-colors"
             >
               {copied ? (
                 <Check className="w-5 h-5 text-success" />

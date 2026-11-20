@@ -10,7 +10,7 @@ import { QUESTION_EXPLANATION_MAX_LENGTH } from '@/types';
 
 interface QuestionBuilderProps {
   index: number;
-  control: Control<any>; // ✅ on accepte n'importe quel Control
+  control: Control<any>;
   register: UseFormRegister<any>;
   setValue: UseFormSetValue<any>;
   watch: UseFormWatch<any>;
@@ -36,7 +36,7 @@ export function QuestionBuilder({
   const explanation: string = watch(`questions.${index}.explanation`) || '';
   const explanationId = `questions-${index}-explanation`;
 
-  // ✅ Typage explicite du paramètre
+  // Typage explicite du paramètre
   const toggleCorrect = (optionId: string) => {
     const current = correctAnswers;
     if (type === 'single') {
@@ -54,7 +54,7 @@ export function QuestionBuilder({
       <div className="flex justify-between items-start">
         <h3 className="font-medium">Question {index + 1}</h3>
         <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
-          <Trash2 className="w-4 h-4 text-red-500" />
+          <Trash2 className="w-4 h-4 text-danger" />
         </Button>
       </div>
 
@@ -89,7 +89,7 @@ export function QuestionBuilder({
         <p className="text-sm font-medium">Options</p>
         {options.map((opt: any, optIndex: number) => (
           <div key={opt.id} className="flex items-center gap-2">
-            <span className="w-6 font-mono text-sm">{opt.id}</span>
+            <span className="w-6 font-display tabular-nums text-sm">{opt.id}</span>
             <Input
               placeholder={`Option ${opt.id}`}
               {...register(`questions.${index}.options.${optIndex}.text`)}
@@ -102,10 +102,10 @@ export function QuestionBuilder({
                 'px-2 py-1 text-xs rounded border transition-colors',
                 correctAnswers.includes(opt.id)
                   ? 'bg-success-50 border-success text-success'
-                  : 'bg-white border-borderc text-ink-secondary/70'
+                  : 'bg-surface border-borderc text-ink-tertiary'
               )}
             >
-              {correctAnswers.includes(opt.id) ? '✓ Correct' : 'Marquer'}
+              {correctAnswers.includes(opt.id) ? 'Correcte' : 'Marquer correcte'}
             </button>
           </div>
         ))}
@@ -129,7 +129,7 @@ export function QuestionBuilder({
           aria-describedby={`${explanationId}-count`}
           aria-invalid={!!errors?.explanation}
           className={cn(
-            'w-full rounded-md border border-borderc bg-surface px-3 py-2 text-body placeholder:text-ink-secondary/60',
+            'w-full rounded-md border border-borderc bg-surface px-3 py-2 text-body placeholder:text-ink-tertiary',
             'focus:outline-none focus:border-primary focus:shadow-glow',
             errors?.explanation && 'border-danger'
           )}

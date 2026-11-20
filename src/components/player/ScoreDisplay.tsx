@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Card } from '../ui/Card';
 import { ScoreCounter } from '../ui/ScoreCounter';
 import { cn } from '@/lib/utils';
+import { RankBadge } from '../ui/RankBadge';
 
 interface ScoreDisplayProps {
   score: number;
@@ -23,8 +24,6 @@ interface ScoreDisplayProps {
   /** Nombre de bonnes réponses du joueur, affiché en mode sans classement. */
   correctCount?: number | null;
 }
-
-const rankEmojis = ['🥇', '🥈', '🥉'];
 
 function isRank(value: number | null | undefined): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 1;
@@ -51,14 +50,14 @@ export function ScoreDisplay({
     <Card tier="secondary" className="p-6 space-y-4" data-testid="score-display">
       <div className="flex justify-between items-center">
         <span className="text-small text-ink-secondary font-medium">Votre score</span>
-        <span className="text-h2 font-bold tabular-nums">
+        <span className="font-display text-h2 font-bold tabular-nums">
           <ScoreCounter value={score} /> <span className="text-small font-medium text-ink-secondary">pts</span>
         </span>
       </div>
 
       {showRank && (
         <div className="flex items-center gap-2" data-testid="player-rank">
-          <span className="text-2xl">{rank <= 3 ? rankEmojis[rank - 1] : `#${rank}`}</span>
+          <RankBadge rank={rank} />
           <span className="font-semibold">
             {rank === 1 ? '1re' : `${rank}e`} place
           </span>
@@ -101,7 +100,7 @@ export function ScoreDisplay({
               animate={{ opacity: 1, scale: 1 }}
               className={cn('font-semibold text-success')}
             >
-              🎉 Vous êtes sur le podium !
+              Vous êtes sur le podium !
             </motion.p>
           )}
         </div>

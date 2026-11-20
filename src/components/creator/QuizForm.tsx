@@ -119,7 +119,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
           <QuestionBuilder
             key={field.id}
             index={index}
-            control={control as any} // ✅ résout l'incompatibilité de type
+            control={control as any}
             register={register}
             setValue={setValue}
             watch={watch}

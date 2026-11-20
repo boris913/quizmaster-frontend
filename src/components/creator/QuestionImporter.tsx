@@ -79,7 +79,7 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
 
         <div className="bg-background p-4 rounded-lg text-sm text-ink-secondary space-y-1">
           <p>Format attendu :</p>
-          <pre className="bg-white p-2 rounded text-xs">
+          <pre className="bg-subtle p-2 rounded text-xs">
             {`Question 1 [timer:30] [points:100]\nQuelle est la capitale ?\nA) Londres\nB) Berlin\nC) Paris [correct]\nD) Madrid\n> Explication : Paris est la capitale de la France.`}
           </pre>
           <p data-testid="import-explanation-help">

@@ -29,7 +29,7 @@ export function CircularStat({ percentage, label, sublabel, size = 140, classNam
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="rgba(17,24,39,0.07)"
+            stroke="rgb(var(--text-primary) / 0.07)"
             strokeWidth={stroke}
           />
           <motion.circle
@@ -37,7 +37,7 @@ export function CircularStat({ percentage, label, sublabel, size = 140, classNam
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#5B5CEB"
+            stroke="rgb(var(--accent))"
             strokeWidth={stroke}
             strokeLinecap="round"
             strokeDasharray={circumference}
@@ -47,7 +47,7 @@ export function CircularStat({ percentage, label, sublabel, size = 140, classNam
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-h2 font-bold text-ink tabular-nums">{Math.round(clamped)}%</span>
+          <span className="font-display text-h2 font-bold text-ink tabular-nums">{Math.round(clamped)}%</span>
         </div>
       </div>
       <p className="text-small font-semibold text-ink mt-2">{label}</p>

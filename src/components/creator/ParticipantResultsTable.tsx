@@ -63,7 +63,7 @@ export function ParticipantResultsTable({
         <caption className="sr-only">
           Résultats par élève. Cliquez sur un en-tête de colonne pour trier.
         </caption>
-        <thead className="bg-black/[0.02] text-ink-secondary">
+        <thead className="bg-ink/[0.02] text-ink-secondary">
           <tr>
             {columns.map((column) => {
               const active = column.key === sortKey;

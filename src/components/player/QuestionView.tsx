@@ -49,7 +49,7 @@ export function QuestionView({
       <ProgressBar
         value={questionNumber}
         max={totalQuestions}
-        label={questionNumber === totalQuestions ? '🔥 Dernière question — finissez fort !' : 'Progression du quiz'}
+        label={questionNumber === totalQuestions ? 'Dernière question' : 'Progression du quiz'}
       />
 
       {/* The question is the single primary element; the timer stays small and out of the way. */}
