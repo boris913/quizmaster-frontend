@@ -10,7 +10,14 @@ import { AnswerFeedback } from '@/components/player/AnswerFeedback';
 import { ScoreDisplay } from '@/components/player/ScoreDisplay';
 import { WaitingScreen } from '@/components/player/WaitingScreen';
 import { FinalScreen } from '@/components/player/FinalScreen';
-import { Question, WsQuestionStartPayload, WsAnswerResultPayload, LeaderboardEntry } from '@/types';
+import {
+  Question,
+  WsQuestionStartPayload,
+  WsAnswerResultPayload,
+  WsQuestionRevealPayload,
+  LeaderboardEntry,
+  normalizeQuestionReveal,
+} from '@/types';
 import { Card } from '@/components/ui/Card';
 import { ScoreCounter } from '@/components/ui/ScoreCounter';
 
@@ -49,6 +56,7 @@ export default function GamePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<WsAnswerResultPayload | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [reveal, setReveal] = useState<WsQuestionRevealPayload | null>(null);
   const [waiting, setWaiting] = useState(true);
   const [paused, setPaused] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -99,6 +107,7 @@ export default function GamePage() {
       setIsAnsweredLocal(false);
       setShowResult(false);
       setResult(null);
+      setReveal(null);
       setWaiting(false);
       setPaused(false);
       setSelectedAnswers([]);
@@ -145,6 +154,15 @@ export default function GamePage() {
       // La question est finie, on peut afficher le classement
     });
 
+    // Correction envoyée à la clôture : verdict, bonne réponse et explication (#5).
+    socket.on('question:reveal', (raw: unknown) => {
+      const data = normalizeQuestionReveal(raw);
+      if (!data) return;
+      setReveal(data);
+      setShowResult(true);
+      setIsAnsweredLocal(true);
+    });
+
     socket.on('question:in_progress', (data: { question_id: string; time_remaining_ms: number }) => {
       // Si le participant rejoint en cours de question
     });
@@ -180,6 +198,7 @@ export default function GamePage() {
       socket.off('answer:result');
       socket.off('answer:too_late');
       socket.off('question:ended');
+      socket.off('question:reveal');
       socket.off('question:in_progress');
       socket.off('session:paused');
       socket.off('session:resumed');
@@ -241,26 +260,34 @@ export default function GamePage() {
   }
 
   // Écran de résultat après une question
-  if (showResult && result) {
+  if (showResult && (result || reveal)) {
+    const isCorrect = reveal ? reveal.isCorrect : Boolean(result?.is_correct);
     return (
       <div className="min-h-screen bg-background p-6">
         <motion.div key="result" {...pageTransition} className="max-w-2xl mx-auto space-y-6">
           <div className="flex justify-between items-center text-small text-ink-secondary">
             <span>Question {questionNumber}/{totalQuestions}</span>
             <span className="font-medium">
-              {result.is_correct ? '✅' : '❌'} {result.points_earned} pts
+              {isCorrect ? '✅' : '❌'} {result?.points_earned ?? 0} pts
             </span>
           </div>
           <AnswerFeedback
-            result={{
-              isCorrect: result.is_correct,
-              pointsEarned: result.points_earned,
-              maxPoints: result.max_points,
-              timeTakenMs: result.time_taken_ms,
-              correctAnswers: result.correct_answers,
-              yourAnswers: result.your_answer,
-              status: result.points_earned === 0 && !result.is_correct ? 'timeout' : 'answered',
-            }}
+            result={
+              result
+                ? {
+                    isCorrect: result.is_correct,
+                    pointsEarned: result.points_earned,
+                    maxPoints: result.max_points,
+                    timeTakenMs: result.time_taken_ms,
+                    correctAnswers: result.correct_answers ?? [],
+                    yourAnswers: result.your_answer ?? [],
+                    // « Temps écoulé » seulement sans réponse : une réponse fausse reste une réponse.
+                    status: result.your_answer?.length ? 'answered' : 'timeout',
+                  }
+                : null
+            }
+            reveal={reveal}
+            options={question?.options}
           />
           <ScoreDisplay
             score={scoreState}
@@ -271,7 +298,7 @@ export default function GamePage() {
             onPodium={onPodium}
           />
           <p className="text-center text-small text-ink-secondary">
-            En attente de la prochaine question...
+            {reveal ? 'En attente de la prochaine question...' : 'Correction à la fin de la question...'}
           </p>
         </motion.div>
       </div>
