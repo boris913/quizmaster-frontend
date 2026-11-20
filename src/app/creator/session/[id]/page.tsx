@@ -7,6 +7,7 @@ import { useSocket } from '@/hooks/useSocket';
 import { useSession } from '@/hooks/useSession';
 import { useAuthStore } from '@/store/authStore';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { useQuestionResults } from '@/hooks/useQuestionResults';
 import { SessionControl } from '@/components/creator/SessionControl';
 import { LiveLeaderboard } from '@/components/creator/LiveLeaderboard';
 import { ParticipantList } from '@/components/creator/ParticipantList';
@@ -24,6 +25,7 @@ export default function SessionControlPage() {
   const { token } = useAuthStore();
   const { currentSession, participants, fetchSession, fetchParticipants } = useSession();
   const { leaderboard } = useLeaderboard(sessionId);
+  const questionResults = useQuestionResults();
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [isStarting, setIsStarting] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
@@ -239,16 +241,25 @@ export default function SessionControlPage() {
                 onResume={handleResume}
                 onEnd={handleEnd}
                 isStarting={isStarting}
+                questionResults={
+                  questionResults.view === 'results' && questionResults.stats
+                    ? { stats: questionResults.stats, options: questionResults.options }
+                    : null
+                }
+                onShowLeaderboard={questionResults.showLeaderboard}
                 reportHref={`/creator/session/${sessionId}/results`}
               />
             </Card>
 
-            <LiveLeaderboard
-              entries={leaderboard}
-              totalParticipants={participantCount}
-              currentQuestion={Math.max(0, currentQIndex)}
-              totalQuestions={totalQuestions}
-            />
+            {/* Étape « résultats » : le classement attend le clic sur « Afficher le classement ». */}
+            {!(questionResults.view === 'results' && currentSession.status === 'active') && (
+              <LiveLeaderboard
+                entries={leaderboard}
+                totalParticipants={participantCount}
+                currentQuestion={Math.max(0, currentQIndex)}
+                totalQuestions={totalQuestions}
+              />
+            )}
           </div>
 
           <div className="space-y-6">

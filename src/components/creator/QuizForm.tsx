@@ -8,6 +8,7 @@ import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
 import { QuestionBuilder } from './QuestionBuilder';
 import { Plus } from 'lucide-react';
+import { QUESTION_EXPLANATION_MAX_LENGTH } from '@/types';
 
 const questionSchema = z.object({
   text: z.string().min(1, 'Texte requis'),
@@ -19,6 +20,12 @@ const questionSchema = z.object({
   correct_answers: z.array(z.string()).min(1, 'Au moins une bonne réponse'),
   max_points: z.number().min(10).max(1000),
   timer_seconds: z.number().min(5).max(300).optional(),
+  // Facultative : une chaîne vide n'est pas envoyée au backend.
+  explanation: z
+    .string()
+    .max(QUESTION_EXPLANATION_MAX_LENGTH, `${QUESTION_EXPLANATION_MAX_LENGTH} caractères maximum`)
+    .optional()
+    .transform((v) => (v && v.trim() ? v.trim() : undefined)),
 });
 
 const quizSchema = z.object({
@@ -101,6 +108,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
               correct_answers: [],
               max_points: 100,
               timer_seconds: 30,
+              explanation: '',
             })}
           >
             <Plus className="w-4 h-4 mr-1" /> Ajouter une question

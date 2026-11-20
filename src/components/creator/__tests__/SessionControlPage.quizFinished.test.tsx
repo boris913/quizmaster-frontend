@@ -135,7 +135,8 @@ describe('Page de session créateur — fin de partie', () => {
     );
     await screen.findByRole('heading', { name: 'Les fractions' });
     act(() => socket.serverEmit('connect'));
-    expect(socket.listenerCount('quiz:finished')).toBe(1);
+    // La page et le hook useQuestionResults (#5) écoutent chacun quiz:finished.
+    expect(socket.listenerCount('quiz:finished')).toBe(2);
 
     vi.useFakeTimers();
     fireEvent.click(screen.getByRole('button', { name: /Terminer le quiz/ }));
