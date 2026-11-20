@@ -192,6 +192,74 @@ describe('Écran de projection', () => {
     expect(screen.getByTestId('timer')).toHaveTextContent('7');
   });
 
+  it("affiche l'histogramme à la clôture, sans contrôle ni pseudo", async () => {
+    renderPage();
+    await screen.findByText('Alice');
+
+    act(() =>
+      socket.serverEmit('question:start', {
+        question: {
+          id: 'q1',
+          text: 'Combien font 1/2 + 1/4 ?',
+          type: 'single',
+          options: [
+            { id: 'A', text: '3/4' },
+            { id: 'B', text: '2/6' },
+          ],
+          timer_seconds: 20,
+        },
+        question_number: 1,
+        total_questions: 3,
+        timer_seconds: 20,
+        started_at: Date.now(),
+      })
+    );
+    act(() =>
+      socket.serverEmit('question:stats', {
+        questionId: 'q1',
+        distribution: { A: 3, B: 1 },
+        correctAnswers: ['A'],
+        accuracy: 75,
+        answeredCount: 4,
+        totalParticipants: 4,
+      })
+    );
+    // L'ordre question:stats / question:ended n'est pas garanti : on reste sur les résultats.
+    act(() => socket.serverEmit('question:ended', { question_id: 'q1', correct_answers: ['A'], leaderboard: [] }));
+
+    const results = screen.getByTestId('projection-results');
+    expect(results).toHaveTextContent('Combien font 1/2 + 1/4 ?');
+    expect(screen.getByTestId('histogram-row-A')).toHaveTextContent('75 %');
+    expect(within(screen.getByTestId('histogram-row-A')).getByText('Bonne réponse')).toBeInTheDocument();
+    expect(screen.queryByTestId('timer')).not.toBeInTheDocument();
+    expect(results).not.toHaveTextContent('Alice');
+    screen
+      .queryAllByRole('button')
+      .forEach((b) => expect(b.textContent ?? b.getAttribute('aria-label')).toMatch(/plein écran/i));
+    CONTROL_EVENTS.forEach((event) => expect(socket.emitted(event)).toHaveLength(0));
+  });
+
+  it('passe en direct sur « Quiz terminé » à réception de quiz:finished', async () => {
+    renderPage();
+    await screen.findByTestId('session-code');
+
+    act(() =>
+      socket.serverEmit('quiz:finished', {
+        final_leaderboard: [
+          { rank: 1, participant_id: 'p1', pseudo: 'Alice', score: 1800 },
+          { rank: 2, participant_id: 'p2', pseudo: 'Bob', score: 900 },
+        ],
+        total_participants: 2,
+        total_questions: 3,
+        message: 'Fin',
+      })
+    );
+
+    expect(screen.getByRole('heading', { name: 'Quiz terminé !' })).toBeInTheDocument();
+    expect(screen.getByTestId('final-ranking')).toHaveTextContent('1. Alice');
+    expect(screen.queryByTestId('session-code')).not.toBeInTheDocument();
+  });
+
   it('retire ses écouteurs au démontage', async () => {
     const { unmount } = renderPage();
     await screen.findByTestId('session-code');

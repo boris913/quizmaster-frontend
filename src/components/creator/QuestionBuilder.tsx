@@ -6,6 +6,7 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { QUESTION_EXPLANATION_MAX_LENGTH } from '@/types';
 
 interface QuestionBuilderProps {
   index: number;
@@ -32,6 +33,8 @@ export function QuestionBuilder({
   const options = watch(`questions.${index}.options`) || [];
   const correctAnswers = watch(`questions.${index}.correct_answers`) || [];
   const type = watch(`questions.${index}.type`) || 'single';
+  const explanation: string = watch(`questions.${index}.explanation`) || '';
+  const explanationId = `questions-${index}-explanation`;
 
   // ✅ Typage explicite du paramètre
   const toggleCorrect = (optionId: string) => {
@@ -111,6 +114,32 @@ export function QuestionBuilder({
         )}
         {errors?.correct_answers && (
           <p className="text-sm text-danger">Au moins une bonne réponse</p>
+        )}
+      </div>
+
+      <div className="space-y-1.5">
+        <label htmlFor={explanationId} className="text-small font-medium text-ink">
+          Explication (facultatif)
+        </label>
+        <textarea
+          id={explanationId}
+          rows={2}
+          maxLength={QUESTION_EXPLANATION_MAX_LENGTH}
+          placeholder="Affichée aux élèves après la clôture de la question"
+          aria-describedby={`${explanationId}-count`}
+          aria-invalid={!!errors?.explanation}
+          className={cn(
+            'w-full rounded-md border border-borderc bg-surface px-3 py-2 text-body placeholder:text-ink-secondary/60',
+            'focus:outline-none focus:border-primary focus:shadow-glow',
+            errors?.explanation && 'border-danger'
+          )}
+          {...register(`questions.${index}.explanation`)}
+        />
+        <p id={`${explanationId}-count`} className="text-caption text-ink-secondary text-right">
+          {explanation.length}/{QUESTION_EXPLANATION_MAX_LENGTH}
+        </p>
+        {errors?.explanation?.message && (
+          <p className="text-small text-danger">{errors.explanation.message}</p>
         )}
       </div>
 
