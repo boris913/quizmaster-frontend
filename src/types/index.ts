@@ -50,6 +50,8 @@ export interface QuizOption {
     total_questions?: number;
     /** Jointure renvoyée par GET /api/sessions et GET /api/sessions/:id. */
     quizzes?: { id?: string; title?: string | null; total_questions?: number } | null;
+    /** Mode des pseudos : libres (filtrés côté serveur) ou générés (roulette). Défaut : "free". */
+    nickname_mode?: 'free' | 'generated';
   }
   
   export interface Participant {

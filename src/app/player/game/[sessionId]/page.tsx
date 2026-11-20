@@ -10,6 +10,7 @@ import { AnswerFeedback } from '@/components/player/AnswerFeedback';
 import { ScoreDisplay } from '@/components/player/ScoreDisplay';
 import { WaitingScreen } from '@/components/player/WaitingScreen';
 import { FinalScreen } from '@/components/player/FinalScreen';
+import { KickedScreen } from '@/components/player/KickedScreen';
 import {
   Question,
   WsQuestionStartPayload,
@@ -69,6 +70,7 @@ export default function GamePage() {
   const [gapToNext, setGapToNext] = useState<number | null>(null);
   const [gapToPodium, setGapToPodium] = useState<number | null>(null);
   const [onPodium, setOnPodium] = useState(false);
+  const [kicked, setKicked] = useState(false);
   const questionStartTimeRef = useRef<number>(0);
 
   // Réinitialiser l'état du joueur au montage
@@ -79,7 +81,8 @@ export default function GamePage() {
 
   // Rejoindre la salle
   useEffect(() => {
-    if (!socket || !isConnected || !participantId) return;
+    // Joueur exclu : ne plus jamais réémettre « participant:join ».
+    if (!socket || !isConnected || !participantId || kicked) return;
 
     socket.emit('participant:join', {
       sessionId,
@@ -191,7 +194,15 @@ export default function GamePage() {
       console.error('Erreur:', data.message);
     });
 
+    // Exclusion par le créateur (ou reconnexion refusée) : le serveur déconnecte ensuite le
+    // socket. On oublie la partie côté joueur.
+    socket.on('participant:kicked', () => {
+      setKicked(true);
+      reset();
+    });
+
     return () => {
+      socket.off('participant:kicked');
       socket.off('participant:join:success');
       socket.off('question:countdown');
       socket.off('question:start');
@@ -205,7 +216,7 @@ export default function GamePage() {
       socket.off('quiz:finished');
       socket.off('error');
     };
-  }, [socket, isConnected, sessionId, participantId, participant?.score]);
+  }, [socket, isConnected, sessionId, participantId, participant?.score, kicked]);
 
   const handleAnswer = (answers: string[]) => {
     setSelectedAnswers(answers);
@@ -227,6 +238,15 @@ export default function GamePage() {
 
     setTimeout(() => setIsSubmitting(false), 500);
   };
+
+  // Joueur exclu par le créateur : prioritaire sur tous les autres écrans.
+  if (kicked) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <KickedScreen />
+      </div>
+    );
+  }
 
   // Écran de fin
   if (finished) {

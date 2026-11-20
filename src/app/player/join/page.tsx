@@ -6,6 +6,7 @@ import { JoinForm } from '@/components/player/JoinForm';
 import { PrivacyNotice } from '@/components/player/PrivacyNotice';
 import { useSession } from '@/hooks/useSession';
 import { usePlayerStore } from '@/store/playerStore';
+import { getJoinErrorMessage } from '@/lib/nickname';
 
 export default function JoinPage() {
   const router = useRouter();
@@ -22,8 +23,9 @@ export default function JoinPage() {
       setParticipant(result.participant);
       setSessionId(result.session.id);
       router.push(`/player/game/${result.session.id}?participantId=${result.participant.id}`);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de la connexion');
+    } catch (err) {
+      // 400 : pseudo refusé ; 403 : participant exclu ; 404 : code inconnu ; 409 : pseudo pris.
+      setError(getJoinErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }

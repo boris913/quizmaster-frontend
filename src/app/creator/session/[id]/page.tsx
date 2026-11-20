@@ -15,7 +15,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { JoinQrCode } from '@/components/ui/JoinQrCode';
 import { ArrowLeft, MonitorPlay, Users } from 'lucide-react';
-import { LeaderboardEntry, WsParticipantProgressPayload } from '@/types';
+import { LeaderboardEntry, Participant, WsParticipantProgressPayload } from '@/types';
+import { useSessionStore } from '@/store/sessionStore';
 
 export default function SessionControlPage() {
   const params = useParams();
@@ -26,6 +27,7 @@ export default function SessionControlPage() {
   const { currentSession, participants, fetchSession, fetchParticipants } = useSession();
   const { leaderboard } = useLeaderboard(sessionId);
   const questionResults = useQuestionResults();
+  const removeParticipant = useSessionStore((state) => state.removeParticipant);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [isStarting, setIsStarting] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
@@ -68,65 +70,80 @@ export default function SessionControlPage() {
     });
 
     joinedRef.current = true;
+  }, [socket, isConnected, token, sessionId]);
 
-    // --- Écouteurs d'événements ---
+  // --- Écouteurs d'événements ---
+  // Posés à chaque exécution de l'effet et retirés **par handler** : un `socket.off(event)`
+  // sans handler retirerait aussi les écouteurs des hooks partagés (useQuestionResults écoute
+  // question:start et quiz:finished), et l'ancien garde `joinedRef` empêchait de les reposer.
+  useEffect(() => {
+    if (!socket) return;
 
-    // Participant rejoint
-    socket.on('participant:joined', (data: any) => {
+    const onParticipantJoined = () => {
       fetchParticipants(sessionId);
       setParticipantCount((prev) => prev + 1);
-    });
+    };
 
-    // Participant déconnecté
-    socket.on('participant:disconnected', (data: any) => {
+    const onParticipantDisconnected = (data: { participant_id?: string; reason?: string }) => {
+      // Exclusion confirmée par le serveur : retrait immédiat de la liste (le compteur suit
+      // la longueur de la liste).
+      if (data?.reason === 'kicked' && data.participant_id) {
+        removeParticipant(data.participant_id);
+        return;
+      }
       fetchParticipants(sessionId);
       setParticipantCount((prev) => prev - 1);
-    });
+    };
 
-    // Participant a répondu (progression)
-    socket.on('participant:answered', (data: WsParticipantProgressPayload) => {
+    const onParticipantAnswered = (data: WsParticipantProgressPayload) => {
       setProgressMap((prev) => ({
         ...prev,
         [data.participant_id]: data.progress_percentage,
       }));
-    });
+    };
 
     // 🔄 Mise à jour automatique du panneau de contrôle
-    socket.on('question:start', () => {
+    const onSessionChanged = () => {
       fetchSession(sessionId);
-    });
+    };
 
-    socket.on('session:paused', () => {
-      fetchSession(sessionId);
-    });
-
-    socket.on('session:resumed', () => {
-      fetchSession(sessionId);
-    });
-
-    socket.on('quiz:finished', () => {
+    const onQuizFinished = () => {
       clearEndFallback();
       setQuizFinished(true);
       fetchSession(sessionId);
-    });
-
-    // Erreur
-    socket.on('error', (data: any) => {
-      console.error('Erreur WebSocket:', data.message);
-    });
-
-    // --- Cleanup ---
-    return () => {
-      socket.off('participant:joined');
-      socket.off('participant:disconnected');
-      socket.off('participant:answered');
-      socket.off('question:start');
-      socket.off('session:paused');
-      socket.off('session:resumed');
-      socket.off('quiz:finished');
-      socket.off('error');
     };
-  }, [socket, isConnected, token, sessionId, fetchParticipants, fetchSession]);
+
+    const onError = (data: any) => {
+      console.error('Erreur WebSocket:', data?.message);
+    };
+
+    socket.on('participant:joined', onParticipantJoined);
+    socket.on('participant:disconnected', onParticipantDisconnected);
+    socket.on('participant:answered', onParticipantAnswered);
+    socket.on('question:start', onSessionChanged);
+    socket.on('session:paused', onSessionChanged);
+    socket.on('session:resumed', onSessionChanged);
+    socket.on('quiz:finished', onQuizFinished);
+    socket.on('error', onError);
+
+    return () => {
+      socket.off('participant:joined', onParticipantJoined);
+      socket.off('participant:disconnected', onParticipantDisconnected);
+      socket.off('participant:answered', onParticipantAnswered);
+      socket.off('question:start', onSessionChanged);
+      socket.off('session:paused', onSessionChanged);
+      socket.off('session:resumed', onSessionChanged);
+      socket.off('quiz:finished', onQuizFinished);
+      socket.off('error', onError);
+    };
+  }, [socket, sessionId, fetchParticipants, fetchSession, removeParticipant]);
+
+  // Exclusion d'un participant (confirmée dans ParticipantList). Le retrait de la liste se fait
+  // à réception de « participant:disconnected » avec reason: 'kicked'.
+  const handleKick = (participant: Participant) => {
+    if (!socket || !isConnected) return;
+    socket.emit('creator:kick', { sessionId, participantId: participant.id });
+  };
 
   // Actions du créateur
   const handleStartQuestion = () => {
@@ -279,6 +296,7 @@ export default function SessionControlPage() {
               participants={participants || []}
               progressMap={progressMap}
               liveScores={liveScores}
+              onKick={currentSession.status !== 'finished' ? handleKick : undefined}
             />
           </div>
         </div>
