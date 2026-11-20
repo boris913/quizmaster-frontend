@@ -13,6 +13,8 @@ interface AnswerResultProps {
   correctAnswers: string[];
   yourAnswers: string[];
   status: 'answered' | 'timeout' | 'skipped';
+  /** Affiche le rappel « Votre réponse / Réponse attendue » (masqué quand la correction est affichée ailleurs). */
+  showRecap?: boolean;
 }
 
 export function AnswerResult({
@@ -23,6 +25,7 @@ export function AnswerResult({
   correctAnswers,
   yourAnswers,
   status,
+  showRecap = true,
 }: AnswerResultProps) {
   const shouldReduceMotion = useReducedMotion();
   const pop = shouldReduceMotion
@@ -85,7 +88,7 @@ export function AnswerResult({
         </motion.p>
         <p className="text-caption text-ink-secondary/80">sur {maxPoints} pts max</p>
 
-        {!isCorrect && (
+        {showRecap && !isCorrect && correctAnswers.length > 0 && (
           <div className="mt-5 text-small text-left bg-white/60 rounded-md p-3 space-y-1">
             <p className="text-ink-secondary">
               Votre réponse : <span className="font-medium text-ink">{yourAnswers.join(', ') || '—'}</span>

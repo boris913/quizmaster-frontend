@@ -6,6 +6,7 @@ import { Maximize, Minimize, Pause, Users } from 'lucide-react';
 import { useSessionStore } from '@/store/sessionStore';
 import { useProjectionFeed, useRemainingSeconds } from '@/hooks/useProjectionFeed';
 import { JoinQrCode } from '@/components/ui/JoinQrCode';
+import { AnswerHistogram, histogramOptions } from '@/components/ui/AnswerHistogram';
 import { getAppBaseUrl, normalizeSessionCode } from '@/lib/sessionCode';
 import { cn } from '@/lib/utils';
 
@@ -238,6 +239,26 @@ export default function SessionPresentPage() {
 
         {session && (phase === 'question' || phase === 'ended') && !feed.question && (
           <div className="m-auto text-[clamp(1.5rem,3vw,3rem)] text-white/70">Question en cours…</div>
+        )}
+
+        {session && phase === 'results' && feed.stats && (
+          <div className="flex min-h-0 flex-1 flex-col gap-[3vh]" data-testid="projection-results">
+            <div className="min-w-0">
+              {feed.question && (
+                <p className="text-[clamp(1.25rem,2vw,2.25rem)] text-white/60">
+                  Question {feed.question.number}/{feed.question.total} · Résultats
+                </p>
+              )}
+              <h2 className="mt-2 text-[clamp(2rem,4vw,4.5rem)] font-bold leading-tight">
+                {feed.question?.text ?? 'Résultats de la question'}
+              </h2>
+            </div>
+            <AnswerHistogram
+              variant="projection"
+              options={histogramOptions(feed.question?.options, feed.stats)}
+              stats={feed.stats}
+            />
+          </div>
         )}
 
         {session && phase === 'finished' && (

@@ -7,6 +7,7 @@ import { useSocket } from '@/hooks/useSocket';
 import { useSession } from '@/hooks/useSession';
 import { useAuthStore } from '@/store/authStore';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { useQuestionResults } from '@/hooks/useQuestionResults';
 import { SessionControl } from '@/components/creator/SessionControl';
 import { LiveLeaderboard } from '@/components/creator/LiveLeaderboard';
 import { ParticipantList } from '@/components/creator/ParticipantList';
@@ -25,11 +26,26 @@ export default function SessionControlPage() {
   const { token } = useAuthStore();
   const { currentSession, participants, fetchSession, fetchParticipants } = useSession();
   const { leaderboard } = useLeaderboard(sessionId);
+  const questionResults = useQuestionResults();
   const removeParticipant = useSessionStore((state) => state.removeParticipant);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [isStarting, setIsStarting] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
   const joinedRef = useRef(false);
+  // Fin de partie reçue en direct (quiz:finished, aussi émis vers la salle créateur) :
+  // le CTA « Voir le rapport » s'affiche sans attendre la relecture de la session.
+  const [quizFinished, setQuizFinished] = useState(false);
+  const endFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearEndFallback = () => {
+    if (endFallbackRef.current) {
+      clearTimeout(endFallbackRef.current);
+      endFallbackRef.current = null;
+    }
+  };
+
+  // Annule la relecture de secours au démontage.
+  useEffect(() => clearEndFallback, []);
 
   useEffect(() => {
     if (sessionId) {
@@ -54,17 +70,21 @@ export default function SessionControlPage() {
     });
 
     joinedRef.current = true;
+  }, [socket, isConnected, token, sessionId]);
 
-    // --- Écouteurs d'événements ---
+  // --- Écouteurs d'événements ---
+  // Posés à chaque exécution de l'effet et retirés **par handler** : un `socket.off(event)`
+  // sans handler retirerait aussi les écouteurs des hooks partagés (useQuestionResults écoute
+  // question:start et quiz:finished), et l'ancien garde `joinedRef` empêchait de les reposer.
+  useEffect(() => {
+    if (!socket) return;
 
-    // Participant rejoint
-    socket.on('participant:joined', (data: any) => {
+    const onParticipantJoined = () => {
       fetchParticipants(sessionId);
       setParticipantCount((prev) => prev + 1);
-    });
+    };
 
-    // Participant déconnecté
-    socket.on('participant:disconnected', (data: { participant_id?: string; reason?: string }) => {
+    const onParticipantDisconnected = (data: { participant_id?: string; reason?: string }) => {
       // Exclusion confirmée par le serveur : retrait immédiat de la liste (le compteur suit
       // la longueur de la liste).
       if (data?.reason === 'kicked' && data.participant_id) {
@@ -73,50 +93,50 @@ export default function SessionControlPage() {
       }
       fetchParticipants(sessionId);
       setParticipantCount((prev) => prev - 1);
-    });
+    };
 
-    // Participant a répondu (progression)
-    socket.on('participant:answered', (data: WsParticipantProgressPayload) => {
+    const onParticipantAnswered = (data: WsParticipantProgressPayload) => {
       setProgressMap((prev) => ({
         ...prev,
         [data.participant_id]: data.progress_percentage,
       }));
-    });
+    };
 
     // 🔄 Mise à jour automatique du panneau de contrôle
-    socket.on('question:start', () => {
+    const onSessionChanged = () => {
       fetchSession(sessionId);
-    });
-
-    socket.on('session:paused', () => {
-      fetchSession(sessionId);
-    });
-
-    socket.on('session:resumed', () => {
-      fetchSession(sessionId);
-    });
-
-    socket.on('quiz:finished', () => {
-      fetchSession(sessionId);
-    });
-
-    // Erreur
-    socket.on('error', (data: any) => {
-      console.error('Erreur WebSocket:', data.message);
-    });
-
-    // --- Cleanup ---
-    return () => {
-      socket.off('participant:joined');
-      socket.off('participant:disconnected');
-      socket.off('participant:answered');
-      socket.off('question:start');
-      socket.off('session:paused');
-      socket.off('session:resumed');
-      socket.off('quiz:finished');
-      socket.off('error');
     };
-  }, [socket, isConnected, token, sessionId, fetchParticipants, fetchSession, removeParticipant]);
+
+    const onQuizFinished = () => {
+      clearEndFallback();
+      setQuizFinished(true);
+      fetchSession(sessionId);
+    };
+
+    const onError = (data: any) => {
+      console.error('Erreur WebSocket:', data?.message);
+    };
+
+    socket.on('participant:joined', onParticipantJoined);
+    socket.on('participant:disconnected', onParticipantDisconnected);
+    socket.on('participant:answered', onParticipantAnswered);
+    socket.on('question:start', onSessionChanged);
+    socket.on('session:paused', onSessionChanged);
+    socket.on('session:resumed', onSessionChanged);
+    socket.on('quiz:finished', onQuizFinished);
+    socket.on('error', onError);
+
+    return () => {
+      socket.off('participant:joined', onParticipantJoined);
+      socket.off('participant:disconnected', onParticipantDisconnected);
+      socket.off('participant:answered', onParticipantAnswered);
+      socket.off('question:start', onSessionChanged);
+      socket.off('session:paused', onSessionChanged);
+      socket.off('session:resumed', onSessionChanged);
+      socket.off('quiz:finished', onQuizFinished);
+      socket.off('error', onError);
+    };
+  }, [socket, sessionId, fetchParticipants, fetchSession, removeParticipant]);
 
   // Exclusion d'un participant (confirmée dans ParticipantList). Le retrait de la liste se fait
   // à réception de « participant:disconnected » avec reason: 'kicked'.
@@ -150,6 +170,13 @@ export default function SessionControlPage() {
     if (!socket || !isConnected) return;
     if (confirm('Terminer le quiz définitivement ?')) {
       socket.emit('quiz:end', { sessionId });
+      // Filet de sécurité si quiz:finished n'arrive pas (backend plus ancien, événement perdu) :
+      // relecture de la session après 3 s, annulée dès réception de l'événement.
+      clearEndFallback();
+      endFallbackRef.current = setTimeout(() => {
+        endFallbackRef.current = null;
+        fetchSession(sessionId);
+      }, 3000);
     }
   };
 
@@ -162,6 +189,7 @@ export default function SessionControlPage() {
   }
 
   const totalQuestions = (currentSession as any).quizzes?.total_questions || 0;
+  const status = quizFinished ? 'finished' : currentSession.status;
   const currentQIndex = currentSession.current_question_index ?? -1;
 
   // Carte des scores en direct, dérivée du classement temps réel (mis à jour par
@@ -196,7 +224,7 @@ export default function SessionControlPage() {
                   {participantCount} participants
                 </span>
                 <span>•</span>
-                <span>Statut: <span className="capitalize">{currentSession.status}</span></span>
+                <span>Statut: <span className="capitalize">{status}</span></span>
               </div>
             </div>
           </div>
@@ -222,7 +250,7 @@ export default function SessionControlPage() {
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-4">
               <SessionControl
-                status={currentSession.status}
+                status={status}
                 currentQuestion={currentQIndex}
                 totalQuestions={totalQuestions}
                 onStartQuestion={handleStartQuestion}
@@ -230,19 +258,29 @@ export default function SessionControlPage() {
                 onResume={handleResume}
                 onEnd={handleEnd}
                 isStarting={isStarting}
+                questionResults={
+                  questionResults.view === 'results' && questionResults.stats
+                    ? { stats: questionResults.stats, options: questionResults.options }
+                    : null
+                }
+                onShowLeaderboard={questionResults.showLeaderboard}
+                reportHref={`/creator/session/${sessionId}/results`}
               />
             </Card>
 
-            <LiveLeaderboard
-              entries={leaderboard}
-              totalParticipants={participantCount}
-              currentQuestion={Math.max(0, currentQIndex)}
-              totalQuestions={totalQuestions}
-            />
+            {/* Étape « résultats » : le classement attend le clic sur « Afficher le classement ». */}
+            {!(questionResults.view === 'results' && currentSession.status === 'active') && (
+              <LiveLeaderboard
+                entries={leaderboard}
+                totalParticipants={participantCount}
+                currentQuestion={Math.max(0, currentQIndex)}
+                totalQuestions={totalQuestions}
+              />
+            )}
           </div>
 
           <div className="space-y-6">
-            {currentSession.status !== 'finished' && currentSession.password && (
+            {status !== 'finished' && currentSession.password && (
               <Card className="p-4 flex items-center gap-4">
                 <JoinQrCode code={currentSession.password} size={112} />
                 <div className="min-w-0 space-y-1">
