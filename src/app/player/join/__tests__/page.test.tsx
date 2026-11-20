@@ -52,6 +52,18 @@ describe('Page « Rejoindre » : erreurs du join', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(JOIN_ERROR_MESSAGES.kicked);
   });
 
+  it('404 mode async : code d’un devoir, redirige vers la page du devoir', async () => {
+    joinSession.mockRejectedValue({
+      response: {
+        status: 404,
+        data: { message: 'Ce code correspond à un devoir : ouvrez-le depuis la page du devoir.', mode: 'async' },
+      },
+    });
+    await submit();
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith('/player/assignment/ABC123'));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('succès : redirige vers la partie', async () => {
     joinSession.mockResolvedValue({
       participant: { id: 'p1', pseudo: 'Alice' },

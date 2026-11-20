@@ -7,6 +7,8 @@ import { PrivacyNotice } from '@/components/player/PrivacyNotice';
 import { useSession } from '@/hooks/useSession';
 import { usePlayerStore } from '@/store/playerStore';
 import { getJoinErrorMessage } from '@/lib/nickname';
+import { isAssignmentCodeError } from '@/lib/assignments';
+import { normalizeSessionCode } from '@/lib/sessionCode';
 
 export default function JoinPage() {
   const router = useRouter();
@@ -24,6 +26,11 @@ export default function JoinPage() {
       setSessionId(result.session.id);
       router.push(`/player/game/${result.session.id}?participantId=${result.participant.id}`);
     } catch (err) {
+      // Code d'un devoir (backend #10 : 404 avec `mode: 'async'`) : on ouvre la page du devoir.
+      if (isAssignmentCodeError(err)) {
+        router.push(`/player/assignment/${encodeURIComponent(normalizeSessionCode(data.password))}`);
+        return;
+      }
       // 400 : pseudo refusé ; 403 : participant exclu ; 404 : code inconnu ; 409 : pseudo pris.
       setError(getJoinErrorMessage(err));
     } finally {
