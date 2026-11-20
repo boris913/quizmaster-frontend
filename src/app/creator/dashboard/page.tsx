@@ -13,6 +13,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { StatCard } from '@/components/ui/StatCard';
 import { SkeletonCardRow } from '@/components/ui/Skeleton';
 import { DeleteSessionButton } from '@/components/creator/DeleteSessionButton';
+import { ActiveAssignments } from '@/components/creator/ActiveAssignments';
+import { isAssignment } from '@/lib/assignments';
 import {
   PlusCircle,
   List,
@@ -114,6 +116,8 @@ export default function CreatorDashboardPage() {
           />
         </div>
 
+        <ActiveAssignments sessions={sessions ?? []} />
+
         {/* Quiz / Sessions grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Quiz section */}
@@ -203,7 +207,12 @@ export default function CreatorDashboardPage() {
                   return (
                   <Card key={session.id} interactive className="p-4 flex items-center gap-2">
                     <Link
-                      href={`/creator/session/${session.id}`}
+                      // Un devoir n'a pas de panneau de contrôle en direct : on mène au rapport.
+                      href={
+                        isAssignment(session)
+                          ? `/creator/session/${session.id}/results`
+                          : `/creator/session/${session.id}`
+                      }
                       className="group flex flex-1 min-w-0 items-center justify-between"
                     >
                       <div>
@@ -224,6 +233,11 @@ export default function CreatorDashboardPage() {
                           >
                             {session.status}
                           </span>
+                          {isAssignment(session) && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-caption font-medium bg-primary-50 text-primary-700 border border-primary-200">
+                              devoir
+                            </span>
+                          )}
                           <span className="text-ink-tertiary">•</span>
                           <span className="font-display font-semibold tracking-[0.08em] text-caption text-ink-secondary bg-subtle px-1.5 py-0.5 rounded-sm border border-borderc">
                             {session.password}

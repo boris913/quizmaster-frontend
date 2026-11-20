@@ -109,7 +109,7 @@ export default function SessionControlPage() {
       }));
     };
 
-    // 🔄 Mise à jour automatique du panneau de contrôle
+    // Mise à jour automatique du panneau de contrôle
     const onSessionChanged = () => {
       fetchSession(sessionId);
     };
@@ -276,7 +276,13 @@ export default function SessionControlPage() {
                 isStarting={isStarting}
                 questionResults={
                   questionResults.view === 'results' && questionResults.stats
-                    ? { stats: questionResults.stats, options: questionResults.options }
+                    ? {
+                        stats: questionResults.stats,
+                        options: questionResults.options,
+                        questionType: questionResults.questionType,
+                        questionText: questionResults.questionText,
+                        imageUrl: questionResults.imageUrl,
+                      }
                     : null
                 }
                 onShowLeaderboard={questionResults.showLeaderboard}

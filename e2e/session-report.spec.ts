@@ -79,7 +79,7 @@ test.describe('rapport de session', () => {
     await loginAndMock(page);
     await page.goto('/creator/session/report-e2e/results');
 
-    await expect(page.getByRole('heading', { name: 'Les fractions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Les fractions', exact: true })).toBeVisible();
     await expect(page.getByText('Précision de la classe')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'À retravailler' })).toBeVisible();
     await expect(page.getByRole('table')).toContainText('Alice');
@@ -91,7 +91,7 @@ test.describe('rapport de session', () => {
     await page.setViewportSize({ width: 375, height: 800 });
     await loginAndMock(page);
     await page.goto('/creator/session/report-e2e/results');
-    await expect(page.getByRole('heading', { name: 'Les fractions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Les fractions', exact: true })).toBeVisible();
 
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth

@@ -18,12 +18,13 @@ import {
   LeaderboardEntry,
   PlayerAnswerResult,
   normalizeAnswerResult,
+  normalizePlayerQuestion,
   normalizePlayerQuizFinished,
   normalizePlayerScore,
   normalizeQuestionReveal,
 } from '@/types';
 import { Card } from '@/components/ui/Card';
-import { Check, X } from 'lucide-react';
+import { BarChart3, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScoreCounter } from '@/components/ui/ScoreCounter';
 
@@ -112,7 +113,8 @@ export default function GamePage() {
     });
 
     socket.on('question:start', (data: WsQuestionStartPayload) => {
-      setQuestion(data.question);
+      // Types du backend #7 : type connu, options en tableau, `image_url` normalisée.
+      setQuestion(normalizePlayerQuestion(data.question));
       setQuestionNumber(data.question_number);
       setTotalQuestions(data.total_questions);
       setTimerSeconds(data.timer_seconds);
@@ -330,14 +332,29 @@ export default function GamePage() {
   // Écran de résultat après une question
   if (showResult && (result || reveal)) {
     const isCorrect = reveal ? reveal.isCorrect : Boolean(result?.is_correct);
+    const isPoll = question?.type === 'poll';
     return (
       <div className="min-h-screen bg-background p-6">
         <motion.div key="result" {...pageTransition} className="max-w-2xl mx-auto space-y-6">
           <div className="flex justify-between items-center text-small text-ink-secondary">
             <span>Question {questionNumber}/{totalQuestions}</span>
-            <span className={cn('inline-flex items-center gap-1 font-medium', isCorrect ? 'text-success' : 'text-danger')}>
-              {isCorrect ? <Check className="h-4 w-4" aria-hidden /> : <X className="h-4 w-4" aria-hidden />}
-              {result?.points_earned ?? 0} pts
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 font-medium',
+                isPoll ? 'text-ink-secondary' : isCorrect ? 'text-success' : 'text-danger'
+              )}
+            >
+              {isPoll ? (
+                <>
+                  <BarChart3 className="h-4 w-4" aria-hidden />
+                  Sondage
+                </>
+              ) : (
+                <>
+                  {isCorrect ? <Check className="h-4 w-4" aria-hidden /> : <X className="h-4 w-4" aria-hidden />}
+                  {result?.points_earned ?? 0} pts
+                </>
+              )}
             </span>
           </div>
           <AnswerFeedback
@@ -357,6 +374,7 @@ export default function GamePage() {
             }
             reveal={reveal}
             options={question?.options}
+            questionType={question?.type}
           />
           <ScoreDisplay
             score={scoreState}
