@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { JoinForm } from '@/components/player/JoinForm';
+import { PrivacyNotice } from '@/components/player/PrivacyNotice';
 import { useSession } from '@/hooks/useSession';
 import { usePlayerStore } from '@/store/playerStore';
 
@@ -29,12 +30,13 @@ export default function JoinPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-4">
       <JoinForm
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         error={error}
       />
+      <PrivacyNotice />
     </div>
   );
 }
