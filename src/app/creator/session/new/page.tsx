@@ -8,6 +8,21 @@ import { useSession } from '@/hooks/useSession';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ArrowLeft, Copy, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { NicknameMode } from '@/lib/nickname';
+
+const NICKNAME_MODE_OPTIONS: { value: NicknameMode; label: string; description: string }[] = [
+  {
+    value: 'free',
+    label: 'Pseudos libres',
+    description: 'Chaque élève choisit son pseudo ; les termes inappropriés sont refusés.',
+  },
+  {
+    value: 'generated',
+    label: 'Pseudos générés',
+    description: 'Chaque élève tire un pseudo au sort (ex. « Loutre Curieuse »), 3 essais maximum.',
+  },
+];
 
 export default function NewSessionPage() {
   const router = useRouter();
@@ -18,6 +33,7 @@ export default function NewSessionPage() {
   const [created, setCreated] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [nicknameMode, setNicknameMode] = useState<NicknameMode>('free');
 
   useEffect(() => {
     if (quizId) {
@@ -28,7 +44,7 @@ export default function NewSessionPage() {
   const handleCreate = async () => {
     if (!quizId) return;
     try {
-      const s = await createSession(quizId);
+      const s = await createSession(quizId, { nicknameMode });
       setSession(s);
       setCreated(true);
     } catch (error) {
@@ -90,6 +106,9 @@ export default function NewSessionPage() {
           <p className="text-sm text-ink-secondary">
             {currentQuiz.title} • {currentQuiz.total_questions} questions
           </p>
+          <p className="text-sm text-ink-secondary">
+            {(session.nickname_mode ?? nicknameMode) === 'generated' ? 'Pseudos générés' : 'Pseudos libres'}
+          </p>
           <div className="flex flex-col gap-3">
             <Button onClick={() => router.push(`/creator/session/${session.id}`)}>
               Accéder au panneau de contrôle
@@ -123,6 +142,38 @@ export default function NewSessionPage() {
             Timer : {currentQuiz.use_global_timer ? `global (${currentQuiz.global_timer_seconds}s)` : 'personnalisé'}
           </p>
         </div>
+        <fieldset className="space-y-2">
+          <legend className="text-small font-medium text-ink mb-2">Pseudos des participants</legend>
+          {NICKNAME_MODE_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className={cn(
+                'flex cursor-pointer gap-3 rounded-md border p-3 transition-colors',
+                'focus-within:ring-2 focus-within:ring-primary',
+                nicknameMode === option.value ? 'border-primary bg-primary-50' : 'border-borderc'
+              )}
+            >
+              <input
+                type="radio"
+                name="nicknameMode"
+                value={option.value}
+                checked={nicknameMode === option.value}
+                onChange={() => setNicknameMode(option.value)}
+                aria-labelledby={`nickname-mode-${option.value}-label`}
+                aria-describedby={`nickname-mode-${option.value}-desc`}
+                className="mt-1 accent-primary"
+              />
+              <span className="space-y-0.5">
+                <span id={`nickname-mode-${option.value}-label`} className="block font-medium">
+                  {option.label}
+                </span>
+                <span id={`nickname-mode-${option.value}-desc`} className="block text-small text-ink-secondary">
+                  {option.description}
+                </span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
         <Button onClick={handleCreate} isLoading={sessionLoading} className="w-full">
           Créer la session
         </Button>

@@ -14,12 +14,14 @@ interface SessionState {
   fetchSession: (id: string) => Promise<void>;
   fetchParticipants: (id: string) => Promise<void>;
   fetchLeaderboard: (id: string) => Promise<void>;
-  createSession: (quizId: string) => Promise<Session>;
+  createSession: (quizId: string, options?: { nicknameMode?: 'free' | 'generated' }) => Promise<Session>;
   joinSession: (password: string, pseudo: string) => Promise<{ participant: Participant; session: Session }>;
   endSession: (id: string) => Promise<void>;
   /** Supprime définitivement la session et ses données (participants, réponses). 404 si non-créateur. */
   deleteSession: (id: string) => Promise<void>;
   updateLeaderboard: (entries: LeaderboardEntry[]) => void;
+  /** Retire un participant de la liste locale (ex. exclusion confirmée par le serveur). */
+  removeParticipant: (participantId: string) => void;
 }
 
 export const useSessionStore = create<SessionState>((set, get) => ({
@@ -59,8 +61,11 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({ leaderboard: data });
   },
 
-  createSession: async (quizId) => {
-    const { data } = await api.post('/sessions', { quiz_id: quizId });
+  createSession: async (quizId, options = {}) => {
+    const { data } = await api.post('/sessions', {
+      quiz_id: quizId,
+      ...(options.nicknameMode ? { nicknameMode: options.nicknameMode } : {}),
+    });
     set((state) => ({ sessions: [data, ...state.sessions] }));
     return data;
   },
@@ -88,5 +93,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   updateLeaderboard: (entries) => {
     set({ leaderboard: entries });
+  },
+
+  removeParticipant: (participantId) => {
+    set((state) => ({
+      participants: state.participants.filter((p) => p.id !== participantId),
+      leaderboard: state.leaderboard.filter((e) => e.participant_id !== participantId),
+    }));
   },
 }));

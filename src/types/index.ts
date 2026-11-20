@@ -46,6 +46,8 @@ export interface QuizOption {
     created_at: string;
     quiz_title?: string;
     total_questions?: number;
+    /** Mode des pseudos : libres (filtrés côté serveur) ou générés (roulette). Défaut : "free". */
+    nickname_mode?: 'free' | 'generated';
   }
   
   export interface Participant {
