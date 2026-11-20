@@ -15,7 +15,13 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { JoinQrCode } from '@/components/ui/JoinQrCode';
 import { ArrowLeft, MonitorPlay, Users } from 'lucide-react';
-import { LeaderboardEntry, Participant, WsParticipantProgressPayload } from '@/types';
+import {
+  LeaderboardEntry,
+  Participant,
+  WsParticipantProgressPayload,
+  getScoringMode,
+  isLeaderboardHidden,
+} from '@/types';
 import { useSessionStore } from '@/store/sessionStore';
 
 export default function SessionControlPage() {
@@ -225,6 +231,11 @@ export default function SessionControlPage() {
                 </span>
                 <span>•</span>
                 <span>Statut: <span className="capitalize">{status}</span></span>
+                <span>•</span>
+                <span data-testid="session-scoring-mode">
+                  {getScoringMode(currentSession) === 'accuracy' ? 'Mode Précision' : 'Mode Vitesse'}
+                  {isLeaderboardHidden(currentSession) && ' · classement masqué aux élèves'}
+                </span>
               </div>
             </div>
           </div>

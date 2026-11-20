@@ -9,6 +9,7 @@ import { JoinQrCode } from '@/components/ui/JoinQrCode';
 import { AnswerHistogram, histogramOptions } from '@/components/ui/AnswerHistogram';
 import { getAppBaseUrl, normalizeSessionCode } from '@/lib/sessionCode';
 import { cn } from '@/lib/utils';
+import { cumulativeClassAccuracy, isLeaderboardHidden } from '@/types';
 
 /** Nombre maximum de pseudos affichés dans le nuage (les suivants sont résumés en « +N »). */
 const MAX_PSEUDOS = 80;
@@ -74,6 +75,10 @@ export default function SessionPresentPage() {
   const count = feed.participants.length;
   const visible = feed.participants.slice(-MAX_PSEUDOS);
   const hidden = count - visible.length;
+  // Projection vue par toute la classe : si le classement est masqué aux élèves, aucun
+  // classement nominatif, seulement la précision de la classe.
+  const leaderboardHidden = isLeaderboardHidden(session);
+  const classAccuracy = cumulativeClassAccuracy(Object.values(feed.statsByQuestion));
 
   return (
     <div
@@ -264,7 +269,23 @@ export default function SessionPresentPage() {
         {session && phase === 'finished' && (
           <div className="m-auto w-full max-w-4xl text-center">
             <h2 className="text-[clamp(2.5rem,5vw,5rem)] font-bold">Quiz terminé !</h2>
-            {feed.leaderboard.length > 0 && (
+            {leaderboardHidden && (
+              <div className="mt-[4vh]" data-testid="final-class-accuracy">
+                {classAccuracy !== null ? (
+                  <>
+                    <p className="font-mono text-[clamp(6rem,12vw,12rem)] font-bold leading-none tabular-nums">
+                      {classAccuracy} %
+                    </p>
+                    <p className="mt-[2vh] text-[clamp(1.5rem,2.8vw,3rem)] text-white/80">
+                      de bonnes réponses pour la classe
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-[clamp(1.5rem,2.8vw,3rem)] text-white/80">Bravo à toute la classe !</p>
+                )}
+              </div>
+            )}
+            {!leaderboardHidden && feed.leaderboard.length > 0 && (
               <ol className="mt-[4vh] space-y-[1.5vh]" data-testid="final-ranking">
                 {feed.leaderboard.slice(0, 5).map((e) => (
                   <li

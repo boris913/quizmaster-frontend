@@ -36,6 +36,11 @@ export interface ProjectionState {
   leaderboard: LeaderboardEntry[];
   /** Statistiques agrégées de la question clôturée (`question:stats`), jamais nominatives. */
   stats: WsQuestionStatsPayload | null;
+  /**
+   * Statistiques de chaque question clôturée, par id de question : sert à calculer la
+   * précision cumulée de la classe (écran de fin sans classement).
+   */
+  statsByQuestion: Record<string, WsQuestionStatsPayload>;
 }
 
 const initialState: ProjectionState = {
@@ -46,6 +51,7 @@ const initialState: ProjectionState = {
   participants: [],
   leaderboard: [],
   stats: null,
+  statsByQuestion: {},
 };
 
 function upsert(list: ProjectionState['participants'], p: { id: string; pseudo: string }) {
@@ -160,6 +166,7 @@ export function useProjectionFeed(sessionId: string, initialParticipants?: Parti
         ...s,
         phase: s.phase === 'finished' ? s.phase : 'results',
         stats,
+        statsByQuestion: { ...s.statsByQuestion, [stats.questionId]: stats },
         question: s.question ? { ...s.question, endsAt: Math.min(s.question.endsAt, Date.now()) } : null,
       }));
     };
