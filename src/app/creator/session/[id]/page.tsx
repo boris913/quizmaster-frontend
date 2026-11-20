@@ -14,7 +14,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { JoinQrCode } from '@/components/ui/JoinQrCode';
 import { ArrowLeft, MonitorPlay, Users } from 'lucide-react';
-import { LeaderboardEntry, WsParticipantProgressPayload } from '@/types';
+import { LeaderboardEntry, Participant, WsParticipantProgressPayload } from '@/types';
+import { useSessionStore } from '@/store/sessionStore';
 
 export default function SessionControlPage() {
   const params = useParams();
@@ -24,6 +25,7 @@ export default function SessionControlPage() {
   const { token } = useAuthStore();
   const { currentSession, participants, fetchSession, fetchParticipants } = useSession();
   const { leaderboard } = useLeaderboard(sessionId);
+  const removeParticipant = useSessionStore((state) => state.removeParticipant);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [isStarting, setIsStarting] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
@@ -62,7 +64,13 @@ export default function SessionControlPage() {
     });
 
     // Participant déconnecté
-    socket.on('participant:disconnected', (data: any) => {
+    socket.on('participant:disconnected', (data: { participant_id?: string; reason?: string }) => {
+      // Exclusion confirmée par le serveur : retrait immédiat de la liste (le compteur suit
+      // la longueur de la liste).
+      if (data?.reason === 'kicked' && data.participant_id) {
+        removeParticipant(data.participant_id);
+        return;
+      }
       fetchParticipants(sessionId);
       setParticipantCount((prev) => prev - 1);
     });
@@ -108,7 +116,14 @@ export default function SessionControlPage() {
       socket.off('quiz:finished');
       socket.off('error');
     };
-  }, [socket, isConnected, token, sessionId, fetchParticipants, fetchSession]);
+  }, [socket, isConnected, token, sessionId, fetchParticipants, fetchSession, removeParticipant]);
+
+  // Exclusion d'un participant (confirmée dans ParticipantList). Le retrait de la liste se fait
+  // à réception de « participant:disconnected » avec reason: 'kicked'.
+  const handleKick = (participant: Participant) => {
+    if (!socket || !isConnected) return;
+    socket.emit('creator:kick', { sessionId, participantId: participant.id });
+  };
 
   // Actions du créateur
   const handleStartQuestion = () => {
@@ -243,6 +258,7 @@ export default function SessionControlPage() {
               participants={participants || []}
               progressMap={progressMap}
               liveScores={liveScores}
+              onKick={currentSession.status !== 'finished' ? handleKick : undefined}
             />
           </div>
         </div>
