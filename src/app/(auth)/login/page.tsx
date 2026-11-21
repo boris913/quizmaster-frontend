@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore'; // ✅ utiliser le store
+import { redirectAfterLogin, REDIRECT_PARAM, safeRedirectPath } from '@/lib/quizSharing';
 
 const loginSchema = z.object({
   pseudo: z.string().min(1, 'Pseudo requis'),
@@ -22,6 +23,12 @@ export default function LoginPage() {
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
   const [error, setError] = useState('');
+  // Conserve la page de retour (`?next=`) entre connexion et inscription.
+  const [returnQuery, setReturnQuery] = useState('');
+  useEffect(() => {
+    const next = safeRedirectPath(new URLSearchParams(window.location.search).get(REDIRECT_PARAM));
+    if (next) setReturnQuery(`?${REDIRECT_PARAM}=${encodeURIComponent(next)}`);
+  }, []);
   const { register, handleSubmit, formState: { isSubmitting } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
@@ -29,7 +36,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       await login(data.pseudo, data.password);
-      router.push('/creator/dashboard');
+      // Retour sur la page d'origine (`?next=/…`, chemin interne uniquement).
+      router.push(redirectAfterLogin(window.location.search));
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erreur de connexion');
     }
@@ -50,7 +58,7 @@ export default function LoginPage() {
         </form>
         <p className="text-sm text-center mt-4">
           Pas encore de compte ?{' '}
-          <Link href="/register" className="text-primary hover:underline">
+          <Link href={`/register${returnQuery}`} className="text-primary hover:underline">
             S&apos;inscrire
           </Link>
         </p>
