@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, KeyboardEvent } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Participant } from '@/types';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Card } from '../ui/Card';
@@ -29,15 +30,9 @@ const statusIcon = {
   disconnected: <UserX className="w-3 h-3 text-ink-tertiary" />,
 };
 
-const statusLabel = {
-  waiting: 'En attente',
-  answering: 'En cours',
-  answered: 'Répondu',
-  timeout: 'Timeout',
-  disconnected: 'Déconnecté',
-};
-
 export function ParticipantList({ participants, progressMap = {}, liveScores = {}, onKick }: ParticipantListProps) {
+  const t = useTranslations('participants');
+  const tc = useTranslations('common');
   const shouldReduceMotion = useReducedMotion();
   // Participant dont l'exclusion attend une confirmation.
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -78,7 +73,7 @@ export function ParticipantList({ participants, progressMap = {}, liveScores = {
     <Card className="p-4 space-y-3">
       <h3 className="font-semibold flex items-center gap-2">
         <Users className="w-4 h-4" />
-        Participants ({participants.length})
+        {t('title', { count: participants.length })}
       </h3>
       <div className="space-y-2 max-h-80 overflow-y-auto">
         <AnimatePresence initial={false}>
@@ -101,9 +96,9 @@ export function ParticipantList({ participants, progressMap = {}, liveScores = {
                   </span>
                   <span className="flex-1 font-medium truncate">{p.pseudo}</span>
                   <span className="text-caption text-ink-secondary">
-                    {statusLabel[p.status]}
+                    {t(`status.${p.status}`)}
                   </span>
-                  <span className="font-display tabular-nums font-semibold min-w-12 text-right tabular-nums">
+                  <span className="font-display font-semibold min-w-12 text-right tabular-nums">
                     <ScoreCounter value={p.score} durationMs={500} />
                   </span>
                   <ProgressBar value={progress} max={100} className="w-24" barClassName="bg-primary" />
@@ -111,10 +106,10 @@ export function ParticipantList({ participants, progressMap = {}, liveScores = {
                     <button
                       type="button"
                       onClick={() => setConfirmingId(p.id)}
-                      aria-label={`Exclure ${p.pseudo}`}
+                      aria-label={t('kickAria', { pseudo: p.pseudo })}
                       aria-expanded={isConfirming}
-                      title="Exclure de la partie"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded text-ink-secondary hover:bg-danger/10 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
+                      title={t('kickTitle')}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded text-ink-secondary hover:bg-danger-50 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
                     >
                       <UserMinus className="w-4 h-4" aria-hidden="true" />
                     </button>
@@ -125,18 +120,17 @@ export function ParticipantList({ participants, progressMap = {}, liveScores = {
                     role="alertdialog"
                     aria-labelledby={`kick-confirm-${p.id}`}
                     onKeyDown={handleConfirmKeyDown}
-                    className="rounded-md border border-danger/30 bg-danger/5 p-3 space-y-2"
+                    className="rounded-md border border-danger-100 bg-danger-50 p-3 space-y-2"
                   >
                     <p id={`kick-confirm-${p.id}`} className="text-small">
-                      Exclure <strong>{p.pseudo}</strong> de la partie ? Ce pseudo ne pourra plus
-                      rejoindre la session.
+                      {t.rich('kickConfirm', { pseudo: p.pseudo, b: (chunks) => <strong>{chunks}</strong> })}
                     </p>
                     <div className="flex justify-end gap-2">
                       <Button ref={cancelRef} type="button" variant="outline" size="sm" onClick={() => setConfirmingId(null)}>
-                        Annuler
+                        {tc('cancel')}
                       </Button>
                       <Button type="button" variant="danger" size="sm" onClick={handleConfirm}>
-                        Exclure
+                        {t('kick')}
                       </Button>
                     </div>
                   </div>

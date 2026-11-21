@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
+import { useLocalizedMessage } from '@/i18n/localizeMessage';
 import { BarChart3, CalendarClock, Lock, TimerReset } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -19,13 +21,16 @@ import {
 } from '@/lib/assignments';
 import type { Session } from '@/types';
 
-function actionErrorMessage(err: unknown): string {
+type ErrorKey = 'errors.network' | 'errors.notFound' | 'errors.generic';
+
+/** Message du serveur (en français) seulement en français ; sinon un message traduit. */
+function actionErrorMessage(err: unknown, t: (key: ErrorKey) => string, locale: string): string {
   const response = (err as { response?: { status?: number; data?: { message?: unknown } } })?.response;
-  if (!response) return 'Impossible de joindre le serveur. Réessayez.';
-  if (response.status === 404) return "Devoir introuvable, ou vous n'en êtes pas le créateur.";
+  if (!response) return t('errors.network');
+  if (response.status === 404) return t('errors.notFound');
   const message = response.data?.message;
-  if (typeof message === 'string' && message.trim()) return message;
-  return 'L’action a échoué. Réessayez dans un instant.';
+  if (locale === 'fr' && typeof message === 'string' && message.trim()) return message;
+  return t('errors.generic');
 }
 
 /** Remplace la session dans le store (fusion avec la réponse du serveur). */
@@ -36,7 +41,11 @@ function patchStoredSession(id: string, patch: Partial<Session>) {
 }
 
 function AssignmentRow({ session }: { session: Session }) {
-  const title = session.quiz_title || session.quizzes?.title || 'Quiz sans titre';
+  const t = useTranslations('activeAssignments');
+  const tc = useTranslations('common');
+  const locale = useLocale();
+  const localize = useLocalizedMessage();
+  const title = session.quiz_title || session.quizzes?.title || t('untitled');
   const completion = getAssignmentCompletion(session);
   const [isExtending, setIsExtending] = useState(false);
   const [newDue, setNewDue] = useState('');
@@ -56,13 +65,13 @@ function AssignmentRow({ session }: { session: Session }) {
     e.preventDefault();
     const invalid = validateDueDate(newDue);
     if (invalid) {
-      setError(invalid);
+      setError(localize(invalid) ?? invalid);
       return;
     }
     const date = parseDateTimeLocalValue(newDue) as Date;
     const current = session.due_at ? new Date(session.due_at).getTime() : NaN;
     if (!Number.isNaN(current) && date.getTime() <= current) {
-      setError('La nouvelle échéance doit être postérieure à l’échéance actuelle.');
+      setError(t('errors.notLater'));
       return;
     }
     setBusy(true);
@@ -72,21 +81,21 @@ function AssignmentRow({ session }: { session: Session }) {
       patchStoredSession(session.id, { due_at: date.toISOString(), ...(updated ?? {}) });
       setIsExtending(false);
     } catch (err) {
-      setError(actionErrorMessage(err));
+      setError(actionErrorMessage(err, t, locale));
     } finally {
       setBusy(false);
     }
   };
 
   const handleClose = async () => {
-    if (!window.confirm(`Clore le devoir « ${title} » ? Les élèves ne pourront plus répondre.`)) return;
+    if (!window.confirm(t('confirmClose', { title }))) return;
     setBusy(true);
     setError(null);
     try {
       const updated = await closeAssignment(session.id);
       patchStoredSession(session.id, { ...(updated ?? {}), status: 'finished' });
     } catch (err) {
-      setError(actionErrorMessage(err));
+      setError(actionErrorMessage(err, t, locale));
     } finally {
       setBusy(false);
     }
@@ -100,33 +109,31 @@ function AssignmentRow({ session }: { session: Session }) {
           <p className="text-small text-ink-secondary flex items-center gap-1.5">
             <CalendarClock className="w-4 h-4" aria-hidden="true" />
             {!session.due_at
-              ? 'Sans échéance'
+              ? t('noDue')
               : isOpenAssignment(session)
-                ? `Échéance : ${formatDueDate(session.due_at)}`
-                : `Échéance passée (${formatDueDate(session.due_at)})`}
+                ? t('due', { date: formatDueDate(session.due_at, locale) })
+                : t('duePassed', { date: formatDueDate(session.due_at, locale) })}
           </p>
           <p className="text-small text-ink-secondary">
             {completion
-              ? `${completion.completed} / ${completion.started} élève${completion.started > 1 ? 's' : ''} ${
-                  completion.completed > 1 ? 'ont' : 'a'
-                } terminé`
+              ? t('completion', { completed: completion.completed, started: completion.started })
               : // Contrat backend #10 : GET /sessions ne fournit pas la complétion (voir le rapport).
-                'Complétion détaillée dans le rapport'}
+                t('completionInReport')}
             <span className="text-ink-tertiary"> • </span>
             <span className="font-display tabular-nums text-caption">{session.password}</span>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" size="sm" onClick={openExtend} disabled={busy}>
-            <TimerReset className="w-4 h-4 mr-1" aria-hidden="true" />
-            Prolonger
+            <TimerReset className="w-4 h-4" aria-hidden="true" />
+            {t('extend')}
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={handleClose} disabled={busy}>
-            <Lock className="w-4 h-4 mr-1" aria-hidden="true" />
-            Clore
+            <Lock className="w-4 h-4" aria-hidden="true" />
+            {t('close')}
           </Button>
           <Button variant="ghost" size="sm" asChild className="text-primary-700 hover:bg-primary-50">
-            <Link href={`/creator/session/${session.id}/results`} aria-label={`Voir le rapport : ${title}`}>
+            <Link href={`/creator/session/${session.id}/results`} aria-label={t('reportAria', { title })}>
               <BarChart3 className="w-4 h-4" aria-hidden="true" />
             </Link>
           </Button>
@@ -137,7 +144,7 @@ function AssignmentRow({ session }: { session: Session }) {
         <form onSubmit={submitExtend} noValidate className="flex flex-wrap items-end gap-2">
           <div className="space-y-1">
             <label htmlFor={fieldId} className="text-small font-medium text-ink">
-              Nouvelle échéance
+              {t('newDue')}
             </label>
             <input
               id={fieldId}
@@ -147,14 +154,14 @@ function AssignmentRow({ session }: { session: Session }) {
                 setNewDue(e.target.value);
                 setError(null);
               }}
-              className="min-h-[40px] rounded-md border border-borderc bg-surface px-3 py-1.5 text-body"
+              className="min-h-[40px] rounded-md border border-borderc-strong bg-surface px-3 py-1.5 text-body text-ink"
             />
           </div>
           <Button type="submit" size="sm" isLoading={busy}>
-            Valider
+            {t('confirm')}
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={() => setIsExtending(false)} disabled={busy}>
-            Annuler
+            {tc('cancel')}
           </Button>
         </form>
       )}
@@ -173,13 +180,14 @@ function AssignmentRow({ session }: { session: Session }) {
  * listé (signalé comme tel) pour pouvoir être prolongé ou clos.
  */
 export function ActiveAssignments({ sessions }: { sessions: Session[] }) {
+  const t = useTranslations('activeAssignments');
   const open = sessions.filter((s) => isAssignment(s) && s.status !== 'finished');
   if (open.length === 0) return null;
   return (
     <section aria-labelledby="active-assignments-title" className="mb-12">
       <h2 id="active-assignments-title" className="text-h3 mb-4 flex items-center gap-2">
         <CalendarClock className="w-5 h-5 text-ink-secondary" aria-hidden="true" />
-        Devoirs en cours
+        {t('title')}
       </h2>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {open.map((s) => (

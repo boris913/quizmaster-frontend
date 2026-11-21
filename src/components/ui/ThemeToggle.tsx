@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
+import { useTranslations } from 'next-intl';
 import { Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,12 +11,13 @@ import { cn } from '@/lib/utils';
  * (next-themes, `defaultTheme="system"`) ; un clic fixe le choix.
  */
 export function ThemeToggle({ className }: { className?: string }) {
+  const t = useTranslations('common.theme');
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const isDark = mounted && resolvedTheme === 'dark';
-  const label = isDark ? 'Passer en mode clair' : 'Passer en mode sombre';
+  const label = isDark ? t('toLight') : t('toDark');
 
   return (
     <button

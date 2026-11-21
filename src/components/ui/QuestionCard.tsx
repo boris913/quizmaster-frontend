@@ -5,6 +5,8 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Card } from './Card';
 import { Check, BarChart3 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useAnswerLabels } from '@/i18n/answerLabel';
 import { answerTone } from '@/lib/answerTone';
 import { QuestionImage } from './QuestionImage';
 import { SortableList } from './SortableList';
@@ -47,6 +49,9 @@ export function QuestionCard({
   selectedAnswers = [],
   onSubmit,
 }: QuestionCardProps) {
+  const t = useTranslations('player.question');
+  const tc = useTranslations('common');
+  const { optionText } = useAnswerLabels();
   const shouldReduceMotion = useReducedMotion();
   const type = normalizeQuestionType(question.type);
   const rawOptions = Array.isArray(question.options) ? question.options : [];
@@ -99,15 +104,15 @@ export function QuestionCard({
     <Card tier="primary" className="p-6 sm:p-8 space-y-7">
       <div className="flex justify-between items-start gap-4">
         <span className="text-small font-medium text-ink-secondary tabular-nums">
-          Question {questionNumber} / {totalQuestions}
+          {t('counter', { current: questionNumber, total: totalQuestions })}
         </span>
         {type === 'poll' ? (
           <span className="inline-flex items-center gap-1 text-caption font-medium text-ink-secondary bg-ink/[0.05] px-2 py-1 rounded-sm whitespace-nowrap">
-            <BarChart3 className="h-3.5 w-3.5" aria-hidden /> Sondage · non noté
+            <BarChart3 className="h-3.5 w-3.5" aria-hidden /> {t('pollBadge')}
           </span>
         ) : (
           <span className="text-caption font-medium text-ink-secondary bg-ink/[0.05] px-2 py-1 rounded-sm whitespace-nowrap tabular-nums">
-            {question.max_points} pts
+            {tc('pointsCount', { count: question.max_points })}
           </span>
         )}
       </div>
@@ -122,11 +127,11 @@ export function QuestionCard({
       {type === 'ordering' && (
         <div className="space-y-3">
           <p className="text-caption text-ink-secondary" id={`${shortAnswerId}-ordering`}>
-            Remettez les éléments dans le bon ordre : glissez la poignée, ou utilisez les flèches haut et bas.
+            {t('orderingHint')}
           </p>
           <SortableList
             size="large"
-            ariaLabel="Éléments à remettre dans l'ordre"
+            ariaLabel={t('orderingAria')}
             disabled={isDisabled}
             items={order
               .map((id) => options.find((o) => o.id === id))
@@ -141,7 +146,7 @@ export function QuestionCard({
       {type === 'short_answer' && (
         <div className="space-y-2">
           <label htmlFor={shortAnswerId} className="text-small font-medium text-ink">
-            Votre réponse
+            {t('yourAnswer')}
           </label>
           <input
             id={shortAnswerId}
@@ -164,7 +169,7 @@ export function QuestionCard({
               'w-full min-h-[52px] rounded-md border-2 border-borderc-strong bg-surface px-4 py-3 text-h3 text-ink placeholder:text-ink-tertiary',
               'focus:outline-none focus:border-primary focus:shadow-glow disabled:opacity-60'
             )}
-            placeholder="Tapez votre réponse"
+            placeholder={t('typeHere')}
           />
         </div>
       )}
@@ -173,7 +178,7 @@ export function QuestionCard({
         <div
           className={cn('grid gap-3', type === 'true_false' ? 'grid-cols-2' : 'sm:grid-cols-2')}
           role={isSingleChoice ? 'radiogroup' : 'group'}
-          aria-label="Réponses"
+          aria-label={t('answersAria')}
         >
           {options.map((option, i) => {
             const isSelected = selected.includes(option.id);
@@ -212,7 +217,7 @@ export function QuestionCard({
                     {option.id}
                   </span>
                 )}
-                <span className={cn('text-ink', isTrueFalse ? '' : 'text-body font-medium flex-1')}>{option.text}</span>
+                <span className={cn('text-ink', isTrueFalse ? '' : 'text-body font-medium flex-1')}>{optionText(option.text)}</span>
                 {isSelected && !isDisabled && (
                   <motion.span
                     initial={shouldReduceMotion ? false : { scale: 0 }}
@@ -230,11 +235,11 @@ export function QuestionCard({
 
       {type === 'multiple' && !isDisabled && (
         <p className="text-caption text-ink-secondary">
-          Sélectionnez plusieurs réponses (cliquez à nouveau pour désélectionner)
+          {t('multipleHint')}
         </p>
       )}
       {type === 'poll' && !isDisabled && (
-        <p className="text-caption text-ink-secondary">Pas de bonne ou de mauvaise réponse : donnez votre avis.</p>
+        <p className="text-caption text-ink-secondary">{t('pollHint')}</p>
       )}
     </Card>
   );

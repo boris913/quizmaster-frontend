@@ -1,6 +1,8 @@
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
+import { useLocalizedMessage } from '@/i18n/localizeMessage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '../ui/Button';
@@ -51,7 +53,9 @@ interface QuizFormProps {
   submitLabel?: string;
 }
 
-export function QuizForm({ initialData, onSubmit, isSubmitting, quizId, submitLabel = 'Créer le quiz' }: QuizFormProps) {
+export function QuizForm({ initialData, onSubmit, isSubmitting, quizId, submitLabel }: QuizFormProps) {
+  const t = useTranslations('quizForm');
+  const localize = useLocalizedMessage();
   const { questions: initialQuestions, ...initialQuiz } = initialData ?? {};
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<QuizFormInput, unknown, QuizFormOutput>({
     resolver: zodResolver(quizSchema),
@@ -78,34 +82,34 @@ export function QuizForm({ initialData, onSubmit, isSubmitting, quizId, submitLa
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-8">
       <Card className="p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Informations générales</h2>
-        <Input label="Titre" {...register('title')} error={errors.title?.message} />
-        <Input label="Description" {...register('description')} />
+        <h2 className="text-card-title">{t('general')}</h2>
+        <Input label={t('title')} {...register('title')} error={localize(errors.title?.message)} />
+        <Input label={t('description')} {...register('description')} />
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-small">
             <input
               type="checkbox"
               {...register('use_global_timer')}
               className="rounded border-borderc"
             />
-            Utiliser un timer global
+            {t('useGlobalTimer')}
           </label>
         </div>
         {useGlobalTimer && (
           <Input
-            label="Timer global (secondes)"
+            label={t('globalTimer')}
             type="number"
             {...register('global_timer_seconds', { valueAsNumber: true })}
-            error={errors.global_timer_seconds?.message}
+            error={localize(errors.global_timer_seconds?.message)}
           />
         )}
       </Card>
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Questions ({fields.length})</h2>
+          <h2 className="text-card-title">{t('questions', { count: fields.length })}</h2>
           <Button type="button" size="sm" onClick={() => append(emptyQuestion())}>
-            <Plus className="w-4 h-4 mr-1" /> Ajouter une question
+            <Plus className="w-4 h-4" /> {t('addQuestion')}
           </Button>
         </div>
 
@@ -127,7 +131,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting, quizId, submitLa
       </div>
 
       <Button type="submit" isLoading={isSubmitting} className="w-full">
-        {submitLabel}
+        {submitLabel ?? t('submit')}
       </Button>
     </form>
   );

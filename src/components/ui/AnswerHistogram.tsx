@@ -1,9 +1,12 @@
+'use client';
+
 import { Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { answerTone } from '@/lib/answerTone';
+import { useAnswerLabels } from '@/i18n/answerLabel';
 import {
   accuracyToPercent,
-  answerLabel,
   inferQuestionType,
   normalizeShortAnswer,
   type QuestionType,
@@ -35,10 +38,6 @@ function percentOf(count: number, answered: number) {
   return answered > 0 ? Math.round((count / answered) * 100) : 0;
 }
 
-function plural(n: number, word: string) {
-  return `${n} ${word}${n > 1 ? 's' : ''}`;
-}
-
 /**
  * Histogramme des réponses à une question clôturée : une barre par option, bonne(s) réponse(s)
  * mise(s) en évidence, pourcentages. Ne reçoit que des agrégats : jamais de pseudo.
@@ -53,6 +52,8 @@ export function AnswerHistogram({
   className,
   questionType,
 }: AnswerHistogramProps) {
+  const t = useTranslations('histogram');
+  const { answerLabel, optionText } = useAnswerLabels();
   const isProjection = variant === 'projection';
   // Type : prop, sinon celui de `question:stats` (backend #7), sinon déduit (correction vide = sondage).
   const type =
@@ -70,10 +71,10 @@ export function AnswerHistogram({
   const accuracy = accuracyToPercent(stats.accuracy);
   const summary =
     answered === 0
-      ? `Aucune réponse sur ${plural(total, 'participant')}`
+      ? t('none', { total })
       : isPoll
-        ? `${plural(answered, 'vote')} sur ${plural(total, 'participant')} · sondage, sans bonne réponse`
-        : `${plural(answered, 'réponse')} sur ${plural(total, 'participant')} · ${accuracy} % des participants ont répondu juste`;
+        ? t('pollSummary', { answered, total })
+        : t('summary', { answered, total, accuracy });
   const textSize = isProjection ? 'text-[clamp(1.25rem,2.4vw,2.75rem)] font-semibold' : 'text-small';
   const caption = (
     <figcaption
@@ -89,9 +90,9 @@ export function AnswerHistogram({
   if (type === 'ordering') {
     const ids = stats.correctAnswers?.length ? stats.correctAnswers : options.map((o) => o.id);
     return (
-      <figure className={cn('w-full', className)} aria-label="Résultats de la question" data-testid="answer-histogram">
+      <figure className={cn('w-full', className)} aria-label={t('resultsAria')} data-testid="answer-histogram">
         {caption}
-        <p className={cn('mb-2 font-medium', textSize)}>Ordre attendu</p>
+        <p className={cn('mb-2 font-medium', textSize)}>{t('expectedOrder')}</p>
         <ol className="space-y-2" data-testid="histogram-ordering">
           {ids.map((id, i) => (
             <li
@@ -116,14 +117,14 @@ export function AnswerHistogram({
       .sort((a, b) => Number(b[1]) - Number(a[1]))
       .slice(0, 5);
     return (
-      <figure className={cn('w-full', className)} aria-label="Résultats de la question" data-testid="answer-histogram">
+      <figure className={cn('w-full', className)} aria-label={t('resultsAria')} data-testid="answer-histogram">
         {caption}
         <p className={cn('mb-3', textSize)} data-testid="histogram-accepted">
-          {acceptedList.length > 1 ? 'Réponses acceptées : ' : 'Réponse attendue : '}
+          {t('accepted', { count: acceptedList.length })}{' '}
           <strong>{acceptedList.join(' / ') || '—'}</strong>
         </p>
         {top.length > 0 && (
-          <ul className={cn('space-y-2', isProjection && 'space-y-[2vh]')} aria-label="Réponses les plus fréquentes">
+          <ul className={cn('space-y-2', isProjection && 'space-y-[2vh]')} aria-label={t('topAnswers')}>
             {top.map(([answer, n]) => {
               const count = Math.max(0, Number(n) || 0);
               const pct = percentOf(count, answered);
@@ -132,10 +133,11 @@ export function AnswerHistogram({
                 <li key={answer} data-testid="histogram-short-row" data-correct={ok || undefined}>
                   <div className={cn('flex items-baseline justify-between gap-3', textSize)}>
                     <span className="min-w-0 break-words">
-                      « {answer} »{ok && <span className="sr-only"> (acceptée)</span>}
+                      {t('quoted', { answer })}
+                      {ok && <span className="sr-only">{t('acceptedSr')}</span>}
                     </span>
                     <span className="shrink-0 tabular-nums">
-                      <span className="font-semibold">{pct} %</span> ({plural(count, 'réponse')})
+                      <span className="font-semibold">{t('percent', { value: pct })}</span> {t('count', { count })}
                     </span>
                   </div>
                   <div
@@ -162,7 +164,7 @@ export function AnswerHistogram({
   return (
     <figure
       className={cn('w-full', className)}
-      aria-label="Répartition des réponses"
+      aria-label={t('aria')}
       data-testid="answer-histogram"
     >
       {caption}
@@ -192,7 +194,7 @@ export function AnswerHistogram({
                       {opt.id}
                     </span>
                   )}
-                  <span className="min-w-0 break-words">{opt.text || answerLabel(opt.id, options)}</span>
+                  <span className="min-w-0 break-words">{opt.text ? optionText(opt.text) : answerLabel(opt.id, options)}</span>
                   {isCorrect && (
                     <span
                       className={cn(
@@ -201,14 +203,14 @@ export function AnswerHistogram({
                       )}
                     >
                       <Check className="h-[1em] w-[1em]" aria-hidden />
-                      Bonne réponse
+                      {t('correct')}
                     </span>
                   )}
                 </span>
                 <span className="shrink-0 tabular-nums">
-                  <span className="font-semibold">{pct} %</span>{' '}
+                  <span className="font-semibold">{t('percent', { value: pct })}</span>{' '}
                   <span className={isProjection ? 'text-ink-tertiary' : 'text-ink-secondary'}>
-                    ({plural(count, 'réponse')})
+                    {t('count', { count })}
                   </span>
                 </span>
               </div>

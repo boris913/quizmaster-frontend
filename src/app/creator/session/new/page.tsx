@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useQuiz } from '@/hooks/useQuiz';
 import { useSession } from '@/hooks/useSession';
 import { Button } from '@/components/ui/Button';
@@ -12,35 +13,25 @@ import { cn } from '@/lib/utils';
 import type { NicknameMode } from '@/lib/nickname';
 import type { ScoringMode } from '@/types';
 
-const NICKNAME_MODE_OPTIONS: { value: NicknameMode; label: string; description: string }[] = [
-  {
-    value: 'free',
-    label: 'Pseudos libres',
-    description: 'Chaque élève choisit son pseudo ; les termes inappropriés sont refusés.',
-  },
-  {
-    value: 'generated',
-    label: 'Pseudos générés',
-    description: 'Chaque élève tire un pseudo au sort (ex. « Loutre Curieuse »), 3 essais maximum.',
-  },
-];
-
-const SCORING_MODE_OPTIONS: { value: ScoringMode; label: string; badge?: string; description: string }[] = [
-  {
-    value: 'speed',
-    label: 'Vitesse',
-    description: 'Plus l’élève répond vite et juste, plus il marque de points.',
-  },
-  {
-    value: 'accuracy',
-    label: 'Précision',
-    badge: 'recommandé pour réviser',
-    description: 'Toute bonne réponse donnée dans le temps rapporte le maximum : inutile de se précipiter.',
-  },
-];
+const NICKNAME_MODES: NicknameMode[] = ['free', 'generated'];
+const SCORING_MODES: ScoringMode[] = ['speed', 'accuracy'];
 
 export default function NewSessionPage() {
+  const t = useTranslations('newSession');
+  const tc = useTranslations('common');
   const router = useRouter();
+
+  const NICKNAME_MODE_OPTIONS = NICKNAME_MODES.map((value) => ({
+    value,
+    label: t(`nickname.${value}.label`),
+    description: t(`nickname.${value}.desc`),
+  }));
+  const SCORING_MODE_OPTIONS = SCORING_MODES.map((value) => ({
+    value,
+    label: t(`scoring.${value}.label`),
+    badge: value === 'accuracy' ? t('scoring.accuracy.badge') : undefined,
+    description: t(`scoring.${value}.desc`),
+  }));
   const searchParams = useSearchParams();
   const quizId = searchParams.get('quizId');
   const { currentQuiz, fetchQuiz, isLoading: quizLoading } = useQuiz();
@@ -84,7 +75,7 @@ export default function NewSessionPage() {
   if (quizLoading) {
     return (
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-        <p className="text-ink-secondary">Chargement...</p>
+        <p className="text-ink-secondary">{tc('loading')}</p>
       </div>
     );
   }
@@ -92,9 +83,9 @@ export default function NewSessionPage() {
   if (!quizId || !currentQuiz) {
     return (
       <div className="min-h-screen bg-background p-6 flex flex-col items-center justify-center">
-        <p className="text-ink-secondary">Quiz introuvable</p>
+        <p className="text-ink-secondary">{t('notFound')}</p>
         <Button asChild className="mt-4">
-          <Link href="/creator/dashboard">Retour au tableau de bord</Link>
+          <Link href="/creator/dashboard">{t('backToDashboard')}</Link>
         </Button>
       </div>
     );
@@ -105,16 +96,17 @@ export default function NewSessionPage() {
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <Card className="max-w-md w-full p-8 text-center space-y-6">
           <CheckCircle2 className="mx-auto h-12 w-12 text-success" strokeWidth={1.5} aria-hidden />
-          <h2 className="text-2xl font-bold">Session créée !</h2>
-          <p className="text-ink-secondary">
-            Partagez ce mot de passe avec vos participants :
-          </p>
+          <h1 className="text-h2">{t('created')}</h1>
+          <p className="text-ink-secondary">{t('shareCode')}</p>
           <div className="flex items-center justify-center gap-3 bg-ink/[0.05] rounded-lg p-4">
             <span className="font-display text-3xl font-bold tracking-[0.12em] tabular-nums">
               {session.password}
             </span>
             <button
+              type="button"
               onClick={handleCopyPassword}
+              aria-label={copied ? t('copied') : t('copy')}
+              title={copied ? t('copied') : t('copy')}
               className="p-2 hover:bg-ink/[0.08] rounded transition-colors"
             >
               {copied ? (
@@ -124,25 +116,25 @@ export default function NewSessionPage() {
               )}
             </button>
           </div>
-          <p className="text-sm text-ink-secondary">
-            {currentQuiz.title} • {currentQuiz.total_questions} questions
+          <p className="text-small text-ink-secondary">
+            {t('summary', { title: currentQuiz.title, count: currentQuiz.total_questions })}
           </p>
-          <p className="text-sm text-ink-secondary">
-            {(session.nickname_mode ?? nicknameMode) === 'generated' ? 'Pseudos générés' : 'Pseudos libres'}
+          <p className="text-small text-ink-secondary">
+            {(session.nickname_mode ?? nicknameMode) === 'generated'
+              ? t('nickname.generated.label')
+              : t('nickname.free.label')}
           </p>
-          <p className="text-sm text-ink-secondary" data-testid="session-scoring-summary">
-            {(session.scoring_mode ?? scoringMode) === 'accuracy' ? 'Mode Précision' : 'Mode Vitesse'}
+          <p className="text-small text-ink-secondary" data-testid="session-scoring-summary">
+            {(session.scoring_mode ?? scoringMode) === 'accuracy' ? t('modeAccuracy') : t('modeSpeed')}
             {' • '}
-            {(session.show_leaderboard ?? !hideLeaderboard) === false
-              ? 'Classement masqué aux élèves'
-              : 'Classement visible'}
+            {(session.show_leaderboard ?? !hideLeaderboard) === false ? t('rankingHidden') : t('rankingVisible')}
           </p>
           <div className="flex flex-col gap-3">
             <Button onClick={() => router.push(`/creator/session/${session.id}`)}>
-              Accéder au panneau de contrôle
+              {t('openControl')}
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/creator/dashboard">Retour au tableau de bord</Link>
+              <Link href="/creator/dashboard">{t('backToDashboard')}</Link>
             </Button>
           </div>
         </Card>
@@ -155,23 +147,25 @@ export default function NewSessionPage() {
       <Card className="max-w-md w-full p-8 space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/creator/dashboard">
-              <ArrowLeft className="w-4 h-4" />
+            <Link href="/creator/dashboard" aria-label={t('backToDashboard')}>
+              <ArrowLeft className="w-4 h-4" aria-hidden />
             </Link>
           </Button>
-          <h2 className="text-xl font-bold">Nouvelle session</h2>
+          <h1 className="text-h3">{t('title')}</h1>
         </div>
         <div className="space-y-2">
           <p className="font-medium">{currentQuiz.title}</p>
-          <p className="text-sm text-ink-secondary">
-            {currentQuiz.total_questions} questions
+          <p className="text-small text-ink-secondary">
+            {t('questions', { count: currentQuiz.total_questions })}
           </p>
-          <p className="text-sm text-ink-secondary">
-            Timer : {currentQuiz.use_global_timer ? `global (${currentQuiz.global_timer_seconds}s)` : 'personnalisé'}
+          <p className="text-small text-ink-secondary">
+            {currentQuiz.use_global_timer
+              ? t('timerGlobal', { seconds: currentQuiz.global_timer_seconds })
+              : t('timerCustom')}
           </p>
         </div>
         <fieldset className="space-y-2">
-          <legend className="text-small font-medium text-ink mb-2">Pseudos des participants</legend>
+          <legend className="text-small font-medium text-ink mb-2">{t('nicknameLegend')}</legend>
           {NICKNAME_MODE_OPTIONS.map((option) => (
             <label
               key={option.value}
@@ -203,7 +197,7 @@ export default function NewSessionPage() {
           ))}
         </fieldset>
         <fieldset className="space-y-2">
-          <legend className="text-small font-medium text-ink mb-2">Mode de score</legend>
+          <legend className="text-small font-medium text-ink mb-2">{t('scoringLegend')}</legend>
           {SCORING_MODE_OPTIONS.map((option) => (
             <label
               key={option.value}
@@ -227,7 +221,7 @@ export default function NewSessionPage() {
                 <span id={`scoring-mode-${option.value}-label`} className="block font-medium">
                   {option.label}
                   {option.badge && (
-                    <span className="ml-2 rounded-full bg-success-50 px-2 py-0.5 text-caption font-medium text-success">
+                    <span className="ml-2 rounded-sm bg-primary-50 px-1.5 py-0.5 text-caption font-medium text-primary-700">
                       {option.badge}
                     </span>
                   )}
@@ -257,15 +251,15 @@ export default function NewSessionPage() {
           />
           <span className="space-y-0.5">
             <span id="hide-leaderboard-label" className="block font-medium">
-              Masquer le classement aux élèves
+              {t('hideLeaderboard')}
             </span>
             <span id="hide-leaderboard-desc" className="block text-small text-ink-secondary">
-              Chaque élève ne voit que son score et la réussite de la classe ; vous gardez le classement complet.
+              {t('hideLeaderboardDesc')}
             </span>
           </span>
         </label>
         <Button onClick={handleCreate} isLoading={sessionLoading} className="w-full">
-          Créer la session
+          {t('create')}
         </Button>
       </Card>
     </div>

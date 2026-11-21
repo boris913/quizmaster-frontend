@@ -4,6 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '../ui/Button';
 import { QuestionBuilder } from './QuestionBuilder';
 import { emptyQuestion, questionSchema, toPendingQuestion } from './questionSchema';
@@ -32,6 +33,8 @@ export function AddQuestionsForm({
   onCancel,
   isSubmitting,
 }: AddQuestionsFormProps) {
+  const t = useTranslations('addQuestions');
+  const tc = useTranslations('common');
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<
     z.input<typeof schema>,
     unknown,
@@ -70,14 +73,14 @@ export function AddQuestionsForm({
       ))}
       <div className="flex flex-wrap gap-3">
         <Button type="button" variant="outline" size="sm" onClick={() => append(emptyQuestion())}>
-          <Plus className="w-4 h-4 mr-1" /> Autre question
+          <Plus className="w-4 h-4" /> {t('another')}
         </Button>
         <Button type="submit" size="sm" isLoading={isSubmitting} disabled={fields.length === 0}>
-          Enregistrer les questions
+          {t('save')}
         </Button>
         {onCancel && (
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
-            Annuler
+            {tc('cancel')}
           </Button>
         )}
       </div>

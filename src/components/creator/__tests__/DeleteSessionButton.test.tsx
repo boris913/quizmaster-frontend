@@ -80,7 +80,7 @@ describe('DeleteSessionButton', () => {
     click('Supprimer définitivement');
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      "Session introuvable, ou vous n'en êtes pas le créateur."
+      "Session introuvable, ou vous n’en êtes pas le créateur."
     );
     expect(onDeleted).not.toHaveBeenCalled();
     expect(useSessionStore.getState().sessions).toHaveLength(1);

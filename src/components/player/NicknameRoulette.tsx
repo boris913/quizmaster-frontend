@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Dices } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '../ui/Button';
 import { MAX_NICKNAME_DRAWS } from '@/lib/nickname';
 
@@ -22,6 +23,7 @@ interface NicknameRouletteProps {
  * Entrée ou Espace) et annonce du pseudo tiré via une région `aria-live`.
  */
 export function NicknameRoulette({ suggestions, value, onChange, error, disabled }: NicknameRouletteProps) {
+  const t = useTranslations('join.roulette');
   const shouldReduceMotion = useReducedMotion();
   // Le parent remonte le composant (prop `key`) à chaque nouvelle série de propositions.
   const [draws, setDraws] = useState(0);
@@ -37,18 +39,17 @@ export function NicknameRoulette({ suggestions, value, onChange, error, disabled
     onChange(next);
   };
 
-  const plural = (n: number) => (n > 1 ? 's' : '');
-  const buttonLabel = draws === 0 ? 'Lancer la roulette' : 'Tirer un autre pseudo';
+  const buttonLabel = draws === 0 ? t('spin', { remaining }) : t('respin', { remaining });
   const errorId = 'nickname-roulette-error';
   const hintId = 'nickname-roulette-hint';
 
   return (
     <div role="group" aria-labelledby="nickname-roulette-label" className="space-y-2">
       <p id="nickname-roulette-label" className="text-small font-medium text-ink">
-        Votre pseudo
+        {t('label')}
       </p>
       <p id={hintId} className="text-caption text-ink-secondary">
-        Dans cette session, le pseudo est tiré au sort ({MAX_NICKNAME_DRAWS} essais maximum).
+        {t('hint', { max: MAX_NICKNAME_DRAWS })}
       </p>
 
       <div
@@ -66,7 +67,7 @@ export function NicknameRoulette({ suggestions, value, onChange, error, disabled
             transition={{ duration: 0.18 }}
             className={value ? 'text-h3 font-semibold text-ink' : 'text-small text-ink-secondary'}
           >
-            {value || 'Lance la roulette pour obtenir ton pseudo'}
+            {value || t('empty')}
           </motion.span>
         </AnimatePresence>
       </div>
@@ -79,12 +80,12 @@ export function NicknameRoulette({ suggestions, value, onChange, error, disabled
         disabled={disabled || exhausted}
         aria-describedby={error ? `${hintId} ${errorId}` : hintId}
       >
-        <Dices className="mr-2 h-4 w-4" aria-hidden="true" />
-        {buttonLabel} ({remaining} essai{plural(remaining)} restant{plural(remaining)})
+        <Dices className="h-4 w-4" aria-hidden="true" />
+        {buttonLabel}
       </Button>
 
       {exhausted && value && (
-        <p className="text-caption text-ink-secondary">Plus d&apos;essais : ce pseudo sera le tien.</p>
+        <p className="text-caption text-ink-secondary">{t('exhausted')}</p>
       )}
       {error && (
         <p id={errorId} className="text-small text-danger">

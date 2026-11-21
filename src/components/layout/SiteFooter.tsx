@@ -1,14 +1,16 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 /** Pied de page commun : lien vers la page de confidentialité (exigence #8). */
 export function SiteFooter() {
+  const t = useTranslations('footer');
   return (
     <footer className="border-t border-borderc">
       <div className="max-w-content mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-2 text-small text-ink-tertiary">
         <span>© Kwizora</span>
-        <nav aria-label="Liens légaux">
+        <nav aria-label={t('legalLinks')}>
           <Link href="/confidentialite" className="text-ink-secondary hover:text-ink hover:underline">
-            Confidentialité
+            {t('privacy')}
           </Link>
         </nav>
       </div>

@@ -2,6 +2,7 @@
 
 import { useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 export interface SortableListItem {
@@ -47,13 +48,14 @@ export function SortableList<T extends SortableListItem>({
   className,
   size = 'default',
 }: SortableListProps<T>) {
+  const t = useTranslations('sortable');
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const isLarge = size === 'large';
 
   const announce = (item: T, index: number) =>
-    setAnnouncement(`« ${item.label} » déplacé en position ${index + 1} sur ${items.length}.`);
+    setAnnouncement(t('moved', { label: item.label, position: index + 1, total: items.length }));
 
   const moveTo = (from: number, to: number) => {
     if (disabled || to < 0 || to >= items.length || from === to) return;
@@ -135,7 +137,7 @@ export function SortableList<T extends SortableListItem>({
               <button
                 type="button"
                 disabled={disabled}
-                aria-label={`Déplacer « ${item.label} », position ${index + 1} sur ${items.length}. Flèches haut et bas pour déplacer.`}
+                aria-label={t('dragAria', { label: item.label, position: index + 1, total: items.length })}
                 onKeyDown={(e) => onHandleKeyDown(e, index)}
                 onPointerDown={(e) => onPointerDown(e, item.id)}
                 onPointerMove={onPointerMove}
@@ -165,7 +167,7 @@ export function SortableList<T extends SortableListItem>({
                   type="button"
                   disabled={disabled || index === 0}
                   onClick={() => moveTo(index, index - 1)}
-                  aria-label={`Monter « ${item.label} »`}
+                  aria-label={t('up', { label: item.label })}
                   className={cn(
                     'flex items-center justify-center rounded text-ink-secondary hover:bg-ink/[0.05] disabled:opacity-30',
                     isLarge ? 'h-8 w-11' : 'h-6 w-8'
@@ -177,7 +179,7 @@ export function SortableList<T extends SortableListItem>({
                   type="button"
                   disabled={disabled || index === items.length - 1}
                   onClick={() => moveTo(index, index + 1)}
-                  aria-label={`Descendre « ${item.label} »`}
+                  aria-label={t('down', { label: item.label })}
                   className={cn(
                     'flex items-center justify-center rounded text-ink-secondary hover:bg-ink/[0.05] disabled:opacity-30',
                     isLarge ? 'h-8 w-11' : 'h-6 w-8'

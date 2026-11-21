@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
 import { FileText, Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 /**
  * Exemple d'import couvrant les types du backend #7 (syntaxe du parseur backend :
@@ -45,7 +46,13 @@ interface QuestionImporterProps {
   isImporting?: boolean;
 }
 
+const richCode = {
+  b: (chunks: React.ReactNode) => <strong>{chunks}</strong>,
+  code: (chunks: React.ReactNode) => <code className="font-mono">{chunks}</code>,
+};
+
 export function QuestionImporter({ onImport, isImporting }: QuestionImporterProps) {
+  const t = useTranslations('importer');
   const [questionsFile, setQuestionsFile] = useState<File | null>(null);
   const [answersFile, setAnswersFile] = useState<File | null>(null);
   const [questionsContent, setQuestionsContent] = useState('');
@@ -63,14 +70,14 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
 
   return (
     <Card className="p-6 space-y-6">
-      <div className="flex items-center gap-2 text-lg font-semibold">
-        <FileText className="w-5 h-5" />
-        Importer depuis un fichier
+      <div className="flex items-center gap-2 text-card-title">
+        <FileText className="w-5 h-5" aria-hidden />
+        {t('title')}
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-ink-secondary">Questions.md</label>
+          <label className="block text-small font-medium text-ink-secondary">{t('questionsFile')}</label>
           <div className="mt-1 flex items-center gap-2">
             <input
               type="file"
@@ -91,7 +98,7 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-ink-secondary">Reponses.md (optionnel)</label>
+          <label className="block text-small font-medium text-ink-secondary">{t('answersFile')}</label>
           <div className="mt-1 flex items-center gap-2">
             <input
               type="file"
@@ -111,37 +118,27 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
           </div>
         </div>
 
-        <div className="bg-background p-4 rounded-lg text-sm text-ink-secondary space-y-1">
-          <p>Format attendu :</p>
-          <pre className="bg-subtle p-2 rounded text-xs overflow-x-auto" data-testid="import-format-example">
+        <div className="bg-subtle p-4 rounded-lg text-small text-ink-secondary space-y-2">
+          <p>{t('format')}</p>
+          <pre className="bg-surface border border-borderc p-2 rounded-sm text-caption overflow-x-auto" data-testid="import-format-example">
             {IMPORT_FORMAT_EXAMPLE}
           </pre>
           <p data-testid="import-explanation-help">
-            Ligne facultative <code className="font-mono">&gt; Explication : …</code> sous la question, par exemple après les options
-            (500 caractères maximum) : elle est montrée aux élèves après la clôture de la question.
+            {t.rich('explanationHelp', { code: (chunks) => <code className="font-mono">{chunks}</code> })}
+          </p>
+          <p>
+            {t('keywordsNote')}
           </p>
           <ul className="list-disc space-y-1 pl-5" data-testid="import-types-help">
-            <li>
-              <strong>Image</strong> : une ligne <code className="font-mono">![texte](https://…)</code> sous
-              l&apos;en-tête (URL http(s) d&apos;une image).
-            </li>
-            <li>
-              <strong>Type</strong> : marqueur <code className="font-mono">[type: …]</code> sur la ligne
-              « Question N » (marqueurs dans n&apos;importe quel ordre) :{' '}
-              <code className="font-mono">true_false</code> (Vrai / Faux, réponse{' '}
-              <code className="font-mono">= vrai</code> ou <code className="font-mono">= faux</code>),{' '}
-              <code className="font-mono">ordering</code> (options A à F écrites dans l&apos;ordre attendu,
-              mélangées pour les élèves), <code className="font-mono">short_answer</code> (une ligne{' '}
-              <code className="font-mono">= …</code> par réponse acceptée ; casse, accents et ponctuation
-              finale ignorés), <code className="font-mono">poll</code> (sondage, sans bonne réponse ni point).
-            </li>
-            <li>Sans marqueur : réponse unique ou multiple selon le nombre de <code className="font-mono">[correct]</code>.</li>
+            <li>{t.rich('help.image', richCode)}</li>
+            <li>{t.rich('help.type', richCode)}</li>
+            <li>{t.rich('help.default', richCode)}</li>
           </ul>
         </div>
 
         <Button onClick={handleSubmit} isLoading={isImporting} disabled={!questionsContent}>
-          <Upload className="w-4 h-4 mr-2" />
-          Importer
+          <Upload className="w-4 h-4" />
+          {t('submit')}
         </Button>
       </div>
     </Card>
