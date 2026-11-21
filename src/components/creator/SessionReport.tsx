@@ -21,7 +21,11 @@ import {
   hasGradedQuestions,
   isGradedQuestion,
 } from '@/lib/sessionResults';
-import type { SessionResultsQuestion } from '@/types';
+import {
+  isQuestionType,
+  normalizeShortAnswer,
+  type SessionResultsQuestion,
+} from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { CircularStat } from '@/components/ui/CircularStat';
@@ -31,6 +35,7 @@ import { StatCard } from '@/components/ui/StatCard';
 import { ParticipantResultsTable } from '@/components/creator/ParticipantResultsTable';
 import { cn } from '@/lib/utils';
 import { useLocale, useTranslations } from 'next-intl';
+import { useAnswerLabels } from '@/i18n/answerLabel';
 
 function formatDate(iso: string | null, locale: string): string | null {
   if (!iso) return null;
@@ -39,9 +44,55 @@ function formatDate(iso: string | null, locale: string): string | null {
   return date.toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-GB', { dateStyle: 'long', timeStyle: 'short' });
 }
 
-/** Histogramme horizontal de la distribution des réponses ; les bonnes réponses sont en vert. */
+/**
+ * Répartition des réponses d'une question, adaptée à son type (backend #7) :
+ * barres par option (bonnes réponses en vert, aucune pour un sondage), ordre attendu pour
+ * « remettre dans l'ordre », réponses acceptées et fréquentes pour une réponse courte.
+ */
 function AnswerHistogram({ question }: { question: SessionResultsQuestion }) {
   const t = useTranslations('report');
+  const { answerLabel } = useAnswerLabels();
+  if (question.type === 'ordering') {
+    return (
+      <div className="text-small" data-testid="report-ordering">
+        <p className="text-ink-secondary">{t('expectedOrder')}</p>
+        <ol className="mt-1 list-decimal pl-5 text-ink">
+          {question.correctAnswers.map((id) => (
+            <li key={id}>{answerLabel(id, null)}</li>
+          ))}
+        </ol>
+      </div>
+    );
+  }
+  if (question.type === 'short_answer') {
+    const accepted = new Set(question.correctAnswers.map(normalizeShortAnswer));
+    const top = Object.entries(question.answerDistribution ?? {})
+      .filter(([, n]) => n > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+    return (
+      <div className="space-y-1.5 text-small" data-testid="report-short-answer">
+        <p className="text-ink-secondary">
+          {t('accepted', { count: question.correctAnswers.length })}{' '}
+          <strong className="text-success">{question.correctAnswers.join(' / ') || '—'}</strong>
+        </p>
+        {top.length > 0 && (
+          <ul aria-label={t('topAnswers')} className="space-y-0.5">
+            {top.map(([answer, n]) => (
+              <li key={answer} className="flex justify-between gap-2">
+                <span className={cn('min-w-0 break-words', accepted.has(normalizeShortAnswer(answer)) && 'text-success')}>
+                  {t('quoted', { answer })}
+                </span>
+                <span className="shrink-0 tabular-nums text-ink-secondary">{t('students', { count: n })}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
+  const isPoll = question.type === 'poll';
   const entries = Object.entries(question.answerDistribution);
   const max = Math.max(1, ...entries.map(([, n]) => n));
   const total = entries.reduce((sum, [, n]) => sum + n, 0);
@@ -51,13 +102,15 @@ function AnswerHistogram({ question }: { question: SessionResultsQuestion }) {
   return (
     <div className="space-y-1.5" aria-label={t('distributionAria')}>
       {entries.map(([optionId, count]) => {
-        const correct = question.correctAnswers.includes(optionId);
+        const correct = !isPoll && question.correctAnswers.includes(optionId);
         return (
           <div key={optionId} className="flex items-center gap-2 text-small">
-            <span className="w-6 shrink-0 font-display tabular-nums font-semibold text-ink">{optionId}</span>
+            <span className="w-10 shrink-0 font-display font-semibold text-ink">
+              {question.type === 'true_false' ? answerLabel(optionId, null) : optionId}
+            </span>
             <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink/[0.06]">
               <div
-                className={cn('h-full rounded-full', correct ? 'bg-success-solid' : 'bg-ink-tertiary/40')}
+                className={cn('h-full rounded-full', correct ? 'bg-success-solid' : isPoll ? 'bg-primary' : 'bg-ink-tertiary/40')}
                 style={{ width: `${(count / max) * 100}%` }}
               />
             </div>
@@ -105,6 +158,7 @@ function BackLink() {
 /** Rapport post-session : précision de la classe, questions à retravailler, tableau élèves, export CSV. */
 export function SessionReport({ sessionId }: { sessionId: string }) {
   const t = useTranslations('report');
+  const tq = useTranslations('questionTypes');
   const locale = useLocale();
   const { results, isLoading, error, refetch, exportCsv, isExporting, exportError } =
     useSessionResults(sessionId);
@@ -274,6 +328,30 @@ export function SessionReport({ sessionId }: { sessionId: string }) {
             </section>
           )}
 
+          {/* Sondages : répartition des votes, sans aucun pourcentage de réussite */}
+          {perQuestion.some((q) => !isGradedQuestion(q)) && (
+            <section aria-labelledby="polls-title" className="space-y-4">
+              <h2 id="polls-title" className="text-h3 text-ink">
+                {t('polls')}
+              </h2>
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                {perQuestion
+                  .filter((q) => !isGradedQuestion(q))
+                  .map((q) => (
+                    <Card key={q.questionId} className="p-5 space-y-4" data-testid="poll-question">
+                      <div className="space-y-1">
+                        <p className="text-caption font-medium text-ink-secondary">
+                          Question {q.orderIndex + 1} · non notée
+                        </p>
+                        <h3 className="text-card-title text-ink">{q.text}</h3>
+                      </div>
+                      <AnswerHistogram question={q} />
+                    </Card>
+                  ))}
+              </div>
+            </section>
+          )}
+
           {/* Élèves */}
           <section aria-labelledby="students-title" className="space-y-4">
             <h2 id="students-title" className="text-h3 text-ink">
@@ -297,6 +375,9 @@ export function SessionReport({ sessionId }: { sessionId: string }) {
                   <span className="text-small text-ink">
                     <span className="font-medium text-ink-secondary">{t('questionShort', { number: q.orderIndex + 1 })}</span>{' '}
                     {q.text}
+                    {isQuestionType(q.type) && q.type !== 'single' && q.type !== 'multiple' && q.type !== 'poll' && (
+                      <span className="ml-2 text-caption text-ink-secondary">({tq(q.type)})</span>
+                    )}
                   </span>
                   <span className="text-small tabular-nums text-ink-secondary shrink-0">
                     {isGradedQuestion(q) ? (

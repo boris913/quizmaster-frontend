@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
+import { useLocalizedMessage } from '@/i18n/localizeMessage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '../ui/Button';
@@ -10,62 +10,62 @@ import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
 import { QuestionBuilder } from './QuestionBuilder';
 import { Plus } from 'lucide-react';
-import { QUESTION_EXPLANATION_MAX_LENGTH } from '@/types';
+import {
+  emptyQuestion,
+  questionSchema,
+  questionToFormValues,
+  toPendingQuestion,
+  type PendingQuestion,
+} from './questionSchema';
+import type { QuestionPayload } from '@/types';
 
-type Translator = ReturnType<typeof useTranslations<'quizForm'>>;
+const quizSchema = z.object({
+  title: z.string().min(3, 'Titre requis (3 caractères min)').max(200),
+  description: z.string().max(1000).optional(),
+  global_timer_seconds: z.number().min(5).max(300),
+  use_global_timer: z.boolean(),
+  questions: z.array(questionSchema),
+});
 
-function buildQuizSchema(t: Translator) {
-  const questionSchema = z.object({
-    text: z.string().min(1, t('errors.textRequired')),
-    type: z.enum(['single', 'multiple']),
-    options: z
-      .array(
-        z.object({
-          id: z.string(),
-          text: z.string().min(1, t('errors.optionRequired')),
-        })
-      )
-      .min(2, t('errors.minOptions')),
-    correct_answers: z.array(z.string()).min(1, t('errors.minCorrect')),
-    max_points: z.number().min(10, t('errors.pointsRange')).max(1000, t('errors.pointsRange')),
-    timer_seconds: z.number().min(5, t('errors.timerRange')).max(300, t('errors.timerRange')).optional(),
-    // Facultative : une chaîne vide n'est pas envoyée au backend.
-    explanation: z
-      .string()
-      .max(QUESTION_EXPLANATION_MAX_LENGTH, t('errors.maxChars', { count: QUESTION_EXPLANATION_MAX_LENGTH }))
-      .optional()
-      .transform((v) => (v && v.trim() ? v.trim() : undefined)),
-  });
+type QuizFormInput = z.input<typeof quizSchema>;
+type QuizFormOutput = z.output<typeof quizSchema>;
 
-  return z.object({
-    title: z.string().min(3, t('errors.titleRequired')).max(200),
-    description: z.string().max(1000).optional(),
-    global_timer_seconds: z.number().min(5, t('errors.timerRange')).max(300, t('errors.timerRange')),
-    use_global_timer: z.boolean(),
-    questions: z.array(questionSchema),
-  });
+/**
+ * Données soumises : les questions sont déjà au format API (sémantique de `correct_answers`
+ * par type). Une question peut porter un `image_file` à téléverser une fois le quiz créé.
+ */
+export interface QuizFormSubmitData {
+  title: string;
+  description?: string;
+  global_timer_seconds: number;
+  use_global_timer: boolean;
+  questions: PendingQuestion[];
 }
-
-type QuizFormData = z.infer<ReturnType<typeof buildQuizSchema>>;
 
 interface QuizFormProps {
-  initialData?: Partial<QuizFormData>;
-  onSubmit: (data: QuizFormData) => Promise<void>;
+  initialData?: Partial<Omit<QuizFormSubmitData, 'questions'>> & {
+    questions?: (Partial<QuestionPayload> & { image_url?: string | null })[];
+  };
+  onSubmit: (data: QuizFormSubmitData) => Promise<void> | void;
   isSubmitting?: boolean;
+  /** Quiz existant : les images sont envoyées dès leur sélection. */
+  quizId?: string;
+  submitLabel?: string;
 }
 
-export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps) {
+export function QuizForm({ initialData, onSubmit, isSubmitting, quizId, submitLabel }: QuizFormProps) {
   const t = useTranslations('quizForm');
-  const quizSchema = useMemo(() => buildQuizSchema(t), [t]);
-  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<QuizFormData>({
+  const localize = useLocalizedMessage();
+  const { questions: initialQuestions, ...initialQuiz } = initialData ?? {};
+  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<QuizFormInput, unknown, QuizFormOutput>({
     resolver: zodResolver(quizSchema),
     defaultValues: {
       title: '',
       description: '',
       global_timer_seconds: 30,
       use_global_timer: true,
-      questions: [],
-      ...initialData,
+      ...initialQuiz,
+      questions: (initialQuestions ?? []).map(questionToFormValues),
     },
   });
 
@@ -76,11 +76,14 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
 
   const useGlobalTimer = watch('use_global_timer');
 
+  const submit = (data: QuizFormOutput) =>
+    onSubmit({ ...data, questions: data.questions.map(toPendingQuestion) });
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(submit)} className="space-y-8">
       <Card className="p-6 space-y-4">
         <h2 className="text-card-title">{t('general')}</h2>
-        <Input label={t('title')} {...register('title')} error={errors.title?.message} />
+        <Input label={t('title')} {...register('title')} error={localize(errors.title?.message)} />
         <Input label={t('description')} {...register('description')} />
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-small">
@@ -97,7 +100,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
             label={t('globalTimer')}
             type="number"
             {...register('global_timer_seconds', { valueAsNumber: true })}
-            error={errors.global_timer_seconds?.message}
+            error={localize(errors.global_timer_seconds?.message)}
           />
         )}
       </Card>
@@ -105,24 +108,7 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-card-title">{t('questions', { count: fields.length })}</h2>
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => append({
-              text: '',
-              type: 'single',
-              options: [
-                { id: 'A', text: '' },
-                { id: 'B', text: '' },
-                { id: 'C', text: '' },
-                { id: 'D', text: '' },
-              ],
-              correct_answers: [],
-              max_points: 100,
-              timer_seconds: 30,
-              explanation: '',
-            })}
-          >
+          <Button type="button" size="sm" onClick={() => append(emptyQuestion())}>
             <Plus className="w-4 h-4" /> {t('addQuestion')}
           </Button>
         </div>
@@ -139,12 +125,13 @@ export function QuizForm({ initialData, onSubmit, isSubmitting }: QuizFormProps)
             onRemove={() => remove(index)}
             useGlobalTimer={useGlobalTimer}
             globalTimer={watch('global_timer_seconds')}
+            quizId={quizId}
           />
         ))}
       </div>
 
       <Button type="submit" isLoading={isSubmitting} className="w-full">
-        {t('submit')}
+        {submitLabel ?? t('submit')}
       </Button>
     </form>
   );

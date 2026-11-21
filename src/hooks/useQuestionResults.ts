@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSocket } from './useSocket';
 import {
+  normalizePlayerQuestion,
   normalizeQuestionStats,
+  type QuestionType,
   type QuizOption,
   type WsQuestionStartPayload,
   type WsQuestionStatsPayload,
@@ -20,9 +22,21 @@ export interface QuestionResultsState {
   stats: WsQuestionStatsPayload | null;
   /** Options de la dernière question lancée (reçues avec `question:start`). */
   options: QuizOption[];
+  /** Type de la dernière question lancée (backend #7) : adapte l'histogramme (sondage, ordre…). */
+  questionType: QuestionType | null;
+  /** Énoncé et image de la dernière question lancée. */
+  questionText: string;
+  imageUrl: string | null;
 }
 
-const initialState: QuestionResultsState = { view: 'idle', stats: null, options: [] };
+const initialState: QuestionResultsState = {
+  view: 'idle',
+  stats: null,
+  options: [],
+  questionType: null,
+  questionText: '',
+  imageUrl: null,
+};
 
 /**
  * Suit les statistiques de fin de question pour le créateur (room créateur).
@@ -36,8 +50,16 @@ export function useQuestionResults() {
     if (!socket || !isConnected) return;
 
     const onQuestionStart = (data: WsQuestionStartPayload) => {
-      const options = Array.isArray(data?.question?.options) ? data.question.options : [];
-      setState({ view: 'question', stats: null, options });
+      if (!data?.question) return setState({ ...initialState, view: 'question' });
+      const q = normalizePlayerQuestion(data.question);
+      setState({
+        view: 'question',
+        stats: null,
+        options: q.options,
+        questionType: q.type,
+        questionText: q.text ?? '',
+        imageUrl: q.image_url,
+      });
     };
 
     const onQuestionStats = (raw: unknown) => {

@@ -20,7 +20,9 @@
       "3": "Médaille de bronze"
     },
     "cancel": "Annuler",
-    "back": "Retour"
+    "back": "Retour",
+    "true": "Vrai",
+    "false": "Faux"
   },
   "nav": {
     "teacher": "Enseignant",
@@ -194,7 +196,15 @@
       "wrong": "Mauvaise réponse",
       "yourAnswer": "Votre réponse :",
       "correctAnswers": "{count, plural, one {Bonne réponse :} other {Bonnes réponses :}}",
-      "explanation": "Explication"
+      "explanation": "Explication",
+      "pollVoted": "Vote enregistré",
+      "pollNone": "Pas de vote",
+      "pollChoice": "Votre choix :",
+      "pollNote": "Sondage : pas de bonne réponse, aucun point en jeu.",
+      "correctLabel": {
+        "accepted": "{count, plural, one {Réponse attendue :} other {Réponses acceptées :}}",
+        "ordering": "Ordre attendu :"
+      }
     },
     "result": {
       "timeoutTitle": "Temps écoulé !",
@@ -213,7 +223,15 @@
       "submit": "Valider ma réponse",
       "counter": "Question {current} / {total}",
       "counterShort": "Question {current}/{total}",
-      "multipleHint": "Sélectionnez plusieurs réponses (cliquez à nouveau pour désélectionner)"
+      "multipleHint": "Sélectionnez plusieurs réponses (cliquez à nouveau pour désélectionner)",
+      "vote": "Envoyer mon vote",
+      "pollBadge": "Sondage · non noté",
+      "orderingHint": "Remettez les éléments dans le bon ordre : glissez la poignée, ou utilisez les flèches haut et bas.",
+      "orderingAria": "Éléments à remettre dans l'ordre",
+      "yourAnswer": "Votre réponse",
+      "typeHere": "Tapez votre réponse",
+      "answersAria": "Réponses",
+      "pollHint": "Pas de bonne ou de mauvaise réponse : donnez votre avis."
     },
     "timer": {
       "aria": "{left} secondes restantes sur {total}"
@@ -226,7 +244,8 @@
       "paused": "Le quiz est en pause…",
       "waitingNext": "En attente de la prochaine question…",
       "revealAtEnd": "Correction à la fin de la question…",
-      "loading": "Chargement du quiz…"
+      "loading": "Chargement du quiz…",
+      "poll": "Sondage"
     },
     "score": {
       "yourScore": "Votre score",
@@ -289,7 +308,8 @@
       "seeQuizzes": "Voir mes quiz",
       "untitled": "Quiz sans titre",
       "report": "Voir le rapport",
-      "reportAria": "Voir le rapport : {title}"
+      "reportAria": "Voir le rapport : {title}",
+      "homework": "devoir"
     }
   },
   "status": {
@@ -373,8 +393,32 @@
       "explanation": "Explication (facultatif)",
       "explanationPlaceholder": "Affichée aux élèves après la clôture de la question",
       "maxPoints": "Points max",
-      "timer": "Minuteur (secondes)",
-      "globalTimer": "Minuteur commun : {seconds} s"
+      "timer": "Timer (secondes)",
+      "globalTimer": "Timer global : {seconds} s",
+      "hint": {
+        "single": "Une seule bonne réponse parmi les options.",
+        "multiple": "Plusieurs bonnes réponses possibles.",
+        "true_false": "Les élèves répondent Vrai ou Faux.",
+        "ordering": "Saisissez les éléments dans l'ordre attendu : ils seront mélangés pour les élèves.",
+        "short_answer": "Les élèves tapent leur réponse ; casse, accents et ponctuation finale sont ignorés.",
+        "poll": "Sondage : pas de bonne réponse, aucun point, exclu des pourcentages de réussite."
+      },
+      "typeLegend": "Type de question",
+      "correctAnswer": "Bonne réponse",
+      "orderingItems": "Éléments, dans l’ordre attendu",
+      "orderingAria": "Ordre attendu des éléments",
+      "itemPlaceholder": "Élément {id}",
+      "optionAria": "Option {id}",
+      "removeOption": "Supprimer l'option {id}",
+      "markCorrectAria": "Marquer l'option {id} comme bonne réponse",
+      "addOption": "Ajouter une option",
+      "acceptedAnswers": "Réponses acceptées",
+      "acceptedAria": "Réponse acceptée {number}",
+      "acceptedFirstPlaceholder": "Ex. : Paris",
+      "acceptedOtherPlaceholder": "Autre variante",
+      "removeAccepted": "Supprimer la réponse acceptée {number}",
+      "addVariant": "Ajouter une variante",
+      "maxPointsPoll": "Points max (non utilisés)"
     }
   },
   "importer": {
@@ -392,10 +436,18 @@
     "quizDescription": "Description (facultatif)",
     "globalTimer": "Minuteur commun",
     "seconds": "Secondes",
-    "defaultTitle": "Quiz importé"
+    "defaultTitle": "Quiz importé",
+    "help": {
+      "image": "<b>Image</b> : une ligne <code>![texte](https://…)</code> sous l’en-tête (URL http(s) d’une image).",
+      "type": "<b>Type</b> : marqueur <code>[type: …]</code> sur la ligne « Question N » (marqueurs dans n’importe quel ordre) : <code>true_false</code> (Vrai / Faux, réponse <code>= vrai</code> ou <code>= faux</code>), <code>ordering</code> (options A à F écrites dans l’ordre attendu, mélangées pour les élèves), <code>short_answer</code> (une ligne <code>= …</code> par réponse acceptée ; casse, accents et ponctuation finale ignorés), <code>poll</code> (sondage, sans bonne réponse ni point).",
+      "default": "Sans marqueur : réponse unique ou multiple selon le nombre de <code>[correct]</code>."
+    }
   },
   "newQuiz": {
-    "title": "Créer un nouveau quiz"
+    "title": "Créer un nouveau quiz",
+    "imageFailures": "Quiz créé, mais l’image n’a pas pu être envoyée pour : {list}.",
+    "questionN": "question {number}",
+    "saveError": "Le quiz n’a pas pu être enregistré. Vérifiez les champs puis réessayez."
   },
   "quizDetail": {
     "confirmDelete": "Supprimer ce quiz définitivement ?",
@@ -413,7 +465,12 @@
       "single": "Réponse unique",
       "multiple": "Réponses multiples"
     },
-    "seconds": "{seconds} s"
+    "seconds": "{seconds} s",
+    "assign": "Assigner en devoir",
+    "notGraded": "non noté",
+    "addError": "Les questions n’ont pas pu être enregistrées. Réessayez.",
+    "acceptedAria": "Réponses acceptées",
+    "orderAria": "Ordre attendu"
   },
   "newSession": {
     "nickname": {
@@ -497,7 +554,9 @@
     "classAccuracy": "{value} %",
     "classAccuracyLabel": "de bonnes réponses pour la classe",
     "bravo": "Bravo à toute la classe !",
-    "pause": "Pause"
+    "pause": "Pause",
+    "typeOnDevice": "Tapez votre réponse sur votre appareil",
+    "orderOnDevice": "Remettez ces éléments dans le bon ordre sur votre appareil :"
   },
   "histogram": {
     "aria": "Répartition des réponses",
@@ -505,7 +564,14 @@
     "summary": "{answered, plural, one {# réponse} other {# réponses}} sur {total, plural, one {# participant} other {# participants}} · {accuracy} % des participants ont répondu juste",
     "correct": "Bonne réponse",
     "percent": "{value} %",
-    "count": "({count, plural, one {# réponse} other {# réponses}})"
+    "count": "({count, plural, one {# réponse} other {# réponses}})",
+    "pollSummary": "{answered, plural, one {# vote} other {# votes}} sur {total, plural, one {# participant} other {# participants}} · sondage, sans bonne réponse",
+    "resultsAria": "Résultats de la question",
+    "expectedOrder": "Ordre attendu",
+    "accepted": "{count, plural, one {Réponse attendue :} other {Réponses acceptées :}}",
+    "topAnswers": "Réponses les plus fréquentes",
+    "acceptedSr": " (acceptée)",
+    "quoted": "« {answer} »"
   },
   "report": {
     "distributionAria": "Distribution des réponses",
@@ -555,7 +621,12 @@
       "accuracy": "Précision",
       "avgTimeMs": "Temps moyen",
       "timeouts": "Sans réponse"
-    }
+    },
+    "expectedOrder": "Ordre attendu :",
+    "accepted": "{count, plural, one {Réponse attendue :} other {Réponses acceptées :}}",
+    "topAnswers": "Réponses les plus fréquentes",
+    "quoted": "« {answer} »",
+    "polls": "Sondages"
   },
   "privacy": {
     "metaTitle": "Confidentialité — Kwizora",
@@ -617,5 +688,162 @@
       "title": "Contact",
       "text": "Pour toute question ou demande concernant vos données : <b>{contact}</b>"
     }
+  },
+  "questionTypes": {
+    "single": "Réponse unique",
+    "multiple": "Réponses multiples",
+    "true_false": "Vrai / Faux",
+    "ordering": "Remettre dans l’ordre",
+    "short_answer": "Réponse courte",
+    "poll": "Sondage"
+  },
+  "validation": {
+    "textRequired": "Texte requis",
+    "titleRequired": "Titre requis (3 caractères min.)",
+    "maxChars": "{count} caractères maximum",
+    "chooseTrueFalse": "Choisissez Vrai ou Faux",
+    "minAccepted": "Au moins une réponse acceptée",
+    "maxAccepted": "{count} réponses acceptées au plus",
+    "acceptedMaxChars": "{count} caractères au plus par réponse acceptée",
+    "minOptions": "Au moins {count} options, toutes renseignées",
+    "maxOptions": "{count} options au plus",
+    "minCorrect": "Au moins une bonne réponse",
+    "imageFormat": "Format non accepté : PNG, JPEG, WebP ou GIF uniquement.",
+    "imageTooBig": "Image trop lourde : 2 Mo maximum.",
+    "imageUpload": "Échec de l’envoi de l’image.",
+    "min": "Valeur minimale : {count}",
+    "max": "Valeur maximale : {count}",
+    "dueRequired": "Indiquez une date et une heure d’échéance.",
+    "dueTooSoon": "L’échéance doit être au moins 15 minutes après maintenant.",
+    "dueTooFar": "L’échéance ne peut pas dépasser {count} jours.",
+    "atLeastOneQuestion": "Ajoutez au moins une question"
+  },
+  "assignment": {
+    "errors": {
+      "notFound": "Ce devoir est introuvable. Vérifie le lien ou le code donné par ton enseignant.",
+      "expired": "L’échéance de ce devoir est passée : il n’est plus possible d’y répondre.",
+      "closed": "Ce devoir a été clos par ton enseignant : il n’est plus possible d’y répondre.",
+      "nickname": "Ce pseudo n'est pas accepté. Choisis-en un autre.",
+      "nicknameTaken": "Ce pseudo est déjà utilisé pour ce devoir. Choisis-en un autre.",
+      "invalidToken": "Ta progression n’a pas pu être retrouvée. Saisis ton pseudo pour recommencer.",
+      "alreadyAnswered": "Tu as déjà répondu à cette question.",
+      "kicked": "Tu as été exclu de ce devoir par l'enseignant.",
+      "network": "Impossible de joindre le serveur. Vérifie ta connexion et réessaie.",
+      "generic": "Une erreur est survenue. Réessaie dans un instant."
+    },
+    "blocked": {
+      "expired": "Échéance passée",
+      "closed": "Devoir clos",
+      "notFound": "Devoir introuvable",
+      "other": "Oups"
+    },
+    "backHome": "Retour à l’accueil",
+    "retry": "Réessayer",
+    "doneTitle": "Devoir terminé !",
+    "doneTitleNamed": "Devoir terminé, {pseudo} !",
+    "correctOf": "{correct, plural, one {# bonne réponse} other {# bonnes réponses}} sur {total}",
+    "sent": "Tes réponses ont été transmises à ton enseignant.",
+    "review": "Correction",
+    "loading": "Chargement du devoir…",
+    "pseudoTitle": "Devoir à faire à ton rythme",
+    "code": "Code <b>{code}</b>",
+    "pseudoLabel": "Ton pseudo",
+    "start": "Commencer",
+    "resumeHint": "Tu peux fermer cette page et revenir plus tard sur ce même appareil : ta progression est gardée.",
+    "resend": "Renvoyer ma réponse",
+    "recorded": "Réponse enregistrée",
+    "correctionAtEnd": "La correction sera affichée à la fin du devoir.",
+    "seeResult": "Voir mon résultat",
+    "next": "Question suivante",
+    "dueBefore": "À terminer avant le {date}",
+    "pseudoMin": "Au moins {count} caractères.",
+    "pseudoMax": "{count} caractères maximum."
+  },
+  "assignDialog": {
+    "scoring": {
+      "accuracy": {
+        "label": "Précision",
+        "desc": "Toute bonne réponse donnée dans le temps rapporte le maximum."
+      },
+      "speed": {
+        "label": "Vitesse",
+        "desc": "Plus l’élève répond vite et juste, plus il marque de points."
+      }
+    },
+    "expl": {
+      "each": {
+        "label": "Après chaque question",
+        "desc": "L’élève voit la correction et l’explication dès qu’il a répondu."
+      },
+      "end": {
+        "label": "À la fin du devoir",
+        "desc": "La correction complète n’apparaît qu’une fois toutes les questions faites."
+      }
+    },
+    "errors": {
+      "network": "Impossible de joindre le serveur. Réessayez.",
+      "generic": "La création du devoir a échoué. Réessayez dans un instant."
+    },
+    "titleCreated": "Devoir créé",
+    "title": "Assigner en devoir",
+    "close": "Fermer",
+    "dueBefore": "À rendre avant le <b>{date}</b>.",
+    "share": "Partagez ce lien ou ce QR code avec vos élèves :",
+    "qrLabel": "QR code du devoir {code}",
+    "copyLink": "Copier le lien",
+    "copied": "Copié",
+    "copy": "Copier",
+    "code": "Code : <b>{code}</b>",
+    "done": "Terminé",
+    "due": "Échéance",
+    "dueHint": "Au moins 15 minutes après maintenant.",
+    "scoringLegend": "Mode de score",
+    "explLegend": "Correction et explications",
+    "create": "Créer le devoir"
+  },
+  "activeAssignments": {
+    "errors": {
+      "network": "Impossible de joindre le serveur. Réessayez.",
+      "notFound": "Devoir introuvable, ou vous n'en êtes pas le créateur.",
+      "generic": "L’action a échoué. Réessayez dans un instant.",
+      "notLater": "La nouvelle échéance doit être postérieure à l’échéance actuelle."
+    },
+    "untitled": "Quiz sans titre",
+    "confirmClose": "Clore le devoir « {title} » ? Les élèves ne pourront plus répondre.",
+    "noDue": "Sans échéance",
+    "due": "Échéance : {date}",
+    "duePassed": "Échéance passée ({date})",
+    "completion": "{completed} / {started, plural, one {# élève} other {# élèves}} {completed, plural, one {a} other {ont}} terminé",
+    "completionInReport": "Complétion détaillée dans le rapport",
+    "extend": "Prolonger",
+    "close": "Clore",
+    "reportAria": "Voir le rapport : {title}",
+    "newDue": "Nouvelle échéance",
+    "confirm": "Valider",
+    "title": "Devoirs en cours"
+  },
+  "image": {
+    "previewAlt": "Aperçu de l'image : {alt}",
+    "previewAltDefault": "Aperçu de l'image de la question",
+    "replace": "Remplacer",
+    "remove": "Supprimer l'image",
+    "sentOnSave": "L’image sera envoyée à l’enregistrement du quiz.",
+    "drop": "Glissez une image ici ou",
+    "choose": "Choisir une image",
+    "formats": "PNG, JPEG, WebP ou GIF · 2 Mo maximum",
+    "uploading": "Envoi de l’image…",
+    "alt": "Illustration de la question : {text}",
+    "altDefault": "Illustration de la question",
+    "uploadFailed": "Échec de l'envoi de l'image."
+  },
+  "sortable": {
+    "moved": "« {label} » déplacé en position {position} sur {total}.",
+    "dragAria": "Déplacer « {label} », position {position} sur {total}. Flèches haut et bas pour déplacer.",
+    "up": "Monter « {label} »",
+    "down": "Descendre « {label} »"
+  },
+  "addQuestions": {
+    "another": "Autre question",
+    "save": "Enregistrer les questions"
   }
 }

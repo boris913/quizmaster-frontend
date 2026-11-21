@@ -7,6 +7,7 @@ import { useSessionStore } from '@/store/sessionStore';
 import { useProjectionFeed, useRemainingSeconds } from '@/hooks/useProjectionFeed';
 import { JoinQrCode } from '@/components/ui/JoinQrCode';
 import { AnswerHistogram, histogramOptions } from '@/components/ui/AnswerHistogram';
+import { QuestionImage } from '@/components/ui/QuestionImage';
 import { getAppBaseUrl, normalizeSessionCode } from '@/lib/sessionCode';
 import { cn } from '@/lib/utils';
 import { answerTone } from '@/lib/answerTone';
@@ -51,6 +52,7 @@ function useFullscreen() {
 export default function SessionPresentPage() {
   const t = useTranslations('present');
   const tc = useTranslations('common');
+  const tq = useTranslations('questionTypes');
   const params = useParams();
   const sessionId = params?.id as string;
   const { currentSession, participants: restParticipants, fetchSession, fetchParticipants } =
@@ -196,6 +198,9 @@ export default function SessionPresentPage() {
               <div className="min-w-0">
                 <p className="text-[clamp(1.25rem,2vw,2.25rem)] text-ink-tertiary">
                   {t('questionOf', { current: feed.question.number, total: feed.question.total })}
+                  {feed.question.type !== 'single' && feed.question.type !== 'multiple' && (
+                    <span data-testid="question-type"> · {tq(feed.question.type)}</span>
+                  )}
                 </p>
                 <h2
                   className="mt-2 text-[clamp(2rem,4vw,4.5rem)] font-bold leading-tight"
@@ -218,6 +223,26 @@ export default function SessionPresentPage() {
               </div>
             </div>
 
+            {feed.question.imageUrl && (
+              <QuestionImage
+                src={feed.question.imageUrl}
+                questionText={feed.question.text}
+                className="max-h-[35vh]"
+              />
+            )}
+
+            {feed.question.type === 'short_answer' && (
+              <p className="m-auto text-center text-[clamp(1.5rem,3vw,3rem)] text-ink-secondary">
+                {t('typeOnDevice')}
+              </p>
+            )}
+
+            {feed.question.type === 'ordering' && feed.question.options.length > 0 && (
+              <p className="text-[clamp(1.25rem,2vw,2.25rem)] text-ink-secondary">
+                {t('orderOnDevice')}
+              </p>
+            )}
+
             {feed.question.options.length > 0 && (
               <ul className="grid flex-1 grid-cols-2 gap-[2vw]">
                 {feed.question.options.map((opt, i) => (
@@ -228,7 +253,9 @@ export default function SessionPresentPage() {
                       answerTone(opt.id, i).bg
                     )}
                   >
-                    <span className="flex h-[1.6em] w-[1.6em] shrink-0 items-center justify-center rounded-md bg-white/20 font-display font-bold">{opt.id}</span>
+                    {feed.question?.type !== 'true_false' && (
+                      <span className="flex h-[1.6em] w-[1.6em] shrink-0 items-center justify-center rounded-md bg-white/20 font-display font-bold">{opt.id}</span>
+                    )}
                     <span className="min-w-0 break-words">{opt.text}</span>
                   </li>
                 ))}
@@ -266,6 +293,7 @@ export default function SessionPresentPage() {
               variant="projection"
               options={histogramOptions(feed.question?.options, feed.stats)}
               stats={feed.stats}
+              questionType={feed.question?.type}
             />
           </div>
         )}

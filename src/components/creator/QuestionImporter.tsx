@@ -7,10 +7,49 @@ import { Card } from '../ui/Card';
 import { FileText, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+/**
+ * Exemple d'import couvrant les types du backend #7 (syntaxe du parseur backend :
+ * marqueurs `[type: …]` sur la ligne « Question N », image `![texte](url)`, réponses
+ * attendues `= …`). Sans marqueur : choix unique ou multiple selon le nombre de `[correct]`.
+ */
+export const IMPORT_FORMAT_EXAMPLE = `Question 1 [timer:30] [points:100]
+Quelle est la capitale ?
+![Carte de l'Europe](https://exemple.fr/carte-europe.png)
+A) Londres
+B) Berlin
+C) Paris [correct]
+D) Madrid
+> Explication : Paris est la capitale de la France.
+
+Question 2 [type: true_false] [points:50]
+La Terre est plate.
+= faux
+
+Question 3 [type: ordering] [timer:40]
+Remettez dans l'ordre chronologique (options dans l'ordre attendu) :
+A) Antiquité
+B) Moyen Âge
+C) Renaissance
+
+Question 4 [type: short_answer]
+Capitale de l'Italie ?
+= Rome
+= Roma
+
+Question 5 [type: poll]
+Quel thème pour la prochaine séance ?
+A) Volcans
+B) Océans`;
+
 interface QuestionImporterProps {
   onImport: (questionsContent: string, answersContent?: string) => Promise<void>;
   isImporting?: boolean;
 }
+
+const richCode = {
+  b: (chunks: React.ReactNode) => <strong>{chunks}</strong>,
+  code: (chunks: React.ReactNode) => <code className="font-mono">{chunks}</code>,
+};
 
 export function QuestionImporter({ onImport, isImporting }: QuestionImporterProps) {
   const t = useTranslations('importer');
@@ -81,8 +120,8 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
 
         <div className="bg-subtle p-4 rounded-lg text-small text-ink-secondary space-y-2">
           <p>{t('format')}</p>
-          <pre className="bg-surface border border-borderc p-2 rounded-sm text-caption overflow-x-auto">
-            {`Question 1 [timer:30] [points:100]\nQuelle est la capitale ?\nA) Londres\nB) Berlin\nC) Paris [correct]\nD) Madrid\n> Explication : Paris est la capitale de la France.`}
+          <pre className="bg-surface border border-borderc p-2 rounded-sm text-caption overflow-x-auto" data-testid="import-format-example">
+            {IMPORT_FORMAT_EXAMPLE}
           </pre>
           <p data-testid="import-explanation-help">
             {t.rich('explanationHelp', { code: (chunks) => <code className="font-mono">{chunks}</code> })}
@@ -90,6 +129,11 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
           <p>
             {t('keywordsNote')}
           </p>
+          <ul className="list-disc space-y-1 pl-5" data-testid="import-types-help">
+            <li>{t.rich('help.image', richCode)}</li>
+            <li>{t.rich('help.type', richCode)}</li>
+            <li>{t.rich('help.default', richCode)}</li>
+          </ul>
         </div>
 
         <Button onClick={handleSubmit} isLoading={isImporting} disabled={!questionsContent}>

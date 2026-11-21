@@ -20,7 +20,9 @@
       "3": "Bronze medal"
     },
     "cancel": "Cancel",
-    "back": "Back"
+    "back": "Back",
+    "true": "True",
+    "false": "False"
   },
   "nav": {
     "teacher": "Teacher",
@@ -194,7 +196,15 @@
       "wrong": "Wrong answer",
       "yourAnswer": "Your answer:",
       "correctAnswers": "{count, plural, one {Correct answer:} other {Correct answers:}}",
-      "explanation": "Explanation"
+      "explanation": "Explanation",
+      "pollVoted": "Vote recorded",
+      "pollNone": "No vote",
+      "pollChoice": "Your choice:",
+      "pollNote": "Poll: no correct answer, no points at stake.",
+      "correctLabel": {
+        "accepted": "{count, plural, one {Expected answer:} other {Accepted answers:}}",
+        "ordering": "Expected order:"
+      }
     },
     "result": {
       "timeoutTitle": "Time’s up!",
@@ -213,7 +223,15 @@
       "submit": "Submit my answer",
       "counter": "Question {current} / {total}",
       "counterShort": "Question {current}/{total}",
-      "multipleHint": "Select several answers (click again to deselect)"
+      "multipleHint": "Select several answers (click again to deselect)",
+      "vote": "Submit my vote",
+      "pollBadge": "Poll · not graded",
+      "orderingHint": "Put the items in the right order: drag the handle, or use the up and down arrows.",
+      "orderingAria": "Items to put in order",
+      "yourAnswer": "Your answer",
+      "typeHere": "Type your answer",
+      "answersAria": "Answers",
+      "pollHint": "No right or wrong answer: share your opinion."
     },
     "timer": {
       "aria": "{left} seconds left out of {total}"
@@ -226,7 +244,8 @@
       "paused": "The quiz is paused…",
       "waitingNext": "Waiting for the next question…",
       "revealAtEnd": "Answers are revealed when the question ends…",
-      "loading": "Loading the quiz…"
+      "loading": "Loading the quiz…",
+      "poll": "Poll"
     },
     "score": {
       "yourScore": "Your score",
@@ -289,7 +308,8 @@
       "seeQuizzes": "See my quizzes",
       "untitled": "Untitled quiz",
       "report": "View report",
-      "reportAria": "View report: {title}"
+      "reportAria": "View report: {title}",
+      "homework": "homework"
     }
   },
   "status": {
@@ -374,7 +394,31 @@
       "explanationPlaceholder": "Shown to students once the question closes",
       "maxPoints": "Max points",
       "timer": "Timer (seconds)",
-      "globalTimer": "Shared timer: {seconds}s"
+      "globalTimer": "Shared timer: {seconds}s",
+      "hint": {
+        "single": "A single correct answer among the options.",
+        "multiple": "Several correct answers are possible.",
+        "true_false": "Students answer True or False.",
+        "ordering": "Enter the items in the expected order: they will be shuffled for students.",
+        "short_answer": "Students type their answer; case, accents and trailing punctuation are ignored.",
+        "poll": "Poll: no correct answer, no points, excluded from success rates."
+      },
+      "typeLegend": "Question type",
+      "correctAnswer": "Correct answer",
+      "orderingItems": "Items, in the expected order",
+      "orderingAria": "Expected order of the items",
+      "itemPlaceholder": "Item {id}",
+      "optionAria": "Option {id}",
+      "removeOption": "Delete option {id}",
+      "markCorrectAria": "Mark option {id} as correct",
+      "addOption": "Add an option",
+      "acceptedAnswers": "Accepted answers",
+      "acceptedAria": "Accepted answer {number}",
+      "acceptedFirstPlaceholder": "e.g. Paris",
+      "acceptedOtherPlaceholder": "Another variant",
+      "removeAccepted": "Delete accepted answer {number}",
+      "addVariant": "Add a variant",
+      "maxPointsPoll": "Max points (unused)"
     }
   },
   "importer": {
@@ -392,10 +436,18 @@
     "quizDescription": "Description (optional)",
     "globalTimer": "Shared timer",
     "seconds": "Seconds",
-    "defaultTitle": "Imported quiz"
+    "defaultTitle": "Imported quiz",
+    "help": {
+      "image": "<b>Image</b>: a line <code>![text](https://…)</code> under the header (http(s) URL of an image).",
+      "type": "<b>Type</b>: a <code>[type: …]</code> marker on the “Question N” line (markers in any order): <code>true_false</code> (True / False, answer <code>= vrai</code> or <code>= faux</code>), <code>ordering</code> (options A to F written in the expected order, shuffled for students), <code>short_answer</code> (one <code>= …</code> line per accepted answer; case, accents and trailing punctuation ignored), <code>poll</code> (poll, no correct answer and no points).",
+      "default": "Without a marker: single or multiple answer depending on the number of <code>[correct]</code>."
+    }
   },
   "newQuiz": {
-    "title": "Create a new quiz"
+    "title": "Create a new quiz",
+    "imageFailures": "Quiz created, but the image could not be uploaded for: {list}.",
+    "questionN": "question {number}",
+    "saveError": "The quiz could not be saved. Check the fields and try again."
   },
   "quizDetail": {
     "confirmDelete": "Delete this quiz permanently?",
@@ -413,7 +465,12 @@
       "single": "Single answer",
       "multiple": "Multiple answers"
     },
-    "seconds": "{seconds}s"
+    "seconds": "{seconds}s",
+    "assign": "Assign as homework",
+    "notGraded": "not graded",
+    "addError": "The questions could not be saved. Try again.",
+    "acceptedAria": "Accepted answers",
+    "orderAria": "Expected order"
   },
   "newSession": {
     "nickname": {
@@ -497,7 +554,9 @@
     "classAccuracy": "{value}%",
     "classAccuracyLabel": "correct answers for the class",
     "bravo": "Well done, everyone!",
-    "pause": "Paused"
+    "pause": "Paused",
+    "typeOnDevice": "Type your answer on your device",
+    "orderOnDevice": "Put these items in the right order on your device:"
   },
   "histogram": {
     "aria": "Answer breakdown",
@@ -505,7 +564,14 @@
     "summary": "{answered, plural, one {# answer} other {# answers}} from {total, plural, one {# player} other {# players}} · {accuracy}% answered correctly",
     "correct": "Correct answer",
     "percent": "{value}%",
-    "count": "({count, plural, one {# answer} other {# answers}})"
+    "count": "({count, plural, one {# answer} other {# answers}})",
+    "pollSummary": "{answered, plural, one {# vote} other {# votes}} from {total, plural, one {# player} other {# players}} · poll, no correct answer",
+    "resultsAria": "Question results",
+    "expectedOrder": "Expected order",
+    "accepted": "{count, plural, one {Expected answer:} other {Accepted answers:}}",
+    "topAnswers": "Most frequent answers",
+    "acceptedSr": " (accepted)",
+    "quoted": "“{answer}”"
   },
   "report": {
     "distributionAria": "Answer distribution",
@@ -555,7 +621,12 @@
       "accuracy": "Accuracy",
       "avgTimeMs": "Average time",
       "timeouts": "Unanswered"
-    }
+    },
+    "expectedOrder": "Expected order:",
+    "accepted": "{count, plural, one {Expected answer:} other {Accepted answers:}}",
+    "topAnswers": "Most frequent answers",
+    "quoted": "“{answer}”",
+    "polls": "Polls"
   },
   "privacy": {
     "metaTitle": "Privacy — Kwizora",
@@ -617,5 +688,162 @@
       "title": "Contact",
       "text": "For any question or request about your data: <b>{contact}</b>"
     }
+  },
+  "questionTypes": {
+    "single": "Single answer",
+    "multiple": "Multiple answers",
+    "true_false": "True / False",
+    "ordering": "Ordering",
+    "short_answer": "Short answer",
+    "poll": "Poll"
+  },
+  "validation": {
+    "textRequired": "Text is required",
+    "titleRequired": "Title is required (3 characters min.)",
+    "maxChars": "{count} characters max",
+    "chooseTrueFalse": "Choose True or False",
+    "minAccepted": "At least one accepted answer",
+    "maxAccepted": "{count} accepted answers at most",
+    "acceptedMaxChars": "{count} characters at most per accepted answer",
+    "minOptions": "At least {count} options, all filled in",
+    "maxOptions": "{count} options at most",
+    "minCorrect": "At least one correct answer",
+    "imageFormat": "Unsupported format: PNG, JPEG, WebP or GIF only.",
+    "imageTooBig": "Image too large: 2 MB max.",
+    "imageUpload": "The image could not be uploaded.",
+    "min": "Minimum value: {count}",
+    "max": "Maximum value: {count}",
+    "dueRequired": "Enter a deadline date and time.",
+    "dueTooSoon": "The deadline must be at least 15 minutes from now.",
+    "dueTooFar": "The deadline cannot be more than {count} days away.",
+    "atLeastOneQuestion": "Add at least one question"
+  },
+  "assignment": {
+    "errors": {
+      "notFound": "This homework could not be found. Check the link or code your teacher gave you.",
+      "expired": "The deadline for this homework has passed: it can no longer be answered.",
+      "closed": "Your teacher closed this homework: it can no longer be answered.",
+      "nickname": "This nickname is not allowed. Pick another one.",
+      "nicknameTaken": "This nickname is already used for this homework. Pick another one.",
+      "invalidToken": "Your progress could not be found. Enter your nickname to start again.",
+      "alreadyAnswered": "You have already answered this question.",
+      "kicked": "Your teacher removed you from this homework.",
+      "network": "Cannot reach the server. Check your connection and try again.",
+      "generic": "Something went wrong. Try again in a moment."
+    },
+    "blocked": {
+      "expired": "Deadline passed",
+      "closed": "Homework closed",
+      "notFound": "Homework not found",
+      "other": "Oops"
+    },
+    "backHome": "Back to home",
+    "retry": "Try again",
+    "doneTitle": "Homework done!",
+    "doneTitleNamed": "Homework done, {pseudo}!",
+    "correctOf": "{correct, plural, one {# correct answer} other {# correct answers}} out of {total}",
+    "sent": "Your answers have been sent to your teacher.",
+    "review": "Answers",
+    "loading": "Loading the homework…",
+    "pseudoTitle": "Homework at your own pace",
+    "code": "Code <b>{code}</b>",
+    "pseudoLabel": "Your nickname",
+    "start": "Start",
+    "resumeHint": "You can close this page and come back later on this same device: your progress is saved.",
+    "resend": "Send my answer again",
+    "recorded": "Answer recorded",
+    "correctionAtEnd": "The answers will be shown at the end of the homework.",
+    "seeResult": "See my result",
+    "next": "Next question",
+    "dueBefore": "Due by {date}",
+    "pseudoMin": "At least {count} characters.",
+    "pseudoMax": "{count} characters max."
+  },
+  "assignDialog": {
+    "scoring": {
+      "accuracy": {
+        "label": "Accuracy",
+        "desc": "Any correct answer within the time limit earns full points."
+      },
+      "speed": {
+        "label": "Speed",
+        "desc": "The faster a correct answer, the more points it earns."
+      }
+    },
+    "expl": {
+      "each": {
+        "label": "After each question",
+        "desc": "Students see the answer and explanation as soon as they answer."
+      },
+      "end": {
+        "label": "At the end of the homework",
+        "desc": "The full answers only appear once every question is done."
+      }
+    },
+    "errors": {
+      "network": "Cannot reach the server. Try again.",
+      "generic": "The homework could not be created. Try again in a moment."
+    },
+    "titleCreated": "Homework created",
+    "title": "Assign as homework",
+    "close": "Close",
+    "dueBefore": "Due by <b>{date}</b>.",
+    "share": "Share this link or QR code with your students:",
+    "qrLabel": "QR code for homework {code}",
+    "copyLink": "Copy the link",
+    "copied": "Copied",
+    "copy": "Copy",
+    "code": "Code: <b>{code}</b>",
+    "done": "Done",
+    "due": "Deadline",
+    "dueHint": "At least 15 minutes from now.",
+    "scoringLegend": "Scoring mode",
+    "explLegend": "Answers and explanations",
+    "create": "Create the homework"
+  },
+  "activeAssignments": {
+    "errors": {
+      "network": "Cannot reach the server. Try again.",
+      "notFound": "Homework not found, or you did not create it.",
+      "generic": "The action failed. Try again in a moment.",
+      "notLater": "The new deadline must be after the current one."
+    },
+    "untitled": "Untitled quiz",
+    "confirmClose": "Close the homework “{title}”? Students will no longer be able to answer.",
+    "noDue": "No deadline",
+    "due": "Deadline: {date}",
+    "duePassed": "Deadline passed ({date})",
+    "completion": "{completed} / {started, plural, one {# student} other {# students}} finished",
+    "completionInReport": "Detailed completion in the report",
+    "extend": "Extend",
+    "close": "Close",
+    "reportAria": "View report: {title}",
+    "newDue": "New deadline",
+    "confirm": "Confirm",
+    "title": "Open homework"
+  },
+  "image": {
+    "previewAlt": "Image preview: {alt}",
+    "previewAltDefault": "Preview of the question image",
+    "replace": "Replace",
+    "remove": "Remove image",
+    "sentOnSave": "The image will be uploaded when the quiz is saved.",
+    "drop": "Drop an image here or",
+    "choose": "Choose an image",
+    "formats": "PNG, JPEG, WebP or GIF · 2 MB max",
+    "uploading": "Uploading image…",
+    "alt": "Question illustration: {text}",
+    "altDefault": "Question illustration",
+    "uploadFailed": "The image could not be uploaded."
+  },
+  "sortable": {
+    "moved": "“{label}” moved to position {position} of {total}.",
+    "dragAria": "Move “{label}”, position {position} of {total}. Use the up and down arrows to move.",
+    "up": "Move “{label}” up",
+    "down": "Move “{label}” down"
+  },
+  "addQuestions": {
+    "another": "Another question",
+    "save": "Save the questions"
   }
 }

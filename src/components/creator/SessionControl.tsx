@@ -7,7 +7,8 @@ import { Play, Pause, Square, SkipForward, Trophy, BarChart3 } from 'lucide-reac
 import { cn } from '@/lib/utils';
 // --- Résultats de la question (#5) ---
 import { AnswerHistogram, histogramOptions } from '../ui/AnswerHistogram';
-import type { QuizOption, WsQuestionStatsPayload } from '@/types';
+import type { QuestionType, QuizOption, WsQuestionStatsPayload } from '@/types';
+import { QuestionImage } from '../ui/QuestionImage';
 
 interface SessionControlProps {
   status: 'waiting' | 'active' | 'paused' | 'finished';
@@ -23,7 +24,14 @@ interface SessionControlProps {
   className?: string;
   // --- Résultats de la question (#5) ---
   /** Statistiques de la question clôturée : affiche l'étape « résultats » entre la question et le classement. */
-  questionResults?: { stats: WsQuestionStatsPayload; options?: QuizOption[] } | null;
+  questionResults?: {
+    stats: WsQuestionStatsPayload;
+    options?: QuizOption[];
+    /** Type de la question (backend #7) : histogramme adapté (sondage sans réussite, ordre…). */
+    questionType?: QuestionType | null;
+    questionText?: string;
+    imageUrl?: string | null;
+  } | null;
   /** Passe de l'étape « résultats » au classement. */
   onShowLeaderboard?: () => void;
 }
@@ -65,9 +73,17 @@ export function SessionControl({
       {showResults && questionResults && (
         <section aria-label={t('resultsAria')} className="w-full space-y-4" data-testid="question-results">
           <h3 className="font-semibold">{t('resultsTitle', { number: currentQuestion + 1 })}</h3>
+          {questionResults.imageUrl && (
+            <QuestionImage
+              src={questionResults.imageUrl}
+              questionText={questionResults.questionText}
+              className="mx-0 max-h-40"
+            />
+          )}
           <AnswerHistogram
             options={histogramOptions(questionResults.options, questionResults.stats)}
             stats={questionResults.stats}
+            questionType={questionResults.questionType}
           />
           <div className="flex flex-wrap items-center gap-3">
             {onShowLeaderboard && (

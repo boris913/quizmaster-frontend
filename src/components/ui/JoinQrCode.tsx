@@ -15,13 +15,28 @@ interface JoinQrCodeProps {
   showUrl?: boolean;
   className?: string;
   urlClassName?: string;
+  /**
+   * Lien encodé à la place de `/player/join?code=...` (ex. lien d'un devoir).
+   * Calculé côté client par l'appelant (dépend de `window.location`).
+   */
+  href?: string;
+  /** Libellé accessible du QR (défaut : « QR code pour rejoindre la session CODE »). */
+  label?: string;
 }
 
 /**
  * QR code menant à `/player/join?code=...` (lien direct qui pré-remplit le code).
  * Réutilisable : tableau de bord de session, écran de projection, et plus tard le mode devoir.
  */
-export function JoinQrCode({ code, size = 160, showUrl = false, className, urlClassName }: JoinQrCodeProps) {
+export function JoinQrCode({
+  code,
+  size = 160,
+  showUrl = false,
+  className,
+  urlClassName,
+  href,
+  label,
+}: JoinQrCodeProps) {
   // L'URL dépend de window.location quand NEXT_PUBLIC_APP_URL n'est pas défini :
   // on la calcule après le montage pour éviter un écart d'hydratation SSR / client.
   const t = useTranslations('session');
@@ -29,8 +44,9 @@ export function JoinQrCode({ code, size = 160, showUrl = false, className, urlCl
   const normalized = normalizeSessionCode(code);
 
   useEffect(() => {
-    setUrl(normalized ? buildJoinUrl(normalized) : null);
-  }, [normalized]);
+    if (href) setUrl(href);
+    else setUrl(normalized ? buildJoinUrl(normalized) : null);
+  }, [normalized, href]);
 
   return (
     <figure className={cn('inline-flex flex-col items-center gap-2', className)}>
@@ -46,7 +62,7 @@ export function JoinQrCode({ code, size = 160, showUrl = false, className, urlCl
             size={size}
             level="M"
             role="img"
-            aria-label={t('qrAria', { code: normalized })}
+            aria-label={label ?? t('qrAria', { code: normalized })}
           />
         )}
       </div>
