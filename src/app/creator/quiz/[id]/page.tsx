@@ -10,8 +10,19 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AddQuestionsForm } from '@/components/creator/AddQuestionsForm';
 import { QuestionImage } from '@/components/ui/QuestionImage';
-import { ArrowLeft, Trash2, Plus, Play, CalendarClock } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Play, CalendarClock, Copy, Share2, X } from 'lucide-react';
 import { AssignHomeworkDialog } from '@/components/creator/AssignHomeworkDialog';
+import { ShareQuizPanel } from '@/components/creator/ShareQuizPanel';
+import {
+  copiedQuizPath,
+  copyWarningLabel,
+  duplicateErrorMessage,
+  duplicateQuiz,
+  readShareToken,
+  rememberCopyWarnings,
+  takeCopyWarnings,
+  type CopyWarning,
+} from '@/lib/quizSharing';
 import {
   normalizeQuestionType,
   type Question,
@@ -71,6 +82,7 @@ export default function QuizDetailPage() {
   const t = useTranslations('quizDetail');
   const tc = useTranslations('common');
   const tq = useTranslations('questionTypes');
+  const ts = useTranslations('sharing');
   const params = useParams();
   const router = useRouter();
   const quizId = params.id as string;
@@ -93,6 +105,28 @@ export default function QuizDetailPage() {
     }
   };
   const [showAssign, setShowAssign] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  // Avertissements d'une duplication ou d'une copie qui vient d'ouvrir cette page.
+  const [copyWarnings, setCopyWarnings] = useState<CopyWarning[]>([]);
+  useEffect(() => {
+    if (quizId) setCopyWarnings(takeCopyWarnings(quizId));
+  }, [quizId]);
+
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    setDuplicateError(null);
+    try {
+      const copy = await duplicateQuiz(quizId);
+      rememberCopyWarnings(copy);
+      router.push(copiedQuizPath(copy));
+    } catch (e) {
+      setDuplicateError(duplicateErrorMessage(e, ts));
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
 
   useEffect(() => {
     if (quizId) {
@@ -138,10 +172,58 @@ export default function QuizDetailPage() {
             <CalendarClock className="w-4 h-4" aria-hidden="true" />
             {t('assign')}
           </Button>
+          <Button variant="outline" size="sm" onClick={handleDuplicate} isLoading={isDuplicating}>
+            <Copy className="w-4 h-4" aria-hidden="true" />
+            {ts('duplicate')}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowShare((v) => !v)} aria-expanded={showShare}>
+            <Share2 className="w-4 h-4" aria-hidden="true" />
+            {ts('share')}
+          </Button>
           <Button variant="danger" size="sm" onClick={handleDelete} aria-label={t('deleteAria')} title={t('deleteAria')}>
             <Trash2 className="w-4 h-4" aria-hidden />
           </Button>
         </div>
+
+        {duplicateError && (
+          <p role="alert" className="mb-6 rounded-md bg-danger-50 p-3 text-small text-danger">
+            {duplicateError}
+          </p>
+        )}
+
+        {copyWarnings.length > 0 && (
+          <div
+            role="status"
+            data-testid="copy-warnings"
+            className="mb-6 flex items-start justify-between gap-3 rounded-md border border-warning-100 bg-warning-50 p-3 text-small text-ink"
+          >
+            <div className="space-y-1">
+              <p className="font-medium">{ts('copyWarningsTitle', { count: copyWarnings.length })}</p>
+              <ul className="list-disc pl-5 space-y-0.5">
+                {copyWarnings.map((w, i) => (
+                  <li key={i}>{copyWarningLabel(w, ts)}</li>
+                ))}
+              </ul>
+              <p className="text-ink-secondary">{ts('copyWarningsHint')}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCopyWarnings([])}
+              aria-label={ts('copyWarningsDismiss')}
+              className="shrink-0 text-ink-secondary hover:text-ink"
+            >
+              <X className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
+        {showShare && (
+          <ShareQuizPanel
+            quizId={quizId}
+            initialToken={readShareToken(currentQuiz)}
+            onClose={() => setShowShare(false)}
+          />
+        )}
 
         {showAssign && (
           <AssignHomeworkDialog
