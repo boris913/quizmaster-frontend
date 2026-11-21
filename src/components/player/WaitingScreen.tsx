@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { Sparkles, PauseCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Card } from '../ui/Card';
 
 interface WaitingScreenProps {
@@ -9,7 +10,8 @@ interface WaitingScreenProps {
   isPaused?: boolean;
 }
 
-export function WaitingScreen({ message = 'En attente de la prochaine question...', isPaused = false }: WaitingScreenProps) {
+export function WaitingScreen({ message, isPaused = false }: WaitingScreenProps) {
+  const t = useTranslations('player.waiting');
   const shouldReduceMotion = useReducedMotion();
 
   return (
@@ -18,8 +20,8 @@ export function WaitingScreen({ message = 'En attente de la prochaine question..
         {isPaused ? (
           <div className="space-y-3">
             <PauseCircle className="w-14 h-14 mx-auto text-warning" strokeWidth={1.5} />
-            <h3 className="text-h3">Quiz en pause</h3>
-            <p className="text-ink-secondary text-small">Le créateur a mis le quiz en pause.</p>
+            <h3 className="text-h3">{t('pausedTitle')}</h3>
+            <p className="text-ink-secondary text-small">{t('pausedText')}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -30,8 +32,8 @@ export function WaitingScreen({ message = 'En attente de la prochaine question..
             >
               <Sparkles className="w-7 h-7 text-primary" />
             </motion.div>
-            <h3 className="text-h3">{message}</h3>
-            <p className="text-small text-ink-secondary">Restez prêt, la question arrive !</p>
+            <h3 className="text-h3">{message ?? t('default')}</h3>
+            <p className="text-small text-ink-secondary">{t('ready')}</p>
           </div>
         )}
       </Card>

@@ -270,7 +270,7 @@ describe('SessionReport', () => {
       render(<SessionReport sessionId="sess-1" />);
 
       fireEvent.click(await screen.findByRole('button', { name: /Exporter CSV/ }));
-      expect(await screen.findByRole('alert')).toHaveTextContent("L'export CSV a échoué");
+      expect(await screen.findByRole('alert')).toHaveTextContent('L’export CSV a échoué');
       expect(clickSpy).not.toHaveBeenCalled();
     });
   });

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { useQuiz } from '@/hooks/useQuiz';
 import { useSession } from '@/hooks/useSession';
@@ -27,14 +28,16 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-function getGreeting() {
+function getGreetingKey() {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Bonjour';
-  if (hour < 18) return 'Bon après-midi';
-  return 'Bonsoir';
+  if (hour < 12) return 'morning' as const;
+  if (hour < 18) return 'afternoon' as const;
+  return 'evening' as const;
 }
 
 export default function CreatorDashboardPage() {
+  const t = useTranslations('dashboard');
+  const ts = useTranslations('status');
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
   const { quizzes, isLoading: quizzesLoading } = useQuiz();
@@ -62,23 +65,23 @@ export default function CreatorDashboardPage() {
           className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-10"
         >
           <div>
-            <p className="text-small text-ink-secondary font-medium">{getGreeting()},</p>
+            <p className="text-small text-ink-secondary font-medium">{t(`greeting.${getGreetingKey()}`)},</p>
             <h1 className="text-h1 sm:text-display leading-tight text-ink">
               {user?.pseudo}
             </h1>
-            <p className="text-ink-secondary mt-2">Gérez vos quiz et lancez des sessions en direct.</p>
+            <p className="text-ink-secondary mt-2">{t('lead')}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
               <Link href="/creator/quiz/new">
-                <PlusCircle className="w-4 h-4 mr-2" />
-                Nouveau quiz
+                <PlusCircle className="w-4 h-4" />
+                {t('newQuiz')}
               </Link>
             </Button>
             <Button variant="outline" asChild>
               <Link href="/creator/quiz/import">
-                <List className="w-4 h-4 mr-2" />
-                Importer
+                <List className="w-4 h-4" />
+                {t('import')}
               </Link>
             </Button>
           </div>
@@ -89,29 +92,29 @@ export default function CreatorDashboardPage() {
           <StatCard
             icon={<FileQuestion className="w-5 h-5" />}
             value={quizzes?.length || 0}
-            label="Quiz créés"
+            label={t('stats.quizzes')}
             tone="primary"
             delay={0}
           />
           <StatCard
             icon={<Play className="w-5 h-5" />}
             value={activeSessions.length}
-            label="Sessions actives"
-            tone="success"
+            label={t('stats.activeSessions')}
+            tone="primary"
             delay={0.05}
           />
           <StatCard
             icon={<Calendar className="w-5 h-5" />}
             value={sessions?.length || 0}
-            label="Sessions totales"
-            tone="accent"
+            label={t('stats.totalSessions')}
+            tone="primary"
             delay={0.1}
           />
           <StatCard
             icon={<ListChecks className="w-5 h-5" />}
             value={totalQuestions}
-            label="Questions au total"
-            tone="warning"
+            label={t('stats.totalQuestions')}
+            tone="primary"
             delay={0.15}
           />
         </div>
@@ -124,7 +127,7 @@ export default function CreatorDashboardPage() {
           <div>
             <h2 className="text-h3 mb-4 flex items-center gap-2">
               <FileQuestion className="w-5 h-5 text-ink-secondary" />
-              Mes quiz
+              {t('quizzes.title')}
             </h2>
             <div className="space-y-3">
               {quizzesLoading ? (
@@ -136,13 +139,13 @@ export default function CreatorDashboardPage() {
               ) : quizzes?.length === 0 ? (
                 <EmptyState
                   icon={<FileQuestion className="w-8 h-8" />}
-                  title="Aucun quiz"
-                  description="Créez votre premier quiz manuellement ou importez-le depuis un fichier."
+                  title={t('quizzes.emptyTitle')}
+                  description={t('quizzes.emptyText')}
                   action={
                     <Button size="sm" asChild>
                       <Link href="/creator/quiz/new">
-                        <PlusCircle className="w-4 h-4 mr-1" />
-                        Créer un quiz
+                        <PlusCircle className="w-4 h-4" />
+                        {t('quizzes.create')}
                       </Link>
                     </Button>
                   }
@@ -156,7 +159,7 @@ export default function CreatorDashboardPage() {
                         <div>
                           <h3 className="text-card-title text-ink">{quiz.title}</h3>
                           <p className="text-small text-ink-secondary">
-                            {quiz.total_questions} questions
+                            {t('quizzes.questions', { count: quiz.total_questions })}
                           </p>
                         </div>
                         <ChevronRight className="w-5 h-5 text-ink-tertiary group-hover:text-primary transition-colors" />
@@ -167,7 +170,7 @@ export default function CreatorDashboardPage() {
               )}
               {quizzes && quizzes.length > 5 && (
                 <p className="text-small text-ink-tertiary text-center pt-2">
-                  + {quizzes.length - 5} autres quiz
+                  {t('quizzes.more', { count: quizzes.length - 5 })}
                 </p>
               )}
             </div>
@@ -177,7 +180,7 @@ export default function CreatorDashboardPage() {
           <div>
             <h2 className="text-h3 mb-4 flex items-center gap-2">
               <Play className="w-5 h-5 text-ink-secondary" />
-              Sessions récentes
+              {t('sessions.title')}
             </h2>
             <div className="space-y-3">
               {sessionsLoading ? (
@@ -189,13 +192,13 @@ export default function CreatorDashboardPage() {
               ) : sessions?.length === 0 ? (
                 <EmptyState
                   icon={<Sparkles className="w-8 h-8" />}
-                  title="Aucune session"
-                  description="Lancez une session en direct à partir d'un de vos quiz pour démarrer un jeu."
+                  title={t('sessions.emptyTitle')}
+                  description={t('sessions.emptyText')}
                   action={
                     <Button size="sm" variant="outline" asChild>
                       <Link href="/creator/quiz">
-                        <Play className="w-4 h-4 mr-1" />
-                        Voir mes quiz
+                        <Play className="w-4 h-4" />
+                        {t('sessions.seeQuizzes')}
                       </Link>
                     </Button>
                   }
@@ -203,7 +206,7 @@ export default function CreatorDashboardPage() {
                 />
               ) : (
                 sessions.slice(0, 5).map((session) => {
-                  const title = session.quiz_title || session.quizzes?.title || 'Quiz sans titre';
+                  const title = session.quiz_title || session.quizzes?.title || t('sessions.untitled');
                   return (
                   <Card key={session.id} interactive className="p-4 flex items-center gap-2">
                     <Link
@@ -221,21 +224,21 @@ export default function CreatorDashboardPage() {
                         </h3>
                         <div className="flex items-center gap-2 text-small mt-0.5">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium ${
+                            className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-caption font-medium ${
                               session.status === 'active'
-                                ? 'bg-success-50 text-success border border-success/20'
+                                ? 'bg-success-50 text-success border border-success-100'
                                 : session.status === 'paused'
-                                ? 'bg-warning-50 text-warning border border-warning/20'
+                                ? 'bg-warning-50 text-warning border border-warning-100'
                                 : session.status === 'finished'
                                 ? 'bg-ink/[0.04] text-ink-secondary border border-borderc'
                                 : 'bg-primary-50 text-primary-700 border border-primary-200'
                             }`}
                           >
-                            {session.status}
+                            {ts(session.status)}
                           </span>
                           {isAssignment(session) && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-caption font-medium bg-primary-50 text-primary-700 border border-primary-200">
-                              devoir
+                              {t('sessions.homework')}
                             </span>
                           )}
                           <span className="text-ink-tertiary">•</span>
@@ -255,8 +258,8 @@ export default function CreatorDashboardPage() {
                       >
                         <Link
                           href={`/creator/session/${session.id}/results`}
-                          aria-label={`Voir le rapport : ${title}`}
-                          title="Voir le rapport"
+                          aria-label={t('sessions.reportAria', { title })}
+                          title={t('sessions.report')}
                         >
                           <BarChart3 className="w-4 h-4" aria-hidden="true" />
                         </Link>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 interface QuestionImageProps {
@@ -16,6 +17,7 @@ interface QuestionImageProps {
  * exigerait de le déclarer). Chargement différé, texte alternatif, masquée si elle ne charge pas.
  */
 export function QuestionImage({ src, questionText, className }: QuestionImageProps) {
+  const t = useTranslations('image');
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [src]);
   if (!src || failed) return null;
@@ -23,7 +25,7 @@ export function QuestionImage({ src, questionText, className }: QuestionImagePro
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
-      alt={questionText ? `Illustration de la question : ${questionText}` : 'Illustration de la question'}
+      alt={questionText ? t('alt', { text: questionText }) : t('altDefault')}
       loading="lazy"
       decoding="async"
       onError={() => setFailed(true)}

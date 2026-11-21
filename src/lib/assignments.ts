@@ -85,11 +85,11 @@ export function validateDueDate(value: string, now: Date = new Date()): string |
 }
 
 /** « jeudi 21 novembre à 18:00 » */
-export function formatDueDate(iso: string | null | undefined): string {
+export function formatDueDate(iso: string | null | undefined, locale = 'fr'): string {
   if (!iso) return '';
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleString('fr-FR', {
+  return date.toLocaleString(locale === 'fr' ? 'fr-FR' : 'en-GB', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',

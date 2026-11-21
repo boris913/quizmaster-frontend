@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Card } from '../ui/Card';
 import { ScoreCounter } from '../ui/ScoreCounter';
 import { cn } from '@/lib/utils';
@@ -40,6 +41,8 @@ export function ScoreDisplay({
   classAccuracy = null,
   correctCount = null,
 }: ScoreDisplayProps) {
+  const t = useTranslations('player.score');
+  const tc = useTranslations('common');
   const showRank = !hideRanking && isRank(rank);
   const showGapToNext = showRank && rank > 1 && typeof gapToNext === 'number';
   const showGapToPodium = showRank && rank > 3 && typeof gapToPodium === 'number';
@@ -49,20 +52,18 @@ export function ScoreDisplay({
   return (
     <Card tier="secondary" className="p-6 space-y-4" data-testid="score-display">
       <div className="flex justify-between items-center">
-        <span className="text-small text-ink-secondary font-medium">Votre score</span>
+        <span className="text-small text-ink-secondary font-medium">{t('yourScore')}</span>
         <span className="font-display text-h2 font-bold tabular-nums">
-          <ScoreCounter value={score} /> <span className="text-small font-medium text-ink-secondary">pts</span>
+          <ScoreCounter value={score} /> <span className="text-small font-medium text-ink-secondary">{tc('points')}</span>
         </span>
       </div>
 
       {showRank && (
         <div className="flex items-center gap-2" data-testid="player-rank">
           <RankBadge rank={rank} />
-          <span className="font-semibold">
-            {rank === 1 ? '1re' : `${rank}e`} place
-          </span>
+          <span className="font-semibold">{t('place', { rank })}</span>
           {hasTotal && (
-            <span className="text-small text-ink-secondary">sur {totalParticipants} participants</span>
+            <span className="text-small text-ink-secondary">{t('ofParticipants', { count: totalParticipants })}</span>
           )}
         </div>
       )}
@@ -71,12 +72,12 @@ export function ScoreDisplay({
         <div className="space-y-1.5 text-small" data-testid="class-accuracy">
           {typeof correctCount === 'number' && (
             <p className="text-ink-secondary">
-              Vos bonnes réponses : <span className="font-semibold text-ink">{correctCount}</span>
+              {t('yourCorrect')} <span className="font-semibold text-ink">{correctCount}</span>
             </p>
           )}
           {typeof classAccuracy === 'number' && (
             <p className="text-ink-secondary">
-              La classe : <span className="font-semibold text-ink">{classAccuracy} % de bonnes réponses</span>
+              {t('classLabel')} <span className="font-semibold text-ink">{t('classAccuracy', { value: classAccuracy })}</span>
             </p>
           )}
         </div>
@@ -86,12 +87,12 @@ export function ScoreDisplay({
         <div className="space-y-1.5 text-small pt-1 border-t border-borderc">
           {showGapToNext && (
             <p className="text-ink-secondary pt-2">
-              Écart avec le devant : <span className="font-semibold text-ink">{gapToNext} pts</span>
+              {t('gapToNext')} <span className="font-semibold text-ink">{tc('pointsCount', { count: gapToNext })}</span>
             </p>
           )}
           {showGapToPodium && (
             <p className="text-ink-secondary">
-              Distance du podium : <span className="font-semibold text-ink">{gapToPodium} pts</span>
+              {t('gapToPodium')} <span className="font-semibold text-ink">{tc('pointsCount', { count: gapToPodium })}</span>
             </p>
           )}
           {showPodium && (
@@ -100,7 +101,7 @@ export function ScoreDisplay({
               animate={{ opacity: 1, scale: 1 }}
               className={cn('font-semibold text-success')}
             >
-              Vous êtes sur le podium !
+              {t('onPodium')}
             </motion.p>
           )}
         </div>

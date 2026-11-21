@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import { AlertTriangle, CalendarClock, CheckCircle2, Lock, SearchX, WifiOff } from 'lucide-react';
 import { QuestionView } from '@/components/player/QuestionView';
 import { AnswerFeedback } from '@/components/player/AnswerFeedback';
@@ -23,7 +24,6 @@ import {
   NICKNAME_MAX_LENGTH,
   NICKNAME_MIN_LENGTH,
   NICKNAME_PATTERN,
-  NICKNAME_PATTERN_MESSAGE,
 } from '@/lib/nickname';
 import type {
   AssignmentAnswerResult,
@@ -51,15 +51,26 @@ function sameAnswers(a: string[], b: string[]): boolean {
   return a.every((x) => set.has(x));
 }
 
-function validatePseudo(value: string): string | null {
+type AssignmentT = ReturnType<typeof useTranslations<'assignment'>>;
+
+function validatePseudo(value: string, t: AssignmentT, patternMessage: string): string | null {
   const pseudo = value.trim();
-  if (pseudo.length < NICKNAME_MIN_LENGTH) return `Au moins ${NICKNAME_MIN_LENGTH} caractères.`;
-  if (pseudo.length > NICKNAME_MAX_LENGTH) return `${NICKNAME_MAX_LENGTH} caractères maximum.`;
-  if (!NICKNAME_PATTERN.test(pseudo)) return NICKNAME_PATTERN_MESSAGE;
+  if (pseudo.length < NICKNAME_MIN_LENGTH) return t('pseudoMin', { count: NICKNAME_MIN_LENGTH });
+  if (pseudo.length > NICKNAME_MAX_LENGTH) return t('pseudoMax', { count: NICKNAME_MAX_LENGTH });
+  if (!NICKNAME_PATTERN.test(pseudo)) return patternMessage;
   return null;
 }
 
+/** Message d'erreur affiché : celui d'origine en français (serveur compris), sinon la traduction du type d'erreur. */
+function useErrorMessage() {
+  const t = useTranslations('assignment');
+  const locale = useLocale();
+  return (error: AssignmentError) => (locale === 'fr' ? error.message : t(`errors.${error.kind}`));
+}
+
 function BlockedScreen({ error, onRetry }: { error: AssignmentError; onRetry: () => void }) {
+  const t = useTranslations('assignment');
+  const errorMessage = useErrorMessage();
   const Icon =
     error.kind === 'expired'
       ? CalendarClock
@@ -71,51 +82,48 @@ function BlockedScreen({ error, onRetry }: { error: AssignmentError; onRetry: ()
             ? WifiOff
             : AlertTriangle;
   const title =
-    error.kind === 'expired'
-      ? 'Échéance passée'
-      : error.kind === 'closed'
-        ? 'Devoir clos'
-        : error.kind === 'notFound'
-          ? 'Devoir introuvable'
-          : 'Oups';
+    error.kind === 'expired' || error.kind === 'closed' || error.kind === 'notFound'
+      ? t(`blocked.${error.kind}`)
+      : t('blocked.other');
   return (
     <Card tier="primary" className="max-w-md mx-auto p-8 text-center space-y-4" role="alert" data-testid="assignment-blocked">
       <Icon className="w-12 h-12 mx-auto text-ink-secondary" aria-hidden="true" />
       <h1 className="text-h2">{title}</h1>
-      <p className="text-ink-secondary">{error.message}</p>
+      <p className="text-ink-secondary">{errorMessage(error)}</p>
       {BLOCKING_KINDS.has(error.kind) ? (
         <Button variant="outline" asChild>
-          <Link href="/">Retour à l’accueil</Link>
+          <Link href="/">{t('backHome')}</Link>
         </Button>
       ) : (
-        <Button onClick={onRetry}>Réessayer</Button>
+        <Button onClick={onRetry}>{t('retry')}</Button>
       )}
     </Card>
   );
 }
 
 function DoneScreen({ summary, pseudo }: { summary: AssignmentSummary; pseudo: string }) {
+  const t = useTranslations('assignment');
+  const tc = useTranslations('common');
   return (
     <div className="max-w-2xl mx-auto space-y-6" data-testid="assignment-done">
       <Card tier="primary" className="p-8 text-center space-y-3">
         <CheckCircle2 className="w-14 h-14 mx-auto text-success" aria-hidden="true" />
-        <h1 className="text-h2">Devoir terminé{pseudo ? `, ${pseudo}` : ''} !</h1>
-        <p className="text-h1 font-bold text-primary-700" data-testid="assignment-score">
-          {summary.score} <span className="text-h3 font-medium">pts</span>
+        <h1 className="text-h2">{pseudo ? t('doneTitleNamed', { pseudo }) : t('doneTitle')}</h1>
+        <p className="font-display text-h1 font-bold text-primary-700 tabular-nums" data-testid="assignment-score">
+          {summary.score} <span className="text-h3 font-medium">{tc('points')}</span>
         </p>
         {summary.correctCount !== null && summary.totalQuestions !== null && (
           <p className="text-ink-secondary">
-            {summary.correctCount} bonne{summary.correctCount > 1 ? 's' : ''} réponse
-            {summary.correctCount > 1 ? 's' : ''} sur {summary.totalQuestions}
+            {t('correctOf', { correct: summary.correctCount, total: summary.totalQuestions })}
           </p>
         )}
-        <p className="text-small text-ink-secondary">Tes réponses ont été transmises à ton enseignant.</p>
+        <p className="text-small text-ink-secondary">{t('sent')}</p>
       </Card>
 
       {summary.review.length > 0 && (
         <section aria-labelledby="assignment-review-title" className="space-y-4">
           <h2 id="assignment-review-title" className="text-h3">
-            Correction
+            {t('review')}
           </h2>
           {summary.review.map((item, index) => (
             <div key={item.questionId} className="space-y-2">
@@ -146,6 +154,10 @@ function DoneScreen({ summary, pseudo }: { summary: AssignmentSummary; pseudo: s
  * Le jeton de reprise est gardé en localStorage pour reprendre après fermeture de l'onglet.
  */
 export function AssignmentPlayer({ code }: { code: string }) {
+  const t = useTranslations('assignment');
+  const tj = useTranslations('join.errors');
+  const locale = useLocale();
+  const errorMessage = useErrorMessage();
   const [phase, setPhase] = useState<Phase>({ name: 'loading' });
   const [pseudo, setPseudo] = useState('');
   const [pseudoError, setPseudoError] = useState<string | null>(null);
@@ -164,7 +176,7 @@ export function AssignmentPlayer({ code }: { code: string }) {
       if (error.kind === 'invalidToken') {
         clearAssignmentSession(code);
         tokenRef.current = null;
-        setNotice(error.message);
+        setNotice(errorMessage(error));
         setPhase({ name: 'pseudo' });
         return;
       }
@@ -172,9 +184,10 @@ export function AssignmentPlayer({ code }: { code: string }) {
         setPhase({ name: 'blocked', error });
         return;
       }
-      setInlineError(error.message);
+      setInlineError(errorMessage(error));
     },
-    [code]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [code, locale]
   );
 
   const loadNext = useCallback(async () => {
@@ -212,7 +225,7 @@ export function AssignmentPlayer({ code }: { code: string }) {
 
   const handleStart = async (e: React.FormEvent) => {
     e.preventDefault();
-    const invalid = validatePseudo(pseudo);
+    const invalid = validatePseudo(pseudo, t, tj('nicknamePattern'));
     setPseudoError(invalid);
     if (invalid) return;
     const value = pseudo.trim();
@@ -227,7 +240,7 @@ export function AssignmentPlayer({ code }: { code: string }) {
       const error = getAssignmentError(err, 'start');
       setIsBusy(false);
       if (BLOCKING_KINDS.has(error.kind)) setPhase({ name: 'blocked', error });
-      else setPseudoError(error.message);
+      else setPseudoError(errorMessage(error));
       return;
     }
     await loadNext();
@@ -268,7 +281,7 @@ export function AssignmentPlayer({ code }: { code: string }) {
     case 'loading':
       content = (
         <p className="text-center text-ink-secondary" role="status">
-          Chargement du devoir…
+          {t('loading')}
         </p>
       );
       break;
@@ -281,9 +294,9 @@ export function AssignmentPlayer({ code }: { code: string }) {
       content = (
         <Card tier="primary" className="max-w-md mx-auto p-8 space-y-5">
           <div className="space-y-1 text-center">
-            <h1 className="text-h2">Devoir à faire à ton rythme</h1>
+            <h1 className="text-h2">{t('pseudoTitle')}</h1>
             <p className="text-small text-ink-secondary">
-              Code <span className="font-display tabular-nums font-semibold">{code}</span>
+              {t.rich('code', { code, b: (chunks) => <span className="font-display tabular-nums font-semibold">{chunks}</span> })}
             </p>
           </div>
           {notice && (
@@ -295,7 +308,7 @@ export function AssignmentPlayer({ code }: { code: string }) {
             <Input
               id="assignment-pseudo"
               name="pseudo"
-              label="Ton pseudo"
+              label={t('pseudoLabel')}
               autoComplete="off"
               maxLength={NICKNAME_MAX_LENGTH}
               value={pseudo}
@@ -307,11 +320,11 @@ export function AssignmentPlayer({ code }: { code: string }) {
               autoFocus
             />
             <Button type="submit" className="w-full" isLoading={isBusy}>
-              Commencer
+              {t('start')}
             </Button>
           </form>
           <p className="text-caption text-ink-secondary text-center">
-            Tu peux fermer cette page et revenir plus tard sur ce même appareil : ta progression est gardée.
+            {t('resumeHint')}
           </p>
         </Card>
       );
@@ -341,7 +354,7 @@ export function AssignmentPlayer({ code }: { code: string }) {
                 {inlineError}
               </p>
               <Button variant="outline" size="sm" onClick={() => void handleSubmitAnswer()} disabled={isBusy}>
-                Renvoyer ma réponse
+                {t('resend')}
               </Button>
             </div>
           )}
@@ -359,8 +372,8 @@ export function AssignmentPlayer({ code }: { code: string }) {
           {result.isCorrect === null && !hasCorrection ? (
             <Card tier="primary" className="p-8 text-center space-y-2">
               <CheckCircle2 className="w-12 h-12 mx-auto text-primary" aria-hidden="true" />
-              <h2 className="text-h3">Réponse enregistrée</h2>
-              <p className="text-small text-ink-secondary">La correction sera affichée à la fin du devoir.</p>
+              <h2 className="text-h3">{t('recorded')}</h2>
+              <p className="text-small text-ink-secondary">{t('correctionAtEnd')}</p>
             </Card>
           ) : (
             <AnswerFeedback
@@ -398,7 +411,7 @@ export function AssignmentPlayer({ code }: { code: string }) {
             </p>
           )}
           <Button className="w-full" size="lg" onClick={() => void loadNext()} isLoading={isBusy}>
-            {isLast ? 'Voir mon résultat' : 'Question suivante'}
+            {isLast ? t('seeResult') : t('next')}
           </Button>
         </div>
       );
@@ -414,7 +427,7 @@ export function AssignmentPlayer({ code }: { code: string }) {
     <main className="min-h-screen bg-background px-4 py-8 sm:px-6">
       {dueAt && phase.name !== 'blocked' && phase.name !== 'done' && (
         <p className="max-w-2xl mx-auto mb-4 text-small text-ink-secondary text-center" data-testid="assignment-due">
-          À terminer avant le {formatDueDate(dueAt)}
+          {t('dueBefore', { date: formatDueDate(dueAt, locale) })}
         </p>
       )}
       {content}

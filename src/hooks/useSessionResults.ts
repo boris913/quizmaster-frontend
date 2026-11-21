@@ -35,7 +35,7 @@ export function useSessionResults(sessionId: string | undefined) {
   const [isLoading, setIsLoading] = useState(Boolean(sessionId));
   const [error, setError] = useState<SessionResultsError | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<'notFound' | 'generic' | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -80,11 +80,8 @@ export function useSessionResults(sessionId: string | undefined) {
           : new Blob([response.data as BlobPart], { type: 'text/csv;charset=utf-8' });
       saveBlob(blob, filename);
     } catch (err) {
-      setExportError(
-        httpStatus(err) === 404
-          ? "Export impossible : session introuvable, ou vous n'en êtes pas le créateur."
-          : "L'export CSV a échoué. Réessayez dans un instant."
-      );
+      // Clé de traduction (report.exportErrors.*) : le composant affiche le message.
+      setExportError(httpStatus(err) === 404 ? 'notFound' : 'generic');
     } finally {
       setIsExporting(false);
     }

@@ -7,6 +7,7 @@ import { Button } from '../ui/Button';
 import { ProgressBar } from '../ui/ProgressBar';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 interface QuestionViewProps {
   /**
@@ -33,6 +34,7 @@ export function QuestionView({
   isSubmitting = false,
   isAnswered = false,
 }: QuestionViewProps) {
+  const t = useTranslations('player.question');
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [hasSelected, setHasSelected] = useState(false);
 
@@ -64,7 +66,7 @@ export function QuestionView({
       <ProgressBar
         value={questionNumber}
         max={totalQuestions}
-        label={questionNumber === totalQuestions ? 'Dernière question' : 'Progression du quiz'}
+        label={questionNumber === totalQuestions ? t('last') : t('progress')}
       />
 
       {/* The question is the single primary element; the timer stays small and out of the way. */}
@@ -98,7 +100,7 @@ export function QuestionView({
         className="w-full"
         isLoading={isSubmitting}
       >
-        {question.type === 'poll' ? 'Envoyer mon vote' : 'Valider ma réponse'}
+        {question.type === 'poll' ? t('vote') : t('submit')}
       </Button>
     </motion.div>
   );

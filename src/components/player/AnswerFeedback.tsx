@@ -1,11 +1,12 @@
 'use client';
 
 import { BarChart3, CheckCircle2, Lightbulb, XCircle, MinusCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useAnswerLabels } from '@/i18n/answerLabel';
 import { AnswerResult } from '../ui/AnswerResult';
 import { Card } from '../ui/Card';
 import { cn } from '@/lib/utils';
 import {
-  answerLabel,
   inferQuestionType,
   type QuestionType,
   type QuizOption,
@@ -35,7 +36,9 @@ interface AnswerFeedbackProps {
   questionType?: QuestionType | string;
 }
 
-function describe(ids: string[], options: QuizOption[] | undefined, type: QuestionType | null) {
+type LabelFn = (id: string, options: QuizOption[] | null | undefined) => string;
+
+function describe(ids: string[], options: QuizOption[] | undefined, type: QuestionType | null, answerLabel: LabelFn) {
   if (ids.length === 0) return '—';
   if (type === 'short_answer') return ids.join(' / ');
   if (type === 'true_false') return ids.map((id) => answerLabel(id, options)).join(', ');
@@ -52,22 +55,26 @@ function describe(ids: string[], options: QuizOption[] | undefined, type: Questi
 
 /** Retour d'un sondage : ni verdict, ni points ; simple accusé de réception du vote. */
 function PollFeedback({ yourAnswers, options }: { yourAnswers: string[]; options?: QuizOption[] }) {
+  const t = useTranslations('player.feedback');
+  const { answerLabel } = useAnswerLabels();
   const voted = yourAnswers.length > 0;
   return (
     <Card tier="primary" className="p-6 text-center space-y-2" data-testid="poll-feedback" aria-live="polite">
       <BarChart3 className="w-10 h-10 mx-auto text-primary" aria-hidden />
-      <h3 className="text-h3">{voted ? 'Vote enregistré' : 'Pas de vote'}</h3>
+      <h3 className="text-h3">{voted ? t('pollVoted') : t('pollNone')}</h3>
       {voted && (
         <p className="text-small text-ink-secondary">
-          Votre choix : <span className="font-medium text-ink">{describe(yourAnswers, options, 'poll')}</span>
+          {t('pollChoice')} <span className="font-medium text-ink">{describe(yourAnswers, options, 'poll', answerLabel)}</span>
         </p>
       )}
-      <p className="text-caption text-ink-secondary">Sondage : pas de bonne réponse, aucun point en jeu.</p>
+      <p className="text-caption text-ink-secondary">{t('pollNote')}</p>
     </Card>
   );
 }
 
 export function AnswerFeedback({ result, reveal, options, questionType }: AnswerFeedbackProps) {
+  const t = useTranslations('player.feedback');
+  const { answerLabel } = useAnswerLabels();
   // Type : prop, sinon celui de `question:reveal` (backend #7), sinon déduit.
   const type = reveal?.graded === false ? 'poll' : inferQuestionType({
     type: questionType ?? reveal?.type ?? undefined,
@@ -84,7 +91,7 @@ export function AnswerFeedback({ result, reveal, options, questionType }: Answer
           <div className="rounded-md bg-primary-50 p-3 text-small" data-testid="answer-explanation">
             <p className="flex items-center gap-1.5 font-semibold text-ink">
               <Lightbulb className="w-4 h-4" aria-hidden />
-              Explication
+              {t('explanation')}
             </p>
             <p className="mt-1 whitespace-pre-line text-ink">{reveal.explanation}</p>
           </div>
@@ -93,16 +100,13 @@ export function AnswerFeedback({ result, reveal, options, questionType }: Answer
     );
   }
 
+  const correctCount = reveal ? reveal.correctAnswers.length : 1;
   const correctLabel =
     type === 'short_answer'
-      ? reveal && reveal.correctAnswers.length > 1
-        ? 'Réponses acceptées :'
-        : 'Réponse attendue :'
+      ? t('correctLabel.accepted', { count: correctCount })
       : type === 'ordering'
-        ? 'Ordre attendu :'
-        : reveal && reveal.correctAnswers.length > 1
-          ? 'Bonnes réponses :'
-          : 'Bonne réponse :';
+        ? t('correctLabel.ordering')
+        : t('correctAnswers', { count: correctCount });
 
   return (
     <div className="max-w-md mx-auto space-y-4">
@@ -140,17 +144,17 @@ export function AnswerFeedback({ result, reveal, options, questionType }: Answer
             ) : (
               <XCircle className="w-6 h-6" aria-hidden />
             )}
-            {!answered ? 'Pas de réponse' : reveal.isCorrect ? 'Bonne réponse' : 'Mauvaise réponse'}
+            {!answered ? t('noAnswer') : reveal.isCorrect ? t('correct') : t('wrong')}
           </h3>
 
           <dl className="text-small space-y-1">
             <div className="flex gap-2">
-              <dt className="text-ink-secondary shrink-0">Votre réponse :</dt>
-              <dd className="font-medium text-ink">{describe(reveal.yourAnswers, options, type)}</dd>
+              <dt className="text-ink-secondary shrink-0">{t('yourAnswer')}</dt>
+              <dd className="font-medium text-ink">{describe(reveal.yourAnswers, options, type, answerLabel)}</dd>
             </div>
             <div className="flex gap-2">
               <dt className="text-ink-secondary shrink-0">{correctLabel}</dt>
-              <dd className="font-medium text-success">{describe(reveal.correctAnswers, options, type)}</dd>
+              <dd className="font-medium text-success">{describe(reveal.correctAnswers, options, type, answerLabel)}</dd>
             </div>
           </dl>
 
@@ -158,7 +162,7 @@ export function AnswerFeedback({ result, reveal, options, questionType }: Answer
             <div className="rounded-md bg-primary-50 p-3 text-small" data-testid="answer-explanation">
               <p className="flex items-center gap-1.5 font-semibold text-ink">
                 <Lightbulb className="w-4 h-4" aria-hidden />
-                Explication
+                {t('explanation')}
               </p>
               <p className="mt-1 whitespace-pre-line text-ink">{reveal.explanation}</p>
             </div>
