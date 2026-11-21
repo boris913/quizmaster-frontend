@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { QuestionImage } from '@/components/ui/QuestionImage';
 import { useAuthStore } from '@/store/authStore';
 import { LinkIcon, Plus } from 'lucide-react';
-import { QUESTION_TYPE_LABELS } from '@/types';
 import {
   copiedQuizPath,
   copySharedQuiz,
@@ -26,13 +26,15 @@ type LoadState =
   | { kind: 'loading' }
   | { kind: 'ready'; quiz: SharedQuizPreview }
   | { kind: 'invalid' }
-  | { kind: 'error'; message: string };
+  | { kind: 'error'; network: boolean; serverMessage: string | null };
 
 /**
  * Aperçu public d'un quiz partagé par un collègue (sans les bonnes réponses) et copie dans
  * son propre compte. Non connecté : « Ajouter à mes quiz » renvoie vers la connexion, puis ici.
  */
 export default function SharedQuizPage() {
+  const t = useTranslations('sharing');
+  const tq = useTranslations('questionTypes');
   const params = useParams();
   const router = useRouter();
   const token = String(params?.token ?? '');
@@ -48,13 +50,7 @@ export default function SharedQuizPage() {
     } catch (e) {
       if (isInvalidShareTokenError(e)) setState({ kind: 'invalid' });
       else
-        setState({
-          kind: 'error',
-          message:
-            httpStatus(e) === null
-              ? 'Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.'
-              : serverMessage(e) ?? 'L’aperçu n’a pas pu être chargé. Réessayez.',
-        });
+        setState({ kind: 'error', network: httpStatus(e) === null, serverMessage: serverMessage(e) });
     }
   }, [token]);
 
@@ -78,7 +74,7 @@ export default function SharedQuizPage() {
     } catch (e) {
       if (httpStatus(e) === 401) goToLogin();
       else if (isInvalidShareTokenError(e)) setState({ kind: 'invalid' });
-      else setCopyError(serverMessage(e) ?? 'La copie n’a pas pu être créée. Réessayez.');
+      else setCopyError(serverMessage(e) ?? t('errors.duplicateFailed'));
       setCopying(false);
     }
   };
@@ -86,19 +82,17 @@ export default function SharedQuizPage() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-3xl mx-auto space-y-6">
-        {state.kind === 'loading' && <p className="text-ink-secondary">Chargement de l’aperçu…</p>}
+        {state.kind === 'loading' && <p className="text-ink-secondary">{t('shared.loading')}</p>}
 
         {state.kind === 'invalid' && (
           <Card className="p-6 space-y-3" role="alert" data-testid="shared-invalid">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+            <h1 className="text-h2 flex items-center gap-2">
               <LinkIcon className="w-5 h-5" aria-hidden="true" />
-              Lien de partage invalide
+              {t('shared.invalidTitle')}
             </h1>
-            <p className="text-ink-secondary">
-              Ce lien n’existe pas ou a été révoqué par son auteur. Demandez-lui un nouveau lien.
-            </p>
+            <p className="text-ink-secondary">{t('shared.invalidText')}</p>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/creator/dashboard">Aller à mes quiz</Link>
+              <Link href="/creator/dashboard">{t('shared.toMyQuizzes')}</Link>
             </Button>
           </Card>
         )}
@@ -106,10 +100,10 @@ export default function SharedQuizPage() {
         {state.kind === 'error' && (
           <Card className="p-6 space-y-3">
             <p role="alert" className="text-danger">
-              {state.message}
+              {state.network ? t('errors.network') : state.serverMessage ?? t('errors.previewFailed')}
             </p>
             <Button variant="outline" size="sm" onClick={load}>
-              Réessayer
+              {t('shared.retry')}
             </Button>
           </Card>
         )}
@@ -117,34 +111,28 @@ export default function SharedQuizPage() {
         {state.kind === 'ready' && (
           <>
             <Card className="p-6 space-y-4">
-              <p className="text-caption font-medium text-primary">Quiz partagé avec vous</p>
-              <h1 className="text-3xl font-bold">{state.quiz.title}</h1>
+              <p className="text-caption font-medium text-primary">{t('shared.eyebrow')}</p>
+              <h1 className="text-h1">{state.quiz.title || t('shared.untitled')}</h1>
               {state.quiz.authorPseudo && (
-                <p className="text-small text-ink-secondary">Par {state.quiz.authorPseudo}</p>
+                <p className="text-small text-ink-secondary">{t('shared.by', { pseudo: state.quiz.authorPseudo })}</p>
               )}
               {state.quiz.description && <p className="text-ink-secondary">{state.quiz.description}</p>}
               <div className="flex flex-wrap gap-2 text-small" data-testid="shared-summary">
-                <span className="font-semibold">
-                  {state.quiz.questionCount} question{state.quiz.questionCount > 1 ? 's' : ''}
-                </span>
+                <span className="font-semibold">{t('shared.questionCount', { count: state.quiz.questionCount })}</span>
                 {countQuestionTypes(state.quiz.questions).map(([type, count]) => (
-                  <span key={type} className="rounded bg-black/[0.05] px-2 py-0.5 text-ink-secondary">
-                    {QUESTION_TYPE_LABELS[type]} × {count}
+                  <span key={type} className="rounded-sm bg-ink/[0.05] px-2 py-0.5 text-ink-secondary">
+                    {t('shared.typeCount', { type: tq(type), count })}
                   </span>
                 ))}
               </div>
-              <p className="text-small text-ink-secondary">
-                Vous recevez une copie modifiable dans vos quiz ; le quiz d’origine n’est jamais modifié.
-              </p>
+              <p className="text-small text-ink-secondary">{t('shared.copyNote')}</p>
               <div className="flex flex-wrap items-center gap-3">
                 <Button onClick={handleCopy} isLoading={copying}>
                   <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
-                  Ajouter à mes quiz
+                  {t('shared.add')}
                 </Button>
                 {!isAuthenticated && (
-                  <span className="text-small text-ink-secondary">
-                    Vous devrez vous connecter (ou créer un compte) pour l’ajouter.
-                  </span>
+                  <span className="text-small text-ink-secondary">{t('shared.loginNeeded')}</span>
                 )}
               </div>
               {copyError && (
@@ -154,13 +142,13 @@ export default function SharedQuizPage() {
               )}
             </Card>
 
-            <section aria-label="Questions du quiz" className="space-y-3">
+            <section aria-label={t('shared.questionsAria')} className="space-y-3">
               {state.quiz.questions.map((q, index) => (
                 <Card key={index} className="p-4" data-testid="shared-question">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                     <div className="min-w-0 flex-1">
-                      <span className="text-sm text-ink-secondary">
-                        Q{index + 1} · {QUESTION_TYPE_LABELS[q.type]}
+                      <span className="text-small text-ink-secondary">
+                        {t('shared.questionHeader', { number: index + 1, type: tq(q.type) })}
                       </span>
                       <p className="font-medium">{q.text}</p>
                       {q.options.length > 0 && q.type !== 'true_false' && (
@@ -168,7 +156,7 @@ export default function SharedQuizPage() {
                           {q.options.map((o) => (
                             <li
                               key={o.id}
-                              className="px-2 py-0.5 text-xs rounded bg-black/[0.05] text-ink-secondary"
+                              className="px-2 py-0.5 text-caption rounded-sm bg-ink/[0.05] text-ink-secondary"
                             >
                               {o.text}
                             </li>

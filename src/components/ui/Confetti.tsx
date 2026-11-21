@@ -3,7 +3,14 @@
 import { useMemo } from 'react';
 import { useReducedMotion } from 'framer-motion';
 
-const COLORS = ['#5B5CEB', '#7C3AED', '#22C55E', '#F59E0B', '#EF4444'];
+/** Les teintes des réponses + l'accent : la fête reprend les couleurs du jeu. */
+const COLORS = [
+  'rgb(var(--answer-a))',
+  'rgb(var(--answer-b))',
+  'rgb(var(--answer-c))',
+  'rgb(var(--answer-d))',
+  'rgb(var(--accent))',
+];
 
 /** A small, tasteful confetti burst. Respects prefers-reduced-motion (renders nothing). */
 export function Confetti({ count = 24 }: { count?: number }) {

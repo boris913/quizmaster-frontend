@@ -53,7 +53,7 @@ for (const path of ['/player/join', '/confidentialite']) {
 test('la page de join affiche la mention de confidentialité et son lien', async ({ page }) => {
   await page.goto('/player/join');
   await expect(
-    page.getByText("Aucun compte, aucune donnée personnelle demandée. N'utilise pas ton nom complet.")
+    page.getByText("Aucun compte, aucune donnée personnelle demandée. N’utilise pas ton nom complet.")
   ).toBeVisible();
   await page.getByRole('link', { name: 'En savoir plus sur la confidentialité' }).click();
   await expect(page).toHaveURL(/\/confidentialite$/);

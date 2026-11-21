@@ -184,7 +184,7 @@ describe('Écran joueur : classement visible (non-régression)', () => {
     expect(screen.getByTestId('player-rank')).toHaveTextContent('2e place');
     expect(screen.getByTestId('player-rank')).toHaveTextContent('sur 5 participants');
     expect(screen.getByText(/Écart avec le devant/)).toHaveTextContent('120 pts');
-    expect(screen.getByText('🎉 Vous êtes sur le podium !')).toBeInTheDocument();
+    expect(screen.getByText('Vous êtes sur le podium !')).toBeInTheDocument();
     expect(screen.queryByTestId('class-accuracy')).not.toBeInTheDocument();
   });
 

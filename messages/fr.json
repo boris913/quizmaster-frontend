@@ -1,0 +1,936 @@
+{
+  "common": {
+    "brand": "Kwizora",
+    "points": "pts",
+    "pointsCount": "{count} pts",
+    "loading": "Chargement…",
+    "you": "vous",
+    "language": {
+      "label": "Langue",
+      "fr": "Français",
+      "en": "Anglais"
+    },
+    "theme": {
+      "toLight": "Passer en mode clair",
+      "toDark": "Passer en mode sombre"
+    },
+    "medal": {
+      "1": "Médaille d’or",
+      "2": "Médaille d’argent",
+      "3": "Médaille de bronze"
+    },
+    "cancel": "Annuler",
+    "back": "Retour",
+    "true": "Vrai",
+    "false": "Faux"
+  },
+  "nav": {
+    "teacher": "Enseignant",
+    "dashboard": "Tableau de bord",
+    "newQuiz": "Nouveau quiz",
+    "logout": "Déconnexion",
+    "joinQuiz": "Rejoindre un quiz",
+    "login": "Se connecter",
+    "register": "Créer un compte",
+    "home": "Accueil",
+    "leave": "Quitter",
+    "homeAria": "Kwizora, accueil"
+  },
+  "footer": {
+    "legalLinks": "Liens légaux",
+    "privacy": "Confidentialité"
+  },
+  "meta": {
+    "description": "Quiz en direct pour la classe : vos élèves répondent depuis leur téléphone, vous suivez les résultats en temps réel."
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Connectez-vous pour gérer vos quiz",
+      "submit": "Se connecter",
+      "noAccount": "Pas encore de compte ?",
+      "toRegister": "S’inscrire"
+    },
+    "register": {
+      "title": "Créer un compte",
+      "subtitle": "Créez vos quiz et animez vos séances en direct",
+      "submit": "S’inscrire",
+      "hasAccount": "Déjà un compte ?",
+      "toLogin": "Se connecter"
+    },
+    "fields": {
+      "pseudo": "Pseudo",
+      "pseudoPlaceholder": "Votre pseudo",
+      "uniquePseudoPlaceholder": "Votre pseudo unique",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe"
+    },
+    "errors": {
+      "pseudoRequired": "Pseudo requis",
+      "passwordRequired": "Mot de passe requis",
+      "minChars": "Minimum {count} caractères",
+      "maxChars": "Maximum {count} caractères",
+      "pseudoPattern": "Caractères autorisés : lettres, chiffres, - et _",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "login": "Connexion impossible. Vérifiez votre pseudo et votre mot de passe.",
+      "register": "Inscription impossible. Réessayez dans un instant."
+    }
+  },
+  "home": {
+    "title": "Le quiz en direct qui fait participer toute la classe.",
+    "lead": "Vos élèves répondent depuis leur téléphone, sans créer de compte. Vous voyez, question par question, ce qui est compris et ce qui reste à revoir.",
+    "ctaPrimary": "Créer mon premier quiz",
+    "ctaSecondary": "J’ai déjà un compte",
+    "join": {
+      "title": "Vous êtes élève ?",
+      "hint": "Entrez le code affiché au tableau.",
+      "label": "Code de la session",
+      "placeholder": "Code",
+      "submit": "Rejoindre"
+    },
+    "steps": {
+      "title": "Une séance en trois temps",
+      "prepare": {
+        "title": "Préparez",
+        "desc": "Écrivez vos questions ou importez-les depuis un fichier. Choix unique ou multiple, minuteur par question."
+      },
+      "project": {
+        "title": "Projetez",
+        "desc": "Affichez le code et le QR code au tableau. Les élèves rejoignent en quelques secondes depuis leur téléphone."
+      },
+      "analyze": {
+        "title": "Analysez",
+        "desc": "Après chaque question, la répartition des réponses. À la fin, un rapport pour repérer les notions à retravailler."
+      }
+    },
+    "features": {
+      "title": "Pensé pour la salle de classe",
+      "noAccount": {
+        "title": "Aucun compte pour les élèves",
+        "desc": "Un code, un pseudo, et c’est parti. Rien à installer."
+      },
+      "projection": {
+        "title": "Écran de projection",
+        "desc": "Une vue plein écran lisible du fond de la salle, avec code, QR code et minuteur."
+      },
+      "results": {
+        "title": "Résultats question par question",
+        "desc": "Repérez immédiatement les erreurs fréquentes et revenez dessus à chaud."
+      },
+      "hiddenRanking": {
+        "title": "Classement masqué si besoin",
+        "desc": "Pour une évaluation formative sans compétition, n’affichez que le score de la classe."
+      },
+      "moderation": {
+        "title": "Pseudonymes et modération",
+        "desc": "Pseudos filtrés ou générés, exclusion en un clic, données des élèves anonymisées."
+      },
+      "import": {
+        "title": "Import de questions",
+        "desc": "Réutilisez vos questions existantes au lieu de tout ressaisir."
+      }
+    },
+    "preview": {
+      "aria": "Aperçu de l’écran de projection Kwizora",
+      "question": "Quelle fraction est égale à 2/4 ?",
+      "progress": "Question {current} / {total}",
+      "answers": "{answered} / {total} réponses",
+      "correct": "Bonne réponse",
+      "caption": "Exemple : 71 % des élèves ont choisi la bonne réponse, 1/2."
+    },
+    "percent": "{value} %"
+  },
+  "join": {
+    "title": "Rejoindre un quiz",
+    "subtitle": "Entre le code de la session et ton pseudo",
+    "codeLabel": "Code de la session",
+    "codePlaceholder": "Ex : ABC123",
+    "lookingUp": "Recherche de la session…",
+    "pseudoLabel": "Ton pseudo",
+    "pseudoPlaceholder": "SuperJoueur",
+    "submit": "Rejoindre le quiz",
+    "errors": {
+      "codeRequired": "Entre le code de la session",
+      "codeTooShort": "Code de session trop court",
+      "codeTooLong": "Code de session trop long",
+      "codePattern": "Le code ne contient que des lettres et des chiffres",
+      "minChars": "Minimum {count} caractères",
+      "maxChars": "Maximum {count} caractères",
+      "nicknamePattern": "Lettres, chiffres, - et _ uniquement, avec un seul espace entre les mots",
+      "spinFirst": "Lance la roulette pour obtenir ton pseudo",
+      "kicked": "Tu as été exclu de cette session par l'enseignant : tu ne peux pas la rejoindre à nouveau.",
+      "notFound": "Session introuvable ou terminée. Vérifie le code.",
+      "invalidNickname": "Ce pseudo n'est pas accepté. Choisis-en un autre.",
+      "nicknameTaken": "Ce pseudo est déjà utilisé dans cette session. Choisis-en un autre.",
+      "network": "Impossible de joindre le serveur. Vérifie ta connexion et réessaie.",
+      "generic": "Erreur lors de la connexion. Réessaie."
+    },
+    "privacy": {
+      "text": "Aucun compte, aucune donnée personnelle demandée. N’utilise pas ton nom complet.",
+      "link": "En savoir plus sur la confidentialité"
+    },
+    "roulette": {
+      "label": "Ton pseudo",
+      "hint": "Dans cette session, le pseudo est tiré au sort ({max} essais maximum).",
+      "empty": "Lance la roulette pour obtenir ton pseudo",
+      "spin": "Lancer la roulette ({remaining, plural, =0 {0 essai restant} one {# essai restant} other {# essais restants}})",
+      "respin": "Tirer un autre pseudo ({remaining, plural, =0 {0 essai restant} one {# essai restant} other {# essais restants}})",
+      "exhausted": "Plus d’essais : ce pseudo sera le tien."
+    }
+  },
+  "player": {
+    "waiting": {
+      "default": "En attente de la prochaine question…",
+      "ready": "Restez prêt, la question arrive !",
+      "pausedTitle": "Quiz en pause",
+      "pausedText": "Le créateur a mis le quiz en pause."
+    },
+    "kicked": {
+      "title": "Tu as été retiré de la partie",
+      "text": "L’enseignant t’a exclu de cette session. Tu ne peux pas la rejoindre à nouveau.",
+      "back": "Retour à l’accueil"
+    },
+    "feedback": {
+      "noAnswer": "Pas de réponse",
+      "correct": "Bonne réponse",
+      "wrong": "Mauvaise réponse",
+      "yourAnswer": "Votre réponse :",
+      "correctAnswers": "{count, plural, one {Bonne réponse :} other {Bonnes réponses :}}",
+      "explanation": "Explication",
+      "pollVoted": "Vote enregistré",
+      "pollNone": "Pas de vote",
+      "pollChoice": "Votre choix :",
+      "pollNote": "Sondage : pas de bonne réponse, aucun point en jeu.",
+      "correctLabel": {
+        "accepted": "{count, plural, one {Réponse attendue :} other {Réponses acceptées :}}",
+        "ordering": "Ordre attendu :"
+      }
+    },
+    "result": {
+      "timeoutTitle": "Temps écoulé !",
+      "timeoutText": "Vous n’avez pas répondu à temps.",
+      "zeroPoints": "+0 pt",
+      "correct": "Bonne réponse !",
+      "wrong": "Continuez comme ça",
+      "answeredIn": "Répondu en {seconds} s",
+      "maxPoints": "sur {max} pts max",
+      "yourAnswer": "Votre réponse :",
+      "expected": "Réponse attendue :"
+    },
+    "question": {
+      "progress": "Progression du quiz",
+      "last": "Dernière question",
+      "submit": "Valider ma réponse",
+      "counter": "Question {current} / {total}",
+      "counterShort": "Question {current}/{total}",
+      "multipleHint": "Sélectionnez plusieurs réponses (cliquez à nouveau pour désélectionner)",
+      "vote": "Envoyer mon vote",
+      "pollBadge": "Sondage · non noté",
+      "orderingHint": "Remettez les éléments dans le bon ordre : glissez la poignée, ou utilisez les flèches haut et bas.",
+      "orderingAria": "Éléments à remettre dans l'ordre",
+      "yourAnswer": "Votre réponse",
+      "typeHere": "Tapez votre réponse",
+      "answersAria": "Réponses",
+      "pollHint": "Pas de bonne ou de mauvaise réponse : donnez votre avis."
+    },
+    "timer": {
+      "aria": "{left} secondes restantes sur {total}"
+    },
+    "countdown": {
+      "getReady": "Préparez-vous"
+    },
+    "game": {
+      "waitingStart": "En attente du début du quiz…",
+      "paused": "Le quiz est en pause…",
+      "waitingNext": "En attente de la prochaine question…",
+      "revealAtEnd": "Correction à la fin de la question…",
+      "loading": "Chargement du quiz…",
+      "poll": "Sondage"
+    },
+    "score": {
+      "yourScore": "Votre score",
+      "place": "{rank, selectordinal, one {#re} other {#e}} place",
+      "ofParticipants": "sur {count} participants",
+      "yourCorrect": "Vos bonnes réponses :",
+      "classLabel": "La classe :",
+      "classAccuracy": "{value} % de bonnes réponses",
+      "gapToNext": "Écart avec le devant :",
+      "gapToPodium": "Distance du podium :",
+      "onPodium": "Vous êtes sur le podium !"
+    },
+    "final": {
+      "title": "Quiz terminé !",
+      "rankOf": "#{rank} sur {total}",
+      "ahead": "Devant {percent} % des joueurs",
+      "alone": "Seul participant",
+      "winner": "Félicitations, vous êtes le grand gagnant !",
+      "winnerName": "Vainqueur :",
+      "ranking": "Classement final",
+      "playAgain": "Rejouer",
+      "thanks": "Merci pour votre participation.",
+      "classAccuracyValue": "{value} %",
+      "classAccuracyLabel": "de bonnes réponses dans la classe"
+    },
+    "podium": "Podium",
+    "ranking": "Classement",
+    "youParen": "(vous)"
+  },
+  "session": {
+    "qrAria": "QR code pour rejoindre la session {code}"
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Bonjour",
+      "afternoon": "Bon après-midi",
+      "evening": "Bonsoir"
+    },
+    "lead": "Gérez vos quiz et lancez des sessions en direct.",
+    "newQuiz": "Nouveau quiz",
+    "import": "Importer",
+    "stats": {
+      "quizzes": "Quiz créés",
+      "activeSessions": "Sessions actives",
+      "totalSessions": "Sessions totales",
+      "totalQuestions": "Questions au total"
+    },
+    "quizzes": {
+      "title": "Mes quiz",
+      "emptyTitle": "Aucun quiz",
+      "emptyText": "Créez votre premier quiz manuellement ou importez-le depuis un fichier.",
+      "create": "Créer un quiz",
+      "questions": "{count, plural, one {# question} other {# questions}}",
+      "more": "+ {count} autres quiz"
+    },
+    "sessions": {
+      "title": "Sessions récentes",
+      "emptyTitle": "Aucune session",
+      "emptyText": "Lancez une session en direct à partir d’un de vos quiz pour démarrer un jeu.",
+      "seeQuizzes": "Voir mes quiz",
+      "untitled": "Quiz sans titre",
+      "report": "Voir le rapport",
+      "reportAria": "Voir le rapport : {title}",
+      "homework": "devoir"
+    }
+  },
+  "status": {
+    "waiting": "En attente",
+    "active": "En cours",
+    "paused": "En pause",
+    "finished": "Terminée"
+  },
+  "deleteSession": {
+    "action": "Supprimer la session et ses données",
+    "actionAria": "Supprimer la session et ses données : {label}",
+    "title": "Supprimer la session et ses données ?",
+    "sessionLabel": "Session :",
+    "warning": "La session, la liste des participants et toutes leurs réponses seront supprimées définitivement. Cette action est irréversible.",
+    "confirm": "Supprimer définitivement",
+    "errors": {
+      "notFound": "Session introuvable, ou vous n’en êtes pas le créateur.",
+      "generic": "La suppression a échoué. Réessayez dans un instant."
+    }
+  },
+  "control": {
+    "startFirst": "Lancer la 1re question",
+    "resultsAria": "Résultats de la question",
+    "resultsTitle": "Résultats de la question {number}",
+    "showLeaderboard": "Afficher le classement",
+    "next": "Question suivante",
+    "endQuiz": "Terminer le quiz",
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "end": "Terminer",
+    "finished": "Quiz terminé",
+    "report": "Voir le rapport"
+  },
+  "participants": {
+    "title": "Participants ({count})",
+    "status": {
+      "waiting": "En attente",
+      "answering": "En cours",
+      "answered": "Répondu",
+      "timeout": "Temps écoulé",
+      "disconnected": "Déconnecté"
+    },
+    "kickAria": "Exclure {pseudo}",
+    "kickTitle": "Exclure de la partie",
+    "kickConfirm": "Exclure <b>{pseudo}</b> de la partie ? Ce pseudo ne pourra plus rejoindre la session.",
+    "kick": "Exclure",
+    "leaderboardTitle": "Classement ({count, plural, one {# participant} other {# participants}})",
+    "questionShort": "Q{current}/{total}"
+  },
+  "quizForm": {
+    "general": "Informations générales",
+    "title": "Titre",
+    "description": "Description",
+    "useGlobalTimer": "Utiliser un minuteur commun à toutes les questions",
+    "globalTimer": "Minuteur commun (secondes)",
+    "questions": "Questions ({count})",
+    "addQuestion": "Ajouter une question",
+    "submit": "Créer le quiz",
+    "errors": {
+      "textRequired": "Énoncé requis",
+      "optionRequired": "Option requise",
+      "minOptions": "Au moins 2 options",
+      "minCorrect": "Au moins une bonne réponse",
+      "maxChars": "{count} caractères maximum",
+      "titleRequired": "Titre requis (3 caractères min.)",
+      "pointsRange": "Entre 10 et 1000 points",
+      "timerRange": "Entre 5 et 300 secondes"
+    },
+    "question": {
+      "title": "Question {number}",
+      "remove": "Supprimer la question {number}",
+      "text": "Énoncé",
+      "single": "Réponse unique",
+      "multiple": "Réponses multiples",
+      "options": "Options",
+      "optionPlaceholder": "Option {id}",
+      "correct": "Correcte",
+      "markCorrect": "Marquer correcte",
+      "minOptions": "Au moins 2 options requises",
+      "minCorrect": "Au moins une bonne réponse",
+      "explanation": "Explication (facultatif)",
+      "explanationPlaceholder": "Affichée aux élèves après la clôture de la question",
+      "maxPoints": "Points max",
+      "timer": "Timer (secondes)",
+      "globalTimer": "Timer global : {seconds} s",
+      "hint": {
+        "single": "Une seule bonne réponse parmi les options.",
+        "multiple": "Plusieurs bonnes réponses possibles.",
+        "true_false": "Les élèves répondent Vrai ou Faux.",
+        "ordering": "Saisissez les éléments dans l'ordre attendu : ils seront mélangés pour les élèves.",
+        "short_answer": "Les élèves tapent leur réponse ; casse, accents et ponctuation finale sont ignorés.",
+        "poll": "Sondage : pas de bonne réponse, aucun point, exclu des pourcentages de réussite."
+      },
+      "typeLegend": "Type de question",
+      "correctAnswer": "Bonne réponse",
+      "orderingItems": "Éléments, dans l’ordre attendu",
+      "orderingAria": "Ordre attendu des éléments",
+      "itemPlaceholder": "Élément {id}",
+      "optionAria": "Option {id}",
+      "removeOption": "Supprimer l'option {id}",
+      "markCorrectAria": "Marquer l'option {id} comme bonne réponse",
+      "addOption": "Ajouter une option",
+      "acceptedAnswers": "Réponses acceptées",
+      "acceptedAria": "Réponse acceptée {number}",
+      "acceptedFirstPlaceholder": "Ex. : Paris",
+      "acceptedOtherPlaceholder": "Autre variante",
+      "removeAccepted": "Supprimer la réponse acceptée {number}",
+      "addVariant": "Ajouter une variante",
+      "maxPointsPoll": "Points max (non utilisés)"
+    }
+  },
+  "importer": {
+    "title": "Importer depuis un fichier",
+    "questionsFile": "Fichier de questions (.md, .txt)",
+    "answersFile": "Fichier de réponses (facultatif)",
+    "format": "Format attendu :",
+    "keywordsNote": "Les mots-clés du fichier (Question, [timer:], [points:], [correct], > Explication :) restent tels quels.",
+    "explanationHelp": "Ligne facultative <code>> Explication : …</code> sous la question, par exemple après les options (500 caractères maximum) : elle est montrée aux élèves après la clôture de la question.",
+    "submit": "Importer",
+    "pageTitle": "Importer un quiz",
+    "quizInfo": "Informations du quiz",
+    "quizTitle": "Titre",
+    "quizTitlePlaceholder": "Titre du quiz",
+    "quizDescription": "Description (facultatif)",
+    "globalTimer": "Minuteur commun",
+    "seconds": "Secondes",
+    "defaultTitle": "Quiz importé",
+    "help": {
+      "image": "<b>Image</b> : une ligne <code>![texte](https://…)</code> sous l’en-tête (URL http(s) d’une image).",
+      "type": "<b>Type</b> : marqueur <code>[type: …]</code> sur la ligne « Question N » (marqueurs dans n’importe quel ordre) : <code>true_false</code> (Vrai / Faux, réponse <code>= vrai</code> ou <code>= faux</code>), <code>ordering</code> (options A à F écrites dans l’ordre attendu, mélangées pour les élèves), <code>short_answer</code> (une ligne <code>= …</code> par réponse acceptée ; casse, accents et ponctuation finale ignorés), <code>poll</code> (sondage, sans bonne réponse ni point).",
+      "default": "Sans marqueur : réponse unique ou multiple selon le nombre de <code>[correct]</code>."
+    }
+  },
+  "newQuiz": {
+    "title": "Créer un nouveau quiz",
+    "imageFailures": "Quiz créé, mais l’image n’a pas pu être envoyée pour : {list}.",
+    "questionN": "question {number}",
+    "saveError": "Le quiz n’a pas pu être enregistré. Vérifiez les champs puis réessayez."
+  },
+  "quizDetail": {
+    "confirmDelete": "Supprimer ce quiz définitivement ?",
+    "deleteAria": "Supprimer le quiz",
+    "startSession": "Lancer une session",
+    "noDescription": "Aucune description",
+    "questionsCount": "{count, plural, one {<b>#</b> question} other {<b>#</b> questions}}",
+    "timerGlobal": "Minuteur commun : {seconds} s",
+    "timerPerQuestion": "Minuteur par question",
+    "questions": "Questions",
+    "add": "Ajouter",
+    "noQuestions": "Aucune question",
+    "questionShort": "Q{number}",
+    "type": {
+      "single": "Réponse unique",
+      "multiple": "Réponses multiples"
+    },
+    "seconds": "{seconds} s",
+    "assign": "Assigner en devoir",
+    "notGraded": "non noté",
+    "addError": "Les questions n’ont pas pu être enregistrées. Réessayez.",
+    "acceptedAria": "Réponses acceptées",
+    "orderAria": "Ordre attendu"
+  },
+  "newSession": {
+    "nickname": {
+      "free": {
+        "label": "Pseudos libres",
+        "desc": "Chaque élève choisit son pseudo ; les termes inappropriés sont refusés."
+      },
+      "generated": {
+        "label": "Pseudos générés",
+        "desc": "Chaque élève tire un pseudo au sort (ex. « Loutre Curieuse »), 3 essais maximum."
+      }
+    },
+    "scoring": {
+      "speed": {
+        "label": "Vitesse",
+        "desc": "Plus l’élève répond vite et juste, plus il marque de points."
+      },
+      "accuracy": {
+        "label": "Précision",
+        "badge": "recommandé pour réviser",
+        "desc": "Toute bonne réponse donnée dans le temps rapporte le maximum : inutile de se précipiter."
+      }
+    },
+    "notFound": "Quiz introuvable",
+    "backToDashboard": "Retour au tableau de bord",
+    "created": "Session créée",
+    "shareCode": "Partagez ce code avec vos élèves :",
+    "copy": "Copier le code",
+    "copied": "Code copié",
+    "summary": "{title} • {count, plural, one {# question} other {# questions}}",
+    "modeAccuracy": "Mode Précision",
+    "modeSpeed": "Mode Vitesse",
+    "rankingHidden": "Classement masqué aux élèves",
+    "rankingVisible": "Classement visible",
+    "openControl": "Accéder au panneau de contrôle",
+    "title": "Nouvelle session",
+    "questions": "{count, plural, one {# question} other {# questions}}",
+    "timerGlobal": "Minuteur : commun ({seconds} s)",
+    "timerCustom": "Minuteur : par question",
+    "nicknameLegend": "Pseudos des participants",
+    "scoringLegend": "Mode de score",
+    "hideLeaderboard": "Masquer le classement aux élèves",
+    "hideLeaderboardDesc": "Chaque élève ne voit que son score et la réussite de la classe ; vous gardez le classement complet.",
+    "create": "Créer la session"
+  },
+  "sessionPage": {
+    "confirmEnd": "Terminer le quiz définitivement ?",
+    "fallbackTitle": "Session",
+    "code": "Code :",
+    "participants": "{count, plural, one {# participant} other {# participants}}",
+    "status": "Statut : {status}",
+    "modeAccuracy": "Mode Précision",
+    "modeSpeed": "Mode Vitesse",
+    "rankingHidden": " · classement masqué aux élèves",
+    "projectionTitle": "Ouvre l’écran de projection dans un nouvel onglet",
+    "projection": "Mode projection",
+    "connected": "Connecté",
+    "disconnected": "Déconnecté",
+    "joinTitle": "Rejoindre la session",
+    "joinHint": "Scanner le QR code ou saisir le code"
+  },
+  "present": {
+    "fallbackTitle": "Quiz",
+    "participantsAria": "{count, plural, one {# participant} other {# participants}}",
+    "fullscreen": "Plein écran",
+    "exitFullscreen": "Quitter le plein écran",
+    "notFound": "Session introuvable.",
+    "joinOn": "Rejoignez sur <b>{host}</b>",
+    "code": "Code",
+    "participants": "Participants",
+    "waitingPlayers": "En attente des participants…",
+    "ready": "Prêts ?",
+    "questionOf": "Question {current}/{total}",
+    "secondsLeft": "{seconds} secondes restantes",
+    "timeUp": "Temps écoulé !",
+    "reminder": "{host} · code <b>{code}</b>",
+    "inProgress": "Question en cours…",
+    "resultsOf": "Question {current}/{total} · Résultats",
+    "resultsTitle": "Résultats de la question",
+    "finished": "Quiz terminé !",
+    "classAccuracy": "{value} %",
+    "classAccuracyLabel": "de bonnes réponses pour la classe",
+    "bravo": "Bravo à toute la classe !",
+    "pause": "Pause",
+    "typeOnDevice": "Tapez votre réponse sur votre appareil",
+    "orderOnDevice": "Remettez ces éléments dans le bon ordre sur votre appareil :"
+  },
+  "histogram": {
+    "aria": "Répartition des réponses",
+    "none": "Aucune réponse sur {total, plural, one {# participant} other {# participants}}",
+    "summary": "{answered, plural, one {# réponse} other {# réponses}} sur {total, plural, one {# participant} other {# participants}} · {accuracy} % des participants ont répondu juste",
+    "correct": "Bonne réponse",
+    "percent": "{value} %",
+    "count": "({count, plural, one {# réponse} other {# réponses}})",
+    "pollSummary": "{answered, plural, one {# vote} other {# votes}} sur {total, plural, one {# participant} other {# participants}} · sondage, sans bonne réponse",
+    "resultsAria": "Résultats de la question",
+    "expectedOrder": "Ordre attendu",
+    "accepted": "{count, plural, one {Réponse attendue :} other {Réponses acceptées :}}",
+    "topAnswers": "Réponses les plus fréquentes",
+    "acceptedSr": " (acceptée)",
+    "quoted": "« {answer} »"
+  },
+  "report": {
+    "distributionAria": "Distribution des réponses",
+    "students": "{count, plural, one {# élève} other {# élèves}}",
+    "correctSr": " (bonne réponse)",
+    "noAnswers": "Aucune réponse donnée à cette question.",
+    "backToDashboard": "Retour au tableau de bord",
+    "notFoundTitle": "Rapport introuvable",
+    "notFoundText": "Cette session n’existe pas, a été supprimée, ou vous n’en êtes pas le créateur.",
+    "errorTitle": "Impossible de charger le rapport",
+    "errorText": "Une erreur est survenue. Vérifiez votre connexion puis réessayez.",
+    "retry": "Réessayer",
+    "backToSession": "Retour à la session",
+    "eyebrow": "Rapport de session",
+    "untitled": "Quiz sans titre",
+    "sessionOf": "Session du {date}",
+    "notStarted": "Session non démarrée",
+    "partial": " · en cours (résultats partiels)",
+    "exportCsv": "Exporter CSV",
+    "exportErrors": {
+      "notFound": "Export impossible : session introuvable, ou vous n’en êtes pas le créateur.",
+      "generic": "L’export CSV a échoué. Réessayez dans un instant."
+    },
+    "noParticipantsTitle": "Aucun participant",
+    "noParticipantsText": "Personne n’a rejoint cette session : il n’y a pas encore de résultats à analyser.",
+    "summary": "Synthèse",
+    "classAccuracy": "Précision de la classe",
+    "classAccuracyHint": "Bonnes réponses, sans-réponse comptées fausses",
+    "noAccuracy": "Pas de précision",
+    "pollsOnly": "Ce quiz ne contient que des sondages, sans bonne réponse.",
+    "participants": "Participants",
+    "avgScore": "Score moyen",
+    "completion": "Taux de réponse (%)",
+    "toReview": "À retravailler",
+    "toReviewHint": "Les questions notées les moins réussies, avec la répartition des réponses.",
+    "question": "Question {number}",
+    "successAvg": "<b>{percent}</b> de réussite · {time} en moyenne",
+    "studentsTitle": "Élèves",
+    "perQuestion": "Détail par question",
+    "questionShort": "Q{number}.",
+    "success": "<b>{percent}</b> de réussite",
+    "poll": "Sondage · non noté",
+    "table": {
+      "caption": "Résultats par élève. Cliquez sur un en-tête de colonne pour trier.",
+      "pseudo": "Élève",
+      "score": "Score",
+      "accuracy": "Précision",
+      "avgTimeMs": "Temps moyen",
+      "timeouts": "Sans réponse"
+    },
+    "expectedOrder": "Ordre attendu :",
+    "accepted": "{count, plural, one {Réponse attendue :} other {Réponses acceptées :}}",
+    "topAnswers": "Réponses les plus fréquentes",
+    "quoted": "« {answer} »",
+    "polls": "Sondages"
+  },
+  "privacy": {
+    "metaTitle": "Confidentialité — Kwizora",
+    "metaDescription": "Quelles données Kwizora traite sur les élèves et les enseignants, combien de temps elles sont conservées et comment les supprimer.",
+    "hosting": "À confirmer (hébergeur et région des données non encore renseignés).",
+    "contact": "[adresse de contact à compléter]",
+    "lastUpdate": "[date à compléter]",
+    "title": "Confidentialité et données des élèves",
+    "intro": "Cette page s’adresse aux enseignants, aux établissements et aux délégués à la protection des données (DPO). Elle explique simplement quelles données Kwizora traite, pourquoi, combien de temps, et comment les faire supprimer.",
+    "updated": "Dernière mise à jour : {date}",
+    "frenchPrevails": "",
+    "summary": {
+      "title": "En bref",
+      "noAccount": "Les élèves n’ont pas de compte et ne donnent ni nom, ni e-mail, ni âge.",
+      "codeOnly": "Pour jouer, un élève saisit seulement le code de la session et un pseudo de son choix.",
+      "stored": "Nous enregistrons le pseudo, les réponses et le temps de réponse, pour calculer le score et le classement.",
+      "anonymised": "{days} jours après la fin d’une session, les pseudos sont anonymisés.",
+      "deletion": "L’enseignant peut supprimer une session et toutes ses données à tout moment.",
+      "noTrackers": "Aucune publicité, aucun outil de mesure d’audience, aucun script tiers sur les pages élèves."
+    },
+    "students": {
+      "title": "Données collectées sur les élèves",
+      "lead": "Quand un élève rejoint une session, Kwizora enregistre :",
+      "pseudo": "<b>le pseudo</b> qu’il a choisi (nous recommandons de ne pas utiliser son nom complet) ;",
+      "answers": "<b>ses réponses</b> à chaque question ;",
+      "time": "<b>son temps de réponse</b>, qui sert à calculer les points ;",
+      "score": "le <b>score et le rang</b> calculés à partir de ces réponses ;",
+      "connection": "un <b>identifiant technique de connexion</b>, temporaire, nécessaire au fonctionnement en temps réel.",
+      "noAccount": "Il n’y a <b>aucun compte élève</b> : pas d’inscription, pas de mot de passe, pas d’adresse e-mail. Kwizora ne demande ni nom, ni prénom, ni date de naissance, ni classe, ni établissement.",
+      "device": "L’application n’enregistre aucune donnée personnelle sur l’appareil de l’élève. Seules ses préférences d’affichage, s’il les modifie lui-même (thème clair ou sombre, langue), sont mémorisées par le navigateur ; elles ne permettent pas de l’identifier.",
+      "purpose": "Ces données servent uniquement au déroulement du quiz : afficher le classement en direct et permettre à l’enseignant de voir les résultats de sa session. Elles ne sont ni vendues, ni utilisées à des fins publicitaires."
+    },
+    "teachers": {
+      "title": "Données des enseignants",
+      "text": "Pour créer des quiz et lancer des sessions, l’enseignant crée un compte avec une adresse e-mail, un pseudo et un mot de passe (conservé uniquement sous forme hachée, jamais en clair). Les quiz et les sessions qu’il crée sont rattachés à son compte. Sur son navigateur, un jeton de connexion est conservé dans le stockage local pour qu’il reste connecté."
+    },
+    "retention": {
+      "title": "Durée de conservation",
+      "text": "Les données des élèves sont conservées le temps de la session, puis <b>{days} jours après la fin de la session</b>. Passé ce délai, elles sont anonymisées automatiquement :",
+      "pseudo": "chaque pseudo est remplacé par un libellé neutre (« Joueur 1 », « Joueur 2 »…) ;",
+      "connection": "l’identifiant technique de connexion est effacé.",
+      "stats": "Seules restent des statistiques sans lien avec une personne (par exemple le taux de bonnes réponses à une question), utiles à l’enseignant pour améliorer ses quiz."
+    },
+    "deletion": {
+      "title": "Suppression à la demande",
+      "teacher": "L’enseignant peut à tout moment supprimer une session depuis son tableau de bord (action « Supprimer la session et ses données »). La suppression est définitive : elle efface la session, la liste des participants et toutes leurs réponses. Seul l’enseignant qui a créé la session peut la supprimer.",
+      "student": "Un élève ou ses responsables légaux qui souhaitent faire supprimer des données peuvent s’adresser à l’enseignant qui a organisé la session, ou nous écrire à l’adresse indiquée ci-dessous."
+    },
+    "hostingSection": {
+      "title": "Hébergement",
+      "fonts": "Les polices de caractères sont servies directement par Kwizora : l’affichage des pages élèves ne déclenche aucune requête vers un service tiers (polices, statistiques, réseaux sociaux ou publicité)."
+    },
+    "rights": {
+      "title": "Vos droits",
+      "text": "Conformément au RGPD, chaque personne concernée peut demander l’accès à ses données, leur rectification ou leur effacement, et s’opposer à leur traitement. Comme les élèves n’ont pas de compte, la demande doit permettre de retrouver la session concernée (date, enseignant, pseudo utilisé).",
+      "cnil": "Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la CNIL."
+    },
+    "contactSection": {
+      "title": "Contact",
+      "text": "Pour toute question ou demande concernant vos données : <b>{contact}</b>"
+    }
+  },
+  "questionTypes": {
+    "single": "Réponse unique",
+    "multiple": "Réponses multiples",
+    "true_false": "Vrai / Faux",
+    "ordering": "Remettre dans l’ordre",
+    "short_answer": "Réponse courte",
+    "poll": "Sondage"
+  },
+  "validation": {
+    "textRequired": "Texte requis",
+    "titleRequired": "Titre requis (3 caractères min.)",
+    "maxChars": "{count} caractères maximum",
+    "chooseTrueFalse": "Choisissez Vrai ou Faux",
+    "minAccepted": "Au moins une réponse acceptée",
+    "maxAccepted": "{count} réponses acceptées au plus",
+    "acceptedMaxChars": "{count} caractères au plus par réponse acceptée",
+    "minOptions": "Au moins {count} options, toutes renseignées",
+    "maxOptions": "{count} options au plus",
+    "minCorrect": "Au moins une bonne réponse",
+    "imageFormat": "Format non accepté : PNG, JPEG, WebP ou GIF uniquement.",
+    "imageTooBig": "Image trop lourde : 2 Mo maximum.",
+    "imageUpload": "Échec de l’envoi de l’image.",
+    "min": "Valeur minimale : {count}",
+    "max": "Valeur maximale : {count}",
+    "dueRequired": "Indiquez une date et une heure d’échéance.",
+    "dueTooSoon": "L’échéance doit être au moins 15 minutes après maintenant.",
+    "dueTooFar": "L’échéance ne peut pas dépasser {count} jours.",
+    "atLeastOneQuestion": "Ajoutez au moins une question"
+  },
+  "assignment": {
+    "errors": {
+      "notFound": "Ce devoir est introuvable. Vérifie le lien ou le code donné par ton enseignant.",
+      "expired": "L’échéance de ce devoir est passée : il n’est plus possible d’y répondre.",
+      "closed": "Ce devoir a été clos par ton enseignant : il n’est plus possible d’y répondre.",
+      "nickname": "Ce pseudo n'est pas accepté. Choisis-en un autre.",
+      "nicknameTaken": "Ce pseudo est déjà utilisé pour ce devoir. Choisis-en un autre.",
+      "invalidToken": "Ta progression n’a pas pu être retrouvée. Saisis ton pseudo pour recommencer.",
+      "alreadyAnswered": "Tu as déjà répondu à cette question.",
+      "kicked": "Tu as été exclu de ce devoir par l'enseignant.",
+      "network": "Impossible de joindre le serveur. Vérifie ta connexion et réessaie.",
+      "generic": "Une erreur est survenue. Réessaie dans un instant."
+    },
+    "blocked": {
+      "expired": "Échéance passée",
+      "closed": "Devoir clos",
+      "notFound": "Devoir introuvable",
+      "other": "Oups"
+    },
+    "backHome": "Retour à l’accueil",
+    "retry": "Réessayer",
+    "doneTitle": "Devoir terminé !",
+    "doneTitleNamed": "Devoir terminé, {pseudo} !",
+    "correctOf": "{correct, plural, one {# bonne réponse} other {# bonnes réponses}} sur {total}",
+    "sent": "Tes réponses ont été transmises à ton enseignant.",
+    "review": "Correction",
+    "loading": "Chargement du devoir…",
+    "pseudoTitle": "Devoir à faire à ton rythme",
+    "code": "Code <b>{code}</b>",
+    "pseudoLabel": "Ton pseudo",
+    "start": "Commencer",
+    "resumeHint": "Tu peux fermer cette page et revenir plus tard sur ce même appareil : ta progression est gardée.",
+    "resend": "Renvoyer ma réponse",
+    "recorded": "Réponse enregistrée",
+    "correctionAtEnd": "La correction sera affichée à la fin du devoir.",
+    "seeResult": "Voir mon résultat",
+    "next": "Question suivante",
+    "dueBefore": "À terminer avant le {date}",
+    "pseudoMin": "Au moins {count} caractères.",
+    "pseudoMax": "{count} caractères maximum."
+  },
+  "assignDialog": {
+    "scoring": {
+      "accuracy": {
+        "label": "Précision",
+        "desc": "Toute bonne réponse donnée dans le temps rapporte le maximum."
+      },
+      "speed": {
+        "label": "Vitesse",
+        "desc": "Plus l’élève répond vite et juste, plus il marque de points."
+      }
+    },
+    "expl": {
+      "each": {
+        "label": "Après chaque question",
+        "desc": "L’élève voit la correction et l’explication dès qu’il a répondu."
+      },
+      "end": {
+        "label": "À la fin du devoir",
+        "desc": "La correction complète n’apparaît qu’une fois toutes les questions faites."
+      }
+    },
+    "errors": {
+      "network": "Impossible de joindre le serveur. Réessayez.",
+      "generic": "La création du devoir a échoué. Réessayez dans un instant."
+    },
+    "titleCreated": "Devoir créé",
+    "title": "Assigner en devoir",
+    "close": "Fermer",
+    "dueBefore": "À rendre avant le <b>{date}</b>.",
+    "share": "Partagez ce lien ou ce QR code avec vos élèves :",
+    "qrLabel": "QR code du devoir {code}",
+    "copyLink": "Copier le lien",
+    "copied": "Copié",
+    "copy": "Copier",
+    "code": "Code : <b>{code}</b>",
+    "done": "Terminé",
+    "due": "Échéance",
+    "dueHint": "Au moins 15 minutes après maintenant.",
+    "scoringLegend": "Mode de score",
+    "explLegend": "Correction et explications",
+    "create": "Créer le devoir"
+  },
+  "activeAssignments": {
+    "errors": {
+      "network": "Impossible de joindre le serveur. Réessayez.",
+      "notFound": "Devoir introuvable, ou vous n'en êtes pas le créateur.",
+      "generic": "L’action a échoué. Réessayez dans un instant.",
+      "notLater": "La nouvelle échéance doit être postérieure à l’échéance actuelle."
+    },
+    "untitled": "Quiz sans titre",
+    "confirmClose": "Clore le devoir « {title} » ? Les élèves ne pourront plus répondre.",
+    "noDue": "Sans échéance",
+    "due": "Échéance : {date}",
+    "duePassed": "Échéance passée ({date})",
+    "completion": "{completed} / {started, plural, one {# élève} other {# élèves}} {completed, plural, one {a} other {ont}} terminé",
+    "completionInReport": "Complétion détaillée dans le rapport",
+    "extend": "Prolonger",
+    "close": "Clore",
+    "reportAria": "Voir le rapport : {title}",
+    "newDue": "Nouvelle échéance",
+    "confirm": "Valider",
+    "title": "Devoirs en cours"
+  },
+  "image": {
+    "previewAlt": "Aperçu de l'image : {alt}",
+    "previewAltDefault": "Aperçu de l'image de la question",
+    "replace": "Remplacer",
+    "remove": "Supprimer l'image",
+    "sentOnSave": "L’image sera envoyée à l’enregistrement du quiz.",
+    "drop": "Glissez une image ici ou",
+    "choose": "Choisir une image",
+    "formats": "PNG, JPEG, WebP ou GIF · 2 Mo maximum",
+    "uploading": "Envoi de l’image…",
+    "alt": "Illustration de la question : {text}",
+    "altDefault": "Illustration de la question",
+    "uploadFailed": "Échec de l'envoi de l'image."
+  },
+  "sortable": {
+    "moved": "« {label} » déplacé en position {position} sur {total}.",
+    "dragAria": "Déplacer « {label} », position {position} sur {total}. Flèches haut et bas pour déplacer.",
+    "up": "Monter « {label} »",
+    "down": "Descendre « {label} »"
+  },
+  "addQuestions": {
+    "another": "Autre question",
+    "save": "Enregistrer les questions"
+  },
+  "sharing": {
+    "duplicate": "Dupliquer",
+    "share": "Partager",
+    "copyWarningsTitle": "{count, plural, one {Copie créée avec un avertissement :} other {Copie créée avec # avertissements :}}",
+    "copyWarningsHint": "Ajoutez à nouveau les images manquantes et recréez les questions non copiées si besoin.",
+    "copyWarningsDismiss": "Masquer les avertissements",
+    "copyWarningItem": "Question {number} : {message}",
+    "errors": {
+      "network": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+      "duplicateNotFound": "Ce quiz est introuvable ou ne vous appartient pas.",
+      "duplicateFailed": "La copie n’a pas pu être créée. Réessayez.",
+      "shareFailed": "Le lien n’a pas pu être créé. Réessayez.",
+      "revokeFailed": "Le lien n’a pas pu être révoqué. Réessayez.",
+      "clipboard": "Copie impossible : sélectionnez le lien et copiez-le manuellement.",
+      "previewFailed": "L’aperçu n’a pas pu être chargé. Réessayez."
+    },
+    "panel": {
+      "title": "Partager avec un collègue",
+      "explanation": "Le collègue reçoit une copie modifiable, votre quiz n'est jamais modifié.",
+      "close": "Fermer le partage",
+      "linkLabel": "Lien de partage",
+      "copy": "Copier le lien",
+      "copied": "Lien copié",
+      "regenerate": "Régénérer le lien",
+      "revoke": "Révoquer le lien",
+      "generate": "Générer un lien de partage",
+      "confirmRegenerate": "Régénérer le lien ? L’ancien lien cessera de fonctionner pour les personnes qui ne l’ont pas encore utilisé.",
+      "confirmRevoke": "Révoquer le lien de partage ? Plus personne ne pourra l’utiliser. Les copies déjà faites par vos collègues sont conservées.",
+      "created": "Lien de partage créé.",
+      "regenerated": "Nouveau lien généré. L’ancien ne fonctionne plus.",
+      "revoked": "Lien révoqué : il ne fonctionne plus."
+    },
+    "shared": {
+      "loading": "Chargement de l’aperçu…",
+      "invalidTitle": "Lien de partage invalide",
+      "invalidText": "Ce lien n’existe pas ou a été révoqué par son auteur. Demandez-lui un nouveau lien.",
+      "toMyQuizzes": "Aller à mes quiz",
+      "retry": "Réessayer",
+      "eyebrow": "Quiz partagé avec vous",
+      "untitled": "Quiz sans titre",
+      "by": "Par {pseudo}",
+      "questionCount": "{count, plural, one {# question} other {# questions}}",
+      "typeCount": "{type} × {count}",
+      "copyNote": "Vous recevez une copie modifiable dans vos quiz ; le quiz d’origine n’est jamais modifié.",
+      "add": "Ajouter à mes quiz",
+      "loginNeeded": "Vous devrez vous connecter (ou créer un compte) pour l’ajouter.",
+      "questionsAria": "Questions du quiz",
+      "questionHeader": "Q{number} · {type}"
+    },
+    "import": {
+      "tabsAria": "Format d’import",
+      "tabMarkdown": "Markdown",
+      "tabSpreadsheet": "Tableur (CSV / XLSX)",
+      "tabKahoot": "Kahoot (XLSX)",
+      "titleSpreadsheet": "Importer depuis un tableur",
+      "titleKahoot": "Importer un export Kahoot",
+      "spreadsheetHelp": "Un fichier <b>.csv</b> ou <b>.xlsx</b> : une question par ligne, avec les colonnes du modèle (type, question, options, bonnes réponses, points, temps).",
+      "template": "Télécharger le modèle CSV",
+      "templateError": "Le modèle n’a pas pu être téléchargé. Réessayez.",
+      "kahootHelp": "Dans Kahoot, exportez votre kahoot au format tableur (<b>.xlsx</b>). Les questions à choix, le temps et les bonnes réponses sont repris ; les images ne le sont pas.",
+      "fileSpreadsheet": "Fichier tableur (.csv ou .xlsx)",
+      "fileKahoot": "Fichier Kahoot (.xlsx)",
+      "maxSize": "2 Mo maximum.",
+      "fileInfo": "{name} ({size})",
+      "preview": "Prévisualiser l’import",
+      "previewAria": "Aperçu de l’import",
+      "noValid": "Aucune question valide dans ce fichier.",
+      "summary": "{valid, plural, one {# question sera importée} other {# questions seront importées}}, {ignored, plural, one {# ligne ignorée} other {# lignes ignorées}}.",
+      "errorsIntro": "{count, plural, one {# erreur : la ligne concernée sera ignorée.} other {# erreurs : les lignes concernées seront ignorées.}} Corrigez le fichier puis relancez l’aperçu, ou importez seulement les questions valides.",
+      "errorsCaption": "Erreurs par ligne",
+      "colRow": "Ligne",
+      "colMessage": "Message",
+      "confirm": "{count, plural, one {Importer # question} other {Importer # questions}}",
+      "cancel": "Annuler",
+      "nothingImported": "Aucune question n’a été importée : corrigez le fichier puis relancez l’aperçu.",
+      "errorKahootType": "Choisissez le fichier .xlsx exporté depuis Kahoot.",
+      "errorType": "Format non pris en charge : choisissez un fichier .csv ou .xlsx.",
+      "errorEmpty": "Ce fichier est vide.",
+      "errorSize": "Fichier trop volumineux ({size}) : 2 Mo maximum.",
+      "errorTooLarge": "Fichier trop volumineux pour le serveur.",
+      "errorUnsupported": "Format de fichier refusé par le serveur.",
+      "errorGeneric": "Le fichier n’a pas pu être analysé. Vérifiez son format.",
+      "bytes": "{value} o",
+      "kilobytes": "{value} Ko",
+      "megabytes": "{value} Mo"
+    }
+  }
+}

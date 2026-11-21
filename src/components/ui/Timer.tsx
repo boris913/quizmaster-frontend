@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 interface TimerProps {
@@ -13,6 +14,7 @@ interface TimerProps {
 }
 
 export function Timer({ duration, onComplete, isActive, className, variant = 'ring' }: TimerProps) {
+  const t = useTranslations('player.timer');
   const [timeLeft, setTimeLeft] = useState(duration);
   const progress = duration > 0 ? (timeLeft / duration) * 100 : 0;
 
@@ -32,17 +34,18 @@ export function Timer({ duration, onComplete, isActive, className, variant = 'ri
     setTimeLeft(duration);
   }, [duration]);
 
-  const color = progress > 60 ? '#22C55E' : progress > 30 ? '#F59E0B' : '#EF4444';
+  const color =
+    progress > 60 ? 'rgb(var(--success-solid))' : progress > 30 ? 'rgb(var(--warning-solid))' : 'rgb(var(--error-solid))';
   const colorClass = progress > 60 ? 'text-success' : progress > 30 ? 'text-warning' : 'text-danger';
 
   if (variant === 'bar') {
     return (
       <div className={cn('w-full space-y-1', className)} role="timer" aria-live="polite">
         <div className="flex justify-between text-small">
-          <span className="font-mono font-medium">{timeLeft}s</span>
+          <span className="font-display font-semibold tabular-nums">{timeLeft}s</span>
           <span className="text-ink-secondary">/{duration}s</span>
         </div>
-        <div className="h-2 w-full rounded-full bg-black/[0.06] overflow-hidden">
+        <div className="h-2 w-full rounded-full bg-ink/[0.06] overflow-hidden">
           <div
             className="h-full transition-all duration-1000 ease-linear rounded-full"
             style={{ width: `${progress}%`, backgroundColor: color }}
@@ -65,7 +68,7 @@ export function Timer({ duration, onComplete, isActive, className, variant = 'ri
       className={cn('relative inline-flex items-center justify-center', className)}
       role="timer"
       aria-live="polite"
-      aria-label={`${timeLeft} secondes restantes sur ${duration}`}
+      aria-label={t('aria', { left: timeLeft, total: duration })}
     >
       <svg width={size} height={size} className="-rotate-90">
         <circle
@@ -73,7 +76,7 @@ export function Timer({ duration, onComplete, isActive, className, variant = 'ri
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(17,24,39,0.08)"
+          stroke="rgb(var(--text-primary) / 0.08)"
           strokeWidth={stroke}
         />
         <circle
@@ -89,7 +92,7 @@ export function Timer({ duration, onComplete, isActive, className, variant = 'ri
           style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s ease' }}
         />
       </svg>
-      <span className={cn('absolute font-mono text-small font-semibold tabular-nums', colorClass)}>
+      <span className={cn('absolute font-display text-small font-bold tabular-nums', colorClass)}>
         {timeLeft}
       </span>
     </div>

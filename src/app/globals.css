@@ -2,46 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Design tokens Kwizora. Valeurs en triplets RGB pour permettre les
+ * modificateurs d'opacité Tailwind. Règles d'usage : DESIGN.md.
+ * `.dark` peut être posé sur <html> (thème global) ou sur un conteneur
+ * (ex. l'écran de projection, toujours sombre).
+ */
 @layer base {
   :root {
-    /* Premium design tokens */
-    --color-background: 240 20% 98.4%; /* #FAFAFB */
-    --color-surface: 0 0% 100%;
-    --color-primary: 240 78% 65%; /* #5B5CEB */
-    --color-primary-hover: 243 75% 59%; /* #4F46E5 */
-    --color-success: 142 71% 45%;
-    --color-danger: 0 84% 60%;
-    --color-warning: 38 92% 50%;
-    --color-accent: 262 83% 58%;
-    --color-border: 240 8% 93%; /* #ECECEC */
-    --color-ink: 221 39% 11%; /* #111827 */
-    --color-ink-secondary: 220 9% 46%; /* #6B7280 */
+    /* Neutres */
+    --bg-canvas: 248 249 250;       /* #f8f9fa */
+    --bg-surface: 255 255 255;      /* #ffffff */
+    --bg-subtle: 241 243 245;       /* #f1f3f5 */
+    --bg-muted: 233 236 239;        /* #e9ecef */
+    --border-subtle: 229 231 235;   /* #e5e7eb */
+    --border-strong: 209 213 219;   /* #d1d5db */
+    --text-primary: 17 24 39;       /* #111827 */
+    --text-secondary: 75 85 99;     /* #4b5563 */
+    --text-tertiary: 107 114 128;   /* #6b7280 */
 
-    /* legacy shadcn-style vars kept for compatibility */
-    --background: 0 0% 100%;
-    --foreground: 221 39% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 221 39% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 221 39% 11%;
-    --primary: 240 78% 65%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 20% 96%;
-    --secondary-foreground: 221 39% 11%;
-    --muted: 240 20% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 262 83% 58%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 8% 93%;
-    --input: 240 8% 93%;
-    --ring: 240 78% 65%;
-    --radius: 0.75rem;
+    /* Accent : bleu pétrole (encre, tableau) */
+    --accent: 11 107 125;           /* #0b6b7d — 6.2:1 sur blanc */
+    --accent-hover: 9 88 103;       /* #095867 */
+    --accent-strong: 7 80 94;       /* #07505e — texte sur fond accent-subtle */
+    --accent-subtle: 232 243 245;   /* #e8f3f5 */
+    --accent-subtle-strong: 210 233 237;
+    --accent-border: 168 212 220;   /* #a8d4dc */
+    --text-on-accent: 255 255 255;
+
+    /* États sémantiques */
+    --success-fg: 22 101 52;        /* #166534 */
+    --success-bg: 240 253 244;
+    --success-border: 187 247 208;
+    --success-solid: 21 128 61;     /* #15803d — fond plein, texte blanc */
+    --warning-fg: 146 64 14;        /* #92400e */
+    --warning-bg: 255 251 235;
+    --warning-border: 253 230 138;
+    --warning-solid: 180 83 9;      /* #b45309 */
+    --error-fg: 153 27 27;          /* #991b1b */
+    --error-bg: 254 242 242;
+    --error-border: 254 202 202;
+    --error-solid: 185 28 28;       /* #b91c1c */
+
+    /* Réponses A/B/C/D (texte blanc ≥ 4.5:1) */
+    --answer-a: 194 65 12;          /* #c2410c orange brûlé */
+    --answer-b: 29 78 216;          /* #1d4ed8 bleu */
+    --answer-c: 161 98 7;           /* #a16207 ocre */
+    --answer-d: 190 24 93;          /* #be185d framboise */
+
+    /* Médailles du podium (fond plein, texte blanc ou ink) */
+    --medal-gold: 202 138 4;        /* #ca8a04 */
+    --medal-silver: 148 163 184;    /* #94a3b8 */
+    --medal-bronze: 180 83 9;       /* #b45309 */
+
+    --shadow-color: 17 24 39;
+    color-scheme: light;
+  }
+
+  .dark {
+    --bg-canvas: 14 18 23;          /* #0e1217 */
+    --bg-surface: 21 26 33;         /* #151a21 */
+    --bg-subtle: 27 33 42;
+    --bg-muted: 36 43 53;
+    --border-subtle: 38 45 55;
+    --border-strong: 53 62 74;
+    --text-primary: 232 236 241;
+    --text-secondary: 163 173 186;
+    --text-tertiary: 133 144 160;
+
+    --accent: 92 195 212;           /* #5cc3d4 */
+    --accent-hover: 128 210 223;
+    --accent-strong: 150 220 231;
+    --accent-subtle: 18 47 54;
+    --accent-subtle-strong: 22 60 69;
+    --accent-border: 35 92 104;
+    --text-on-accent: 6 42 49;
+
+    --success-fg: 74 222 128;
+    --success-bg: 13 40 25;
+    --success-border: 22 78 46;
+    --warning-fg: 251 191 36;
+    --warning-bg: 45 32 8;
+    --warning-border: 100 70 15;
+    --error-fg: 248 113 113;
+    --error-bg: 48 16 16;
+    --error-border: 110 35 35;
+
+    --shadow-color: 0 0 0;
+    color-scheme: dark;
   }
 
   * {
-    border-color: hsl(var(--border));
+    border-color: rgb(var(--border-subtle));
   }
 
   html {
@@ -50,21 +102,25 @@
 
   body {
     @apply bg-background text-ink antialiased;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
   }
 
   ::selection {
-    background-color: rgba(91, 92, 235, 0.18);
+    background-color: rgb(var(--accent) / 0.2);
   }
 
-  /* Visible, consistent focus rings for keyboard navigation */
+  /* Focus clavier visible et cohérent */
   :focus-visible {
-    outline: 2px solid #5B5CEB;
+    outline: 2px solid rgb(var(--accent));
     outline-offset: 2px;
     border-radius: 4px;
   }
 
-  /* Respect prefers-reduced-motion globally */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -82,11 +138,10 @@
     text-wrap: balance;
   }
 
-  /* Skeleton shimmer loader */
   .skeleton {
     position: relative;
     overflow: hidden;
-    background-color: #EEF0F3;
+    background-color: rgb(var(--bg-muted));
   }
   .skeleton::after {
     content: '';
@@ -94,27 +149,11 @@
     inset: 0;
     background-image: linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0) 0,
-      rgba(255, 255, 255, 0.75) 50%,
-      rgba(255, 255, 255, 0) 100%
+      rgb(var(--bg-surface) / 0) 0,
+      rgb(var(--bg-surface) / 0.6) 50%,
+      rgb(var(--bg-surface) / 0) 100%
     );
     background-size: 400px 100%;
     animation: shimmer 1.6s infinite linear;
-  }
-
-  .gradient-primary {
-    background-image: linear-gradient(135deg, #5B5CEB 0%, #4F46E5 60%, #7C3AED 100%);
-  }
-
-  .gradient-text {
-    background-image: linear-gradient(135deg, #5B5CEB, #7C3AED);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .glass {
-    background-color: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(10px);
   }
 }

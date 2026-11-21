@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef, useState, type DragEvent } from 'react';
 import { ImagePlus, Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useLocalizedMessage } from '@/i18n/localizeMessage';
 import { cn } from '@/lib/utils';
 import { QuestionImageUploadError, uploadQuestionImage } from '@/lib/questionImage';
 import { QUESTION_IMAGE_MIME_TYPES, validateQuestionImageFile } from '@/types';
@@ -40,6 +42,8 @@ function useObjectUrl(file: File | null) {
  * la taille côté client, aperçu, remplacement et suppression.
  */
 export function QuestionImageField({ quizId, imageUrl, file, onChange, alt }: QuestionImageFieldProps) {
+  const t = useTranslations('image');
+  const localize = useLocalizedMessage();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +70,7 @@ export function QuestionImageField({ quizId, imageUrl, file, onChange, alt }: Qu
       const url = await uploadQuestionImage(quizId, selected);
       onChange({ imageUrl: url, file: null });
     } catch (e) {
-      setError(e instanceof QuestionImageUploadError ? e.message : "Échec de l'envoi de l'image.");
+      setError(e instanceof QuestionImageUploadError ? e.message : t('uploadFailed'));
     } finally {
       setIsUploading(false);
     }
@@ -116,7 +120,7 @@ export function QuestionImageField({ quizId, imageUrl, file, onChange, alt }: Qu
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
-              alt={alt ? `Aperçu de l'image : ${alt}` : "Aperçu de l'image de la question"}
+              alt={alt ? t('previewAlt', { alt }) : t('previewAltDefault')}
               loading="lazy"
               className="max-h-40 w-auto rounded-md object-contain"
               data-testid="question-image-preview"
@@ -126,9 +130,9 @@ export function QuestionImageField({ quizId, imageUrl, file, onChange, alt }: Qu
                 type="button"
                 onClick={openPicker}
                 disabled={isUploading}
-                className="inline-flex items-center gap-1 rounded-md border border-borderc px-3 py-1.5 text-small hover:bg-black/[0.04]"
+                className="inline-flex items-center gap-1 rounded-md border border-borderc px-3 py-1.5 text-small hover:bg-ink/[0.04]"
               >
-                <RefreshCw className="h-4 w-4" aria-hidden /> Remplacer
+                <RefreshCw className="h-4 w-4" aria-hidden /> {t('replace')}
               </button>
               <button
                 type="button"
@@ -139,11 +143,11 @@ export function QuestionImageField({ quizId, imageUrl, file, onChange, alt }: Qu
                 disabled={isUploading}
                 className="inline-flex items-center gap-1 rounded-md border border-borderc px-3 py-1.5 text-small text-danger hover:bg-danger-50"
               >
-                <Trash2 className="h-4 w-4" aria-hidden /> Supprimer l&apos;image
+                <Trash2 className="h-4 w-4" aria-hidden /> {t('remove')}
               </button>
               {file && !imageUrl && (
                 <p className="w-full text-caption text-ink-secondary">
-                  L&apos;image sera envoyée à l&apos;enregistrement du quiz.
+                  {t('sentOnSave')}
                 </p>
               )}
             </div>
@@ -151,27 +155,27 @@ export function QuestionImageField({ quizId, imageUrl, file, onChange, alt }: Qu
         ) : (
           <div className="flex flex-col items-center gap-2 py-2 text-center text-small text-ink-secondary">
             <ImagePlus className="h-6 w-6" aria-hidden />
-            <p>Glissez une image ici ou</p>
+            <p>{t('drop')}</p>
             <button
               type="button"
               onClick={openPicker}
               disabled={isUploading}
-              className="rounded-md border border-borderc bg-surface px-3 py-1.5 font-medium text-ink hover:bg-black/[0.04]"
+              className="rounded-md border border-borderc bg-surface px-3 py-1.5 font-medium text-ink hover:bg-ink/[0.04]"
             >
-              Choisir une image
+              {t('choose')}
             </button>
-            <p className="text-caption">PNG, JPEG, WebP ou GIF · 2 Mo maximum</p>
+            <p className="text-caption">{t('formats')}</p>
           </div>
         )}
         {isUploading && (
           <p className="mt-2 flex items-center gap-2 text-small text-ink-secondary" role="status">
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Envoi de l&apos;image…
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> {t('uploading')}
           </p>
         )}
       </div>
       {error && (
         <p role="alert" className="text-small text-danger">
-          {error}
+          {localize(error)}
         </p>
       )}
     </div>

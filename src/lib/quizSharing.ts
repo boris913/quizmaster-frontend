@@ -20,6 +20,12 @@ import { normalizeQuestionType, type QuestionType, type QuizOption } from '@/typ
 
 type Raw = Record<string, unknown>;
 
+/**
+ * Traducteur de l'espace `sharing` (messages/*.json), fourni par les composants via
+ * `useTranslations('sharing')`. Les fonctions de ce module restent ainsi indépendantes de React.
+ */
+export type SharingTranslator = (key: string, values?: Record<string, string | number>) => string;
+
 function pick(raw: unknown, ...keys: string[]): unknown {
   if (!raw || typeof raw !== 'object') return undefined;
   const r = raw as Raw;
@@ -146,19 +152,19 @@ export function takeCopyWarnings(quizId: string): CopyWarning[] {
 }
 
 /** Libellé d'un avertissement : « Question 2 : image non copiée (…) ». */
-export function copyWarningLabel(w: CopyWarning): string {
-  return w.questionNumber ? `Question ${w.questionNumber} : ${w.message}` : w.message;
+export function copyWarningLabel(w: CopyWarning, t: SharingTranslator): string {
+  return w.questionNumber ? t('copyWarningItem', { number: w.questionNumber, message: w.message }) : w.message;
 }
 
-export function duplicateErrorMessage(err: unknown): string {
+export function duplicateErrorMessage(err: unknown, t: SharingTranslator): string {
   switch (httpStatus(err)) {
     case null:
-      return 'Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.';
+      return t('errors.network');
     case 403:
     case 404:
-      return 'Ce quiz est introuvable ou ne vous appartient pas.';
+      return t('errors.duplicateNotFound');
     default:
-      return serverMessage(err) ?? 'La copie n’a pas pu être créée. Réessayez.';
+      return serverMessage(err) ?? t('errors.duplicateFailed');
   }
 }
 
@@ -233,7 +239,7 @@ export function normalizeSharedPreview(raw: unknown): SharedQuizPreview {
     : [];
   const author = pick(source, 'author', 'creator');
   return {
-    title: toText(pick(source, 'title')) ?? 'Quiz sans titre',
+    title: toText(pick(source, 'title')) ?? '',
     description: toText(pick(source, 'description')),
     questionCount:
       toCount(pick(source, 'questionCount', 'question_count', 'total_questions', 'totalQuestions')) ||
@@ -309,26 +315,27 @@ function extensionOf(name: string): string {
  */
 export function resolveImportFile(
   file: File,
-  source: 'spreadsheet' | 'kahoot'
+  source: 'spreadsheet' | 'kahoot',
+  t: SharingTranslator
 ): { format: FileImportFormat } | { error: string } {
   const ext = extensionOf(file.name);
   if (source === 'kahoot') {
-    if (ext !== 'xlsx') return { error: 'Choisissez le fichier .xlsx exporté depuis Kahoot.' };
+    if (ext !== 'xlsx') return { error: t('import.errorKahootType') };
   } else if (ext !== 'csv' && ext !== 'xlsx') {
-    return { error: 'Format non pris en charge : choisissez un fichier .csv ou .xlsx.' };
+    return { error: t('import.errorType') };
   }
-  if (file.size === 0) return { error: 'Ce fichier est vide.' };
+  if (file.size === 0) return { error: t('import.errorEmpty') };
   if (file.size > IMPORT_MAX_BYTES) {
-    return { error: `Fichier trop volumineux (${formatBytes(file.size)}) : 2 Mo maximum.` };
+    return { error: t('import.errorSize', { size: formatBytes(file.size, t) }) };
   }
   if (source === 'kahoot') return { format: 'kahoot' };
   return { format: ext === 'csv' ? 'csv' : 'xlsx' };
 }
 
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} o`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} Mo`;
+export function formatBytes(bytes: number, t: SharingTranslator): string {
+  if (bytes < 1024) return t('import.bytes', { value: bytes });
+  if (bytes < 1024 * 1024) return t('import.kilobytes', { value: Math.round(bytes / 1024) });
+  return t('import.megabytes', { value: Math.round((bytes / (1024 * 1024)) * 10) / 10 });
 }
 
 export interface ImportRowError {
@@ -346,12 +353,8 @@ export interface ImportReport {
 }
 
 /** « 3 questions seront importées, 2 lignes ignorées. » */
-export function importSummary(report: Pick<ImportReport, 'valid' | 'errors'>): string {
-  const n = report.valid;
-  const m = report.errors.length;
-  const questions = n === 1 ? '1 question sera importée' : `${n} questions seront importées`;
-  const ignored = m === 1 ? '1 ligne ignorée' : `${m} lignes ignorées`;
-  return `${questions}, ${ignored}.`;
+export function importSummary(report: Pick<ImportReport, 'valid' | 'errors'>, t: SharingTranslator): string {
+  return t('import.summary', { valid: report.valid, ignored: report.errors.length });
 }
 
 export function normalizeImportReport(raw: unknown): ImportReport {
@@ -390,16 +393,16 @@ export async function importQuizFile(
   return normalizeImportReport(data);
 }
 
-export function importErrorMessage(err: unknown): string {
+export function importErrorMessage(err: unknown, t: SharingTranslator): string {
   switch (httpStatus(err)) {
     case null:
-      return 'Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.';
+      return t('errors.network');
     case 413:
-      return 'Fichier trop volumineux pour le serveur.';
+      return t('import.errorTooLarge');
     case 415:
-      return 'Format de fichier refusé par le serveur.';
+      return t('import.errorUnsupported');
     default:
-      return serverMessage(err) ?? 'Le fichier n’a pas pu être analysé. Vérifiez son format.';
+      return serverMessage(err) ?? t('import.errorGeneric');
   }
 }
 

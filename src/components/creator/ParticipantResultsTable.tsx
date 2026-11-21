@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   formatPercent,
   formatSeconds,
@@ -26,12 +27,12 @@ interface Column {
   numeric: boolean;
 }
 
-const COLUMNS: Column[] = [
-  { key: 'pseudo', label: 'Élève', firstDirection: 'asc', numeric: false },
-  { key: 'score', label: 'Score', firstDirection: 'desc', numeric: true },
-  { key: 'accuracy', label: 'Précision', firstDirection: 'desc', numeric: true },
-  { key: 'avgTimeMs', label: 'Temps moyen', firstDirection: 'asc', numeric: true },
-  { key: 'timeouts', label: 'Sans réponse', firstDirection: 'desc', numeric: true },
+const COLUMNS: Omit<Column, 'label'>[] = [
+  { key: 'pseudo', firstDirection: 'asc', numeric: false },
+  { key: 'score', firstDirection: 'desc', numeric: true },
+  { key: 'accuracy', firstDirection: 'desc', numeric: true },
+  { key: 'avgTimeMs', firstDirection: 'asc', numeric: true },
+  { key: 'timeouts', firstDirection: 'desc', numeric: true },
 ];
 
 /** Tableau des élèves, triable en cliquant sur les en-têtes (aria-sort pour les lecteurs d'écran). */
@@ -39,10 +40,14 @@ export function ParticipantResultsTable({
   participants,
   showAccuracy = true,
 }: ParticipantResultsTableProps) {
+  const t = useTranslations('report');
+  const locale = useLocale();
   const [sortKey, setSortKey] = useState<ParticipantSortKey>('score');
   const [direction, setDirection] = useState<SortDirection>('desc');
 
-  const columns = showAccuracy ? COLUMNS : COLUMNS.filter((c) => c.key !== 'accuracy');
+  const columns: Column[] = (showAccuracy ? COLUMNS : COLUMNS.filter((c) => c.key !== 'accuracy')).map(
+    (c) => ({ ...c, label: t(`table.${c.key}`) })
+  );
   const rows = useMemo(
     () => sortParticipants(participants, sortKey, direction),
     [participants, sortKey, direction]
@@ -61,9 +66,9 @@ export function ParticipantResultsTable({
     <div className="overflow-x-auto rounded-lg border border-borderc bg-surface">
       <table className="w-full min-w-[560px] text-small">
         <caption className="sr-only">
-          Résultats par élève. Cliquez sur un en-tête de colonne pour trier.
+          {t('table.caption')}
         </caption>
-        <thead className="bg-black/[0.02] text-ink-secondary">
+        <thead className="bg-ink/[0.02] text-ink-secondary">
           <tr>
             {columns.map((column) => {
               const active = column.key === sortKey;
@@ -99,9 +104,9 @@ export function ParticipantResultsTable({
               </th>
               <td className="px-4 py-2 text-right tabular-nums">{p.score}</td>
               {showAccuracy && (
-                <td className="px-4 py-2 text-right tabular-nums">{formatPercent(p.accuracy)}</td>
+                <td className="px-4 py-2 text-right tabular-nums">{formatPercent(p.accuracy, locale)}</td>
               )}
-              <td className="px-4 py-2 text-right tabular-nums">{formatSeconds(p.avgTimeMs)}</td>
+              <td className="px-4 py-2 text-right tabular-nums">{formatSeconds(p.avgTimeMs, locale)}</td>
               <td className="px-4 py-2 text-right tabular-nums">{p.timeouts}</td>
             </tr>
           ))}

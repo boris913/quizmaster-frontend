@@ -1,6 +1,8 @@
 'use client';
 
 import { Control, UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
+import { useLocalizedMessage } from '@/i18n/localizeMessage';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -13,7 +15,6 @@ import {
   QUESTION_MAX_OPTIONS,
   QUESTION_MIN_OPTIONS,
   QUESTION_TYPES,
-  QUESTION_TYPE_LABELS,
   SHORT_ANSWER_MAX_VARIANTS,
   SHORT_ANSWER_VARIANT_MAX_LENGTH,
   TRUE_FALSE_OPTIONS,
@@ -36,15 +37,6 @@ interface QuestionBuilderProps {
   quizId?: string;
 }
 
-const TYPE_HINTS: Record<QuestionType, string> = {
-  single: 'Une seule bonne réponse parmi les options.',
-  multiple: 'Plusieurs bonnes réponses possibles.',
-  true_false: 'Les élèves répondent Vrai ou Faux.',
-  ordering: "Saisissez les éléments dans l'ordre attendu : ils seront mélangés pour les élèves.",
-  short_answer: 'Les élèves tapent leur réponse ; casse, accents et ponctuation finale sont ignorés.',
-  poll: 'Sondage : pas de bonne réponse, aucun point, exclu des pourcentages de réussite.',
-};
-
 export function QuestionBuilder({
   index,
   register,
@@ -56,6 +48,10 @@ export function QuestionBuilder({
   globalTimer,
   quizId,
 }: QuestionBuilderProps) {
+  const t = useTranslations('quizForm.question');
+  const tq = useTranslations('questionTypes');
+  const tc = useTranslations('common');
+  const localize = useLocalizedMessage();
   const path = `questions.${index}`;
   const options: QuizOption[] = watch(`${path}.options`) || [];
   const correctAnswers: string[] = watch(`${path}.correct_answers`) || [];
@@ -120,7 +116,7 @@ export function QuestionBuilder({
   const optionInput = (opt: QuizOption, placeholder: string) => (
     <div className="flex flex-1 items-center gap-2">
       <Input
-        aria-label={`Option ${opt.id}`}
+        aria-label={t('optionAria', { id: opt.id })}
         placeholder={placeholder}
         value={opt.text}
         maxLength={300}
@@ -131,8 +127,8 @@ export function QuestionBuilder({
         <button
           type="button"
           onClick={() => removeOption(opt.id)}
-          aria-label={`Supprimer l'option ${opt.id}`}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink-secondary hover:bg-black/[0.05] hover:text-danger"
+          aria-label={t('removeOption', { id: opt.id })}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink-secondary hover:bg-ink/[0.05] hover:text-danger"
         >
           <X className="h-4 w-4" aria-hidden />
         </button>
@@ -145,43 +141,43 @@ export function QuestionBuilder({
   return (
     <Card className="p-4 space-y-4 border-borderc" data-testid={`question-builder-${index}`}>
       <div className="flex justify-between items-start">
-        <h3 className="font-medium">Question {index + 1}</h3>
-        <Button type="button" variant="ghost" size="sm" onClick={onRemove} aria-label={`Supprimer la question ${index + 1}`}>
-          <Trash2 className="w-4 h-4 text-red-500" />
+        <h3 className="font-medium">{t('title', { number: index + 1 })}</h3>
+        <Button type="button" variant="ghost" size="sm" onClick={onRemove} aria-label={t('remove', { number: index + 1 })}>
+          <Trash2 className="w-4 h-4 text-danger" aria-hidden />
         </Button>
       </div>
 
       <Input
-        label="Énoncé"
+        label={t('text')}
         id={`questions-${index}-text`}
         {...register(`${path}.text`)}
-        error={errors?.text?.message}
+        error={localize(errors?.text?.message)}
       />
 
       <fieldset className="space-y-2">
-        <legend className="text-small font-medium text-ink">Type de question</legend>
+        <legend className="text-small font-medium text-ink">{t('typeLegend')}</legend>
         <div className="flex flex-wrap gap-2">
-          {QUESTION_TYPES.map((t) => (
+          {QUESTION_TYPES.map((qt) => (
             <label
-              key={t}
+              key={qt}
               className={cn(
-                'flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors',
-                type === t ? 'border-primary bg-primary-50 text-primary-700' : 'border-borderc hover:border-primary/40'
+                'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-small transition-colors',
+                type === qt ? 'border-primary bg-primary-50 text-primary-700' : 'border-borderc hover:border-borderc-strong'
               )}
             >
               <input
                 type="radio"
                 name={typeGroupName}
-                value={t}
-                checked={type === t}
-                onChange={() => selectType(t)}
+                value={qt}
+                checked={type === qt}
+                onChange={() => selectType(qt)}
                 className="sr-only"
               />
-              {QUESTION_TYPE_LABELS[t]}
+              {tq(qt)}
             </label>
           ))}
         </div>
-        <p className="text-caption text-ink-secondary">{TYPE_HINTS[type]}</p>
+        <p className="text-caption text-ink-secondary">{t(`hint.${type}`)}</p>
       </fieldset>
 
       <QuestionImageField
@@ -198,8 +194,8 @@ export function QuestionBuilder({
       {/* Éditeur adapté au type */}
       {type === 'true_false' && (
         <div className="space-y-2">
-          <p className="text-sm font-medium" id={`questions-${index}-tf`}>
-            Bonne réponse
+          <p className="text-small font-medium" id={`questions-${index}-tf`}>
+            {t('correctAnswer')}
           </p>
           <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-labelledby={`questions-${index}-tf`}>
             {TRUE_FALSE_OPTIONS.map((opt) => {
@@ -216,7 +212,7 @@ export function QuestionBuilder({
                     checked ? 'border-success bg-success-50 text-success' : 'border-borderc hover:border-primary/40'
                   )}
                 >
-                  {opt.text}
+                  {opt.id === 'false' ? tc('false') : tc('true')}
                 </button>
               );
             })}
@@ -226,37 +222,37 @@ export function QuestionBuilder({
 
       {type === 'ordering' && (
         <div className="space-y-2">
-          <p className="text-sm font-medium">Éléments, dans l&apos;ordre attendu</p>
+          <p className="text-small font-medium">{t('orderingItems')}</p>
           <SortableList
-            ariaLabel="Ordre attendu des éléments"
-            items={options.map((o) => ({ ...o, label: o.text || `Option ${o.id}` }))}
+            ariaLabel={t('orderingAria')}
+            items={options.map((o) => ({ ...o, label: o.text || t('optionAria', { id: o.id }) }))}
             onChange={reorderOptions}
-            renderItem={(opt) => optionInput(opt, `Élément ${opt.id}`)}
+            renderItem={(opt) => optionInput(opt, t('itemPlaceholder', { id: opt.id }))}
           />
         </div>
       )}
 
       {(type === 'single' || type === 'multiple' || type === 'poll') && (
         <div className="space-y-2">
-          <p className="text-sm font-medium">Options</p>
+          <p className="text-small font-medium">{t('options')}</p>
           {options.map((opt) => (
             <div key={opt.id} className="flex items-center gap-2">
-              <span className="w-6 font-mono text-sm">{opt.id}</span>
-              {optionInput(opt, `Option ${opt.id}`)}
+              <span className="w-6 font-display font-semibold text-small">{opt.id}</span>
+              {optionInput(opt, t('optionPlaceholder', { id: opt.id }))}
               {type !== 'poll' && (
                 <button
                   type="button"
                   onClick={() => toggleCorrect(opt.id)}
                   aria-pressed={correctAnswers.includes(opt.id)}
-                  aria-label={`Marquer l'option ${opt.id} comme bonne réponse`}
+                  aria-label={t('markCorrectAria', { id: opt.id })}
                   className={cn(
-                    'px-2 py-1 text-xs rounded border transition-colors',
+                    'px-2 py-1 text-caption rounded-sm border transition-colors',
                     correctAnswers.includes(opt.id)
                       ? 'bg-success-50 border-success text-success'
-                      : 'bg-white border-borderc text-ink-secondary/70'
+                      : 'bg-surface border-borderc text-ink-tertiary'
                   )}
                 >
-                  {correctAnswers.includes(opt.id) ? '✓ Correct' : 'Marquer'}
+                  {correctAnswers.includes(opt.id) ? t('correct') : t('markCorrect')}
                 </button>
               )}
             </div>
@@ -266,18 +262,18 @@ export function QuestionBuilder({
 
       {type !== 'true_false' && type !== 'short_answer' && canAddOption && (
         <Button type="button" variant="ghost" size="sm" onClick={addOption}>
-          <Plus className="w-4 h-4 mr-1" /> Ajouter une option
+          <Plus className="w-4 h-4" /> {t('addOption')}
         </Button>
       )}
 
       {type === 'short_answer' && (
         <div className="space-y-2">
-          <p className="text-sm font-medium">Réponses acceptées</p>
+          <p className="text-small font-medium">{t('acceptedAnswers')}</p>
           {variants.map((value, i) => (
             <div key={i} className="flex items-center gap-2">
               <Input
-                aria-label={`Réponse acceptée ${i + 1}`}
-                placeholder={i === 0 ? 'Ex. : Paris' : 'Autre variante'}
+                aria-label={t('acceptedAria', { number: i + 1 })}
+                placeholder={i === 0 ? t('acceptedFirstPlaceholder') : t('acceptedOtherPlaceholder')}
                 value={value}
                 maxLength={SHORT_ANSWER_VARIANT_MAX_LENGTH}
                 onChange={(e) => {
@@ -291,8 +287,8 @@ export function QuestionBuilder({
                 <button
                   type="button"
                   onClick={() => set('correct_answers', variants.filter((_, j) => j !== i))}
-                  aria-label={`Supprimer la réponse acceptée ${i + 1}`}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink-secondary hover:bg-black/[0.05] hover:text-danger"
+                  aria-label={t('removeAccepted', { number: i + 1 })}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink-secondary hover:bg-ink/[0.05] hover:text-danger"
                 >
                   <X className="h-4 w-4" aria-hidden />
                 </button>
@@ -301,30 +297,30 @@ export function QuestionBuilder({
           ))}
           {variants.length < SHORT_ANSWER_MAX_VARIANTS && (
             <Button type="button" variant="ghost" size="sm" onClick={() => set('correct_answers', [...variants, ''])}>
-              <Plus className="w-4 h-4 mr-1" /> Ajouter une variante
+              <Plus className="w-4 h-4" /> {t('addVariant')}
             </Button>
           )}
         </div>
       )}
 
-      {errors?.options?.message && <p className="text-sm text-danger">{errors.options.message}</p>}
+      {errors?.options?.message && <p className="text-small text-danger">{localize(errors.options.message)}</p>}
       {errors?.correct_answers?.message && (
-        <p className="text-sm text-danger">{errors.correct_answers.message}</p>
+        <p className="text-small text-danger">{localize(errors.correct_answers.message)}</p>
       )}
 
       <div className="space-y-1.5">
         <label htmlFor={explanationId} className="text-small font-medium text-ink">
-          Explication (facultatif)
+          {t('explanation')}
         </label>
         <textarea
           id={explanationId}
           rows={2}
           maxLength={QUESTION_EXPLANATION_MAX_LENGTH}
-          placeholder="Affichée aux élèves après la clôture de la question"
+          placeholder={t('explanationPlaceholder')}
           aria-describedby={`${explanationId}-count`}
           aria-invalid={!!errors?.explanation}
           className={cn(
-            'w-full rounded-md border border-borderc bg-surface px-3 py-2 text-body placeholder:text-ink-secondary/60',
+            'w-full rounded-md border border-borderc-strong bg-surface px-3 py-2 text-body text-ink placeholder:text-ink-tertiary',
             'focus:outline-none focus:border-primary focus:shadow-glow',
             errors?.explanation && 'border-danger'
           )}
@@ -334,30 +330,30 @@ export function QuestionBuilder({
           {explanation.length}/{QUESTION_EXPLANATION_MAX_LENGTH}
         </p>
         {errors?.explanation?.message && (
-          <p className="text-small text-danger">{errors.explanation.message}</p>
+          <p className="text-small text-danger">{localize(errors.explanation.message)}</p>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label={type === 'poll' ? 'Points max (non utilisés)' : 'Points max'}
+          label={type === 'poll' ? t('maxPointsPoll') : t('maxPoints')}
           id={`questions-${index}-points`}
           type="number"
           {...register(`${path}.max_points`, { valueAsNumber: true })}
-          error={errors?.max_points?.message}
+          error={localize(errors?.max_points?.message)}
         />
         {!useGlobalTimer && (
           <Input
-            label="Timer (secondes)"
+            label={t('timer')}
             id={`questions-${index}-timer`}
             type="number"
             {...register(`${path}.timer_seconds`, { valueAsNumber: true })}
-            error={errors?.timer_seconds?.message}
+            error={localize(errors?.timer_seconds?.message)}
           />
         )}
         {useGlobalTimer && (
-          <div className="text-sm text-ink-secondary flex items-center">
-            Timer global: {globalTimer}s
+          <div className="text-small text-ink-secondary flex items-center">
+            {t('globalTimer', { seconds: globalTimer })}
           </div>
         )}
       </div>

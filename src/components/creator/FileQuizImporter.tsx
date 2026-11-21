@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Download, FileSpreadsheet, Search, Upload } from 'lucide-react';
@@ -32,6 +33,7 @@ interface FileQuizImporterProps {
  * et les erreurs par ligne, puis import réel sur confirmation uniquement.
  */
 export function FileQuizImporter({ source, getQuizId, onImported, onDiscard }: FileQuizImporterProps) {
+  const t = useTranslations('sharing');
   const inputId = useId();
   const [file, setFile] = useState<File | null>(null);
   const [format, setFormat] = useState<FileImportFormat | null>(null);
@@ -52,7 +54,7 @@ export function FileQuizImporter({ source, getQuizId, onImported, onDiscard }: F
     setFormat(null);
     setFileError(null);
     if (!selected) return;
-    const resolved = resolveImportFile(selected, source);
+    const resolved = resolveImportFile(selected, source, t);
     if ('error' in resolved) {
       setFileError(resolved.error);
       return;
@@ -73,10 +75,10 @@ export function FileQuizImporter({ source, getQuizId, onImported, onDiscard }: F
       else {
         setReport(null);
         onDiscard();
-        setError('Aucune question n’a été importée : corrigez le fichier puis relancez l’aperçu.');
+        setError(t('import.nothingImported'));
       }
     } catch (e) {
-      setError(importErrorMessage(e));
+      setError(importErrorMessage(e, t));
     } finally {
       setBusy(null);
     }
@@ -88,32 +90,31 @@ export function FileQuizImporter({ source, getQuizId, onImported, onDiscard }: F
     try {
       await downloadImportTemplate();
     } catch {
-      setTemplateError('Le modèle n’a pas pu être téléchargé. Réessayez.');
+      setTemplateError(t('import.templateError'));
     }
   };
 
   const accept = source === 'kahoot' ? '.xlsx' : '.csv,.xlsx';
 
+  const bold = (chunks: React.ReactNode) => <strong>{chunks}</strong>;
+
   return (
     <Card className="p-6 space-y-5">
-      <div className="flex items-center gap-2 text-lg font-semibold">
+      <div className="flex items-center gap-2 text-h3">
         <FileSpreadsheet className="w-5 h-5" aria-hidden="true" />
-        {source === 'kahoot' ? 'Importer un export Kahoot' : 'Importer depuis un tableur'}
+        {source === 'kahoot' ? t('import.titleKahoot') : t('import.titleSpreadsheet')}
       </div>
 
       {source === 'spreadsheet' ? (
-        <div className="bg-background p-4 rounded-lg text-sm text-ink-secondary space-y-2">
-          <p>
-            Un fichier <strong>.csv</strong> ou <strong>.xlsx</strong> : une question par ligne, avec les colonnes du
-            modèle (énoncé, type, options, bonnes réponses, temps, points).
-          </p>
+        <div className="bg-background p-4 rounded-lg text-small text-ink-secondary space-y-2">
+          <p>{t.rich('import.spreadsheetHelp', { b: bold })}</p>
           <a
             href={IMPORT_TEMPLATE_URL}
             onClick={handleTemplate}
             className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
           >
             <Download className="w-4 h-4" aria-hidden="true" />
-            Télécharger le modèle CSV
+            {t('import.template')}
           </a>
           {templateError && (
             <p role="alert" className="text-danger">
@@ -122,17 +123,14 @@ export function FileQuizImporter({ source, getQuizId, onImported, onDiscard }: F
           )}
         </div>
       ) : (
-        <div className="bg-background p-4 rounded-lg text-sm text-ink-secondary space-y-1">
-          <p>
-            Dans Kahoot, ouvrez votre kahoot puis exportez-le au format tableur (<strong>.xlsx</strong>). Les questions
-            à choix, le temps et les bonnes réponses sont repris ; les images ne le sont pas.
-          </p>
+        <div className="bg-background p-4 rounded-lg text-small text-ink-secondary">
+          <p>{t.rich('import.kahootHelp', { b: bold })}</p>
         </div>
       )}
 
       <div>
-        <label htmlFor={inputId} className="block text-sm font-medium text-ink-secondary">
-          {source === 'kahoot' ? 'Fichier Kahoot (.xlsx)' : 'Fichier tableur (.csv ou .xlsx)'}
+        <label htmlFor={inputId} className="block text-small font-medium text-ink-secondary">
+          {source === 'kahoot' ? t('import.fileKahoot') : t('import.fileSpreadsheet')}
         </label>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <input
@@ -140,15 +138,15 @@ export function FileQuizImporter({ source, getQuizId, onImported, onDiscard }: F
             type="file"
             accept={accept}
             onChange={(e) => handleFile(e.target.files?.[0])}
-            className="text-sm"
+            className="text-small"
           />
           {file && (
-            <span className="text-sm text-success">
-              {file.name} ({formatBytes(file.size)})
+            <span className="text-small text-success">
+              {t('import.fileInfo', { name: file.name, size: formatBytes(file.size, t) })}
             </span>
           )}
         </div>
-        <p className="mt-1 text-caption text-ink-secondary">2 Mo maximum.</p>
+        <p className="mt-1 text-caption text-ink-secondary">{t('import.maxSize')}</p>
         {fileError && (
           <p role="alert" className="mt-2 rounded-md bg-danger-50 p-3 text-small text-danger">
             {fileError}
@@ -158,30 +156,30 @@ export function FileQuizImporter({ source, getQuizId, onImported, onDiscard }: F
 
       {!report && (
         <Button onClick={() => run(true)} isLoading={busy === 'preview'} disabled={!file || busy !== null}>
-          <Search className="w-4 h-4 mr-2" aria-hidden="true" />
-          Prévisualiser l&apos;import
+          <Search className="w-4 h-4" aria-hidden="true" />
+          {t('import.preview')}
         </Button>
       )}
 
       {report && (
-        <section aria-label="Aperçu de l’import" className="space-y-3" data-testid="import-preview">
+        <section aria-label={t('import.previewAria')} className="space-y-3" data-testid="import-preview">
           <p className="font-medium" role="status">
-            {report.valid === 0 ? 'Aucune question valide dans ce fichier.' : importSummary(report)}
+            {report.valid === 0 ? t('import.noValid') : importSummary(report, t)}
           </p>
           {report.errors.length > 0 && (
             <div className="space-y-2">
-              <p className="text-small text-danger">
-                {report.errors.length} erreur{report.errors.length > 1 ? 's' : ''} : les lignes concernées seront
-                ignorées. Corrigez le fichier puis relancez l&apos;aperçu, ou importez seulement les questions
-                valides.
-              </p>
+              <p className="text-small text-danger">{t('import.errorsIntro', { count: report.errors.length })}</p>
               <div className="max-h-72 overflow-auto rounded-md border border-borderc">
                 <table className="w-full text-left text-small">
-                  <caption className="sr-only">Erreurs par ligne</caption>
+                  <caption className="sr-only">{t('import.errorsCaption')}</caption>
                   <thead className="bg-background">
                     <tr>
-                      <th scope="col" className="px-3 py-2 w-20">Ligne</th>
-                      <th scope="col" className="px-3 py-2">Message</th>
+                      <th scope="col" className="px-3 py-2 w-20">
+                        {t('import.colRow')}
+                      </th>
+                      <th scope="col" className="px-3 py-2">
+                        {t('import.colMessage')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -202,8 +200,8 @@ export function FileQuizImporter({ source, getQuizId, onImported, onDiscard }: F
               isLoading={busy === 'import'}
               disabled={report.valid === 0 || busy !== null}
             >
-              <Upload className="w-4 h-4 mr-2" aria-hidden="true" />
-              {`Importer ${report.valid} question${report.valid > 1 ? 's' : ''}`}
+              <Upload className="w-4 h-4" aria-hidden="true" />
+              {t('import.confirm', { count: report.valid })}
             </Button>
             <Button
               variant="outline"
@@ -213,7 +211,7 @@ export function FileQuizImporter({ source, getQuizId, onImported, onDiscard }: F
               }}
               disabled={busy !== null}
             >
-              Annuler
+              {t('import.cancel')}
             </Button>
           </div>
         </section>

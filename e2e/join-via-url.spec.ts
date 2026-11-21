@@ -5,8 +5,8 @@ test.describe('rejoindre via le lien direct', () => {
   test('?code= pré-remplit le code (normalisé) et place le focus sur le pseudo', async ({ page }) => {
     await page.goto('/player/join?code=k7m2p9');
 
-    const code = page.getByLabel('Mot de passe de la session');
-    const pseudo = page.getByLabel('Votre pseudo');
+    const code = page.getByLabel('Code de la session');
+    const pseudo = page.getByLabel('Ton pseudo');
     await expect(code).toHaveValue('K7M2P9');
     await expect(pseudo).toBeFocused();
   });
@@ -34,8 +34,8 @@ test.describe('rejoindre via le lien direct', () => {
     });
 
     await page.goto('/player/join?code=%20ab%20c123');
-    await expect(page.getByLabel('Mot de passe de la session')).toHaveValue('ABC123');
-    await expect(page.getByLabel('Votre pseudo')).toBeFocused();
+    await expect(page.getByLabel('Code de la session')).toHaveValue('ABC123');
+    await expect(page.getByLabel('Ton pseudo')).toBeFocused();
 
     await page.keyboard.type('Alice_42');
     await page.keyboard.press('Enter');
@@ -47,7 +47,7 @@ test.describe('rejoindre via le lien direct', () => {
   test('mobile : le formulaire tient dans la largeur', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 });
     await page.goto('/player/join?code=ABC123');
-    await expect(page.getByLabel('Votre pseudo')).toBeFocused();
+    await expect(page.getByLabel('Ton pseudo')).toBeFocused();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth
     );

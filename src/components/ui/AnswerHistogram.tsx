@@ -1,8 +1,12 @@
+'use client';
+
 import { Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
+import { answerTone } from '@/lib/answerTone';
+import { useAnswerLabels } from '@/i18n/answerLabel';
 import {
   accuracyToPercent,
-  answerLabel,
   inferQuestionType,
   normalizeShortAnswer,
   type QuestionType,
@@ -18,7 +22,7 @@ export interface AnswerHistogramProps {
     'distribution' | 'correctAnswers' | 'accuracy' | 'answeredCount' | 'totalParticipants'
   > &
     Partial<Pick<WsQuestionStatsPayload, 'type' | 'graded'>>;
-  /** `projection` : grandes tailles, texte clair sur fond sombre (vidéoprojecteur). */
+  /** `projection` : grandes tailles (vidéoprojecteur). Les couleurs viennent du thème du conteneur. */
   variant?: 'default' | 'projection';
   className?: string;
   /**
@@ -32,10 +36,6 @@ export interface AnswerHistogramProps {
 /** Part (en %) des répondants ayant choisi l'option. En choix multiple, le total peut dépasser 100 %. */
 function percentOf(count: number, answered: number) {
   return answered > 0 ? Math.round((count / answered) * 100) : 0;
-}
-
-function plural(n: number, word: string) {
-  return `${n} ${word}${n > 1 ? 's' : ''}`;
 }
 
 /**
@@ -52,6 +52,8 @@ export function AnswerHistogram({
   className,
   questionType,
 }: AnswerHistogramProps) {
+  const t = useTranslations('histogram');
+  const { answerLabel, optionText } = useAnswerLabels();
   const isProjection = variant === 'projection';
   // Type : prop, sinon celui de `question:stats` (backend #7), sinon déduit (correction vide = sondage).
   const type =
@@ -69,14 +71,14 @@ export function AnswerHistogram({
   const accuracy = accuracyToPercent(stats.accuracy);
   const summary =
     answered === 0
-      ? `Aucune réponse sur ${plural(total, 'participant')}`
+      ? t('none', { total })
       : isPoll
-        ? `${plural(answered, 'vote')} sur ${plural(total, 'participant')} · sondage, sans bonne réponse`
-        : `${plural(answered, 'réponse')} sur ${plural(total, 'participant')} · ${accuracy} % des participants ont répondu juste`;
+        ? t('pollSummary', { answered, total })
+        : t('summary', { answered, total, accuracy });
   const textSize = isProjection ? 'text-[clamp(1.25rem,2.4vw,2.75rem)] font-semibold' : 'text-small';
   const caption = (
     <figcaption
-      className={cn('mb-3', isProjection ? 'text-[clamp(1.25rem,2vw,2.25rem)] text-white/80' : 'text-small text-ink-secondary')}
+      className={cn('mb-3', isProjection ? 'text-[clamp(1.25rem,2vw,2.25rem)] text-ink-secondary' : 'text-small text-ink-secondary')}
       data-testid="histogram-summary"
     >
       {summary}
@@ -88,16 +90,16 @@ export function AnswerHistogram({
   if (type === 'ordering') {
     const ids = stats.correctAnswers?.length ? stats.correctAnswers : options.map((o) => o.id);
     return (
-      <figure className={cn('w-full', className)} aria-label="Résultats de la question" data-testid="answer-histogram">
+      <figure className={cn('w-full', className)} aria-label={t('resultsAria')} data-testid="answer-histogram">
         {caption}
-        <p className={cn('mb-2 font-medium', textSize)}>Ordre attendu</p>
+        <p className={cn('mb-2 font-medium', textSize)}>{t('expectedOrder')}</p>
         <ol className="space-y-2" data-testid="histogram-ordering">
           {ids.map((id, i) => (
             <li
               key={id}
-              className={cn('flex items-center gap-3 rounded-md px-3 py-2', textSize, isProjection ? 'bg-white/10' : 'bg-success-50')}
+              className={cn('flex items-center gap-3 rounded-md px-3 py-2', textSize, isProjection ? 'bg-ink/10' : 'bg-success-50')}
             >
-              <span className="font-mono opacity-80">{i + 1}.</span>
+              <span className="font-display tabular-nums opacity-80">{i + 1}.</span>
               <span className="min-w-0 break-words">{answerLabel(id, options)}</span>
             </li>
           ))}
@@ -115,14 +117,14 @@ export function AnswerHistogram({
       .sort((a, b) => Number(b[1]) - Number(a[1]))
       .slice(0, 5);
     return (
-      <figure className={cn('w-full', className)} aria-label="Résultats de la question" data-testid="answer-histogram">
+      <figure className={cn('w-full', className)} aria-label={t('resultsAria')} data-testid="answer-histogram">
         {caption}
         <p className={cn('mb-3', textSize)} data-testid="histogram-accepted">
-          {acceptedList.length > 1 ? 'Réponses acceptées : ' : 'Réponse attendue : '}
+          {t('accepted', { count: acceptedList.length })}{' '}
           <strong>{acceptedList.join(' / ') || '—'}</strong>
         </p>
         {top.length > 0 && (
-          <ul className={cn('space-y-2', isProjection && 'space-y-[2vh]')} aria-label="Réponses les plus fréquentes">
+          <ul className={cn('space-y-2', isProjection && 'space-y-[2vh]')} aria-label={t('topAnswers')}>
             {top.map(([answer, n]) => {
               const count = Math.max(0, Number(n) || 0);
               const pct = percentOf(count, answered);
@@ -131,21 +133,22 @@ export function AnswerHistogram({
                 <li key={answer} data-testid="histogram-short-row" data-correct={ok || undefined}>
                   <div className={cn('flex items-baseline justify-between gap-3', textSize)}>
                     <span className="min-w-0 break-words">
-                      « {answer} »{ok && <span className="sr-only"> (acceptée)</span>}
+                      {t('quoted', { answer })}
+                      {ok && <span className="sr-only">{t('acceptedSr')}</span>}
                     </span>
                     <span className="shrink-0 tabular-nums">
-                      <span className="font-semibold">{pct} %</span> ({plural(count, 'réponse')})
+                      <span className="font-semibold">{t('percent', { value: pct })}</span> {t('count', { count })}
                     </span>
                   </div>
                   <div
                     aria-hidden
                     className={cn(
                       'mt-1 w-full overflow-hidden rounded-full',
-                      isProjection ? 'h-[clamp(1rem,2.5vh,2rem)] bg-white/10' : 'h-3 bg-black/[0.06]'
+                      isProjection ? 'h-[clamp(1rem,2.5vh,2rem)] bg-ink/10' : 'h-3 bg-ink/[0.06]'
                     )}
                   >
                     <div
-                      className={cn('h-full rounded-full', ok ? 'bg-success' : isProjection ? 'bg-white/40' : 'bg-ink-secondary/40')}
+                      className={cn('h-full rounded-full', ok ? 'bg-success-solid' : 'bg-ink-tertiary/40')}
                       style={{ width: `${Math.min(100, pct)}%` }}
                     />
                   </div>
@@ -161,13 +164,13 @@ export function AnswerHistogram({
   return (
     <figure
       className={cn('w-full', className)}
-      aria-label="Répartition des réponses"
+      aria-label={t('aria')}
       data-testid="answer-histogram"
     >
       {caption}
 
       <ul className={cn('space-y-2', isProjection && 'space-y-[2vh]')}>
-        {options.map((opt) => {
+        {options.map((opt, index) => {
           const count = Math.max(0, Number(distribution[opt.id] ?? 0) || 0);
           const pct = percentOf(count, answered);
           const isCorrect = correct.has(opt.id);
@@ -180,24 +183,34 @@ export function AnswerHistogram({
                 )}
               >
                 <span className="flex min-w-0 items-center gap-2">
-                  {type !== 'true_false' && <span className="font-mono opacity-80">{opt.id}</span>}
-                  <span className="min-w-0 break-words">{opt.text || answerLabel(opt.id, options)}</span>
+                  {type !== 'true_false' && (
+                    <span
+                      className={cn(
+                        'inline-flex shrink-0 items-center justify-center rounded-sm font-display font-bold text-white',
+                        isProjection ? 'h-[1.4em] w-[1.4em]' : 'h-5 w-5 text-caption',
+                        answerTone(opt.id, index).bg
+                      )}
+                    >
+                      {opt.id}
+                    </span>
+                  )}
+                  <span className="min-w-0 break-words">{opt.text ? optionText(opt.text) : answerLabel(opt.id, options)}</span>
                   {isCorrect && (
                     <span
                       className={cn(
                         'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-medium',
-                        isProjection ? 'bg-success text-white text-[0.6em]' : 'bg-success-50 text-success text-caption'
+                        isProjection ? 'bg-success-solid text-white text-[0.6em]' : 'bg-success-50 text-success text-caption'
                       )}
                     >
                       <Check className="h-[1em] w-[1em]" aria-hidden />
-                      Bonne réponse
+                      {t('correct')}
                     </span>
                   )}
                 </span>
                 <span className="shrink-0 tabular-nums">
-                  <span className="font-semibold">{pct} %</span>{' '}
-                  <span className={isProjection ? 'text-white/60' : 'text-ink-secondary'}>
-                    ({plural(count, 'réponse')})
+                  <span className="font-semibold">{t('percent', { value: pct })}</span>{' '}
+                  <span className={isProjection ? 'text-ink-tertiary' : 'text-ink-secondary'}>
+                    {t('count', { count })}
                   </span>
                 </span>
               </div>
@@ -205,13 +218,13 @@ export function AnswerHistogram({
                 aria-hidden
                 className={cn(
                   'mt-1 w-full overflow-hidden rounded-full',
-                  isProjection ? 'h-[clamp(1rem,2.5vh,2rem)] bg-white/10' : 'h-3 bg-black/[0.06]'
+                  isProjection ? 'h-[clamp(1rem,2.5vh,2rem)] bg-ink/10' : 'h-3 bg-ink/[0.06]'
                 )}
               >
                 <div
                   className={cn(
                     'h-full rounded-full transition-[width] duration-500 ease-out',
-                    isCorrect ? 'bg-success' : isPoll ? 'bg-primary' : isProjection ? 'bg-white/40' : 'bg-ink-secondary/40'
+                    isCorrect ? 'bg-success-solid' : isPoll ? 'bg-primary' : 'bg-ink-tertiary/40'
                   )}
                   style={{ width: `${Math.min(100, pct)}%` }}
                   data-testid={`histogram-bar-${opt.id}`}

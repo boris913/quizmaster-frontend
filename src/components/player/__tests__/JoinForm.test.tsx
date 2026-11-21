@@ -31,8 +31,8 @@ function setSearch(search: string) {
   window.history.replaceState(null, '', `/player/join${search ? `?${search}` : ''}`);
 }
 
-const codeInput = () => screen.getByLabelText('Mot de passe de la session') as HTMLInputElement;
-const pseudoInput = () => screen.getByLabelText('Votre pseudo') as HTMLInputElement;
+const codeInput = () => screen.getByLabelText('Code de la session') as HTMLInputElement;
+const pseudoInput = () => screen.getByLabelText('Ton pseudo') as HTMLInputElement;
 
 describe('JoinForm', () => {
   beforeEach(() => {
@@ -96,7 +96,7 @@ describe('JoinForm', () => {
     await user.type(pseudoInput(), 'Alice');
     await user.click(screen.getByRole('button', { name: 'Rejoindre le quiz' }));
 
-    expect(await screen.findByText('Entrez le code de la session')).toBeInTheDocument();
+    expect(await screen.findByText('Entre le code de la session')).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -158,8 +158,8 @@ describe('JoinForm', () => {
       ).toBeInTheDocument();
       expect(fetchSuggestions).toHaveBeenCalledWith('ABC123');
       // Plus de saisie libre du pseudo.
-      expect(screen.queryByRole('textbox', { name: 'Votre pseudo' })).not.toBeInTheDocument();
-      expect(screen.getByRole('group', { name: 'Votre pseudo' })).toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Ton pseudo' })).not.toBeInTheDocument();
+      expect(screen.getByRole('group', { name: 'Ton pseudo' })).toBeInTheDocument();
     });
 
     it('affiche un état de chargement pendant la recherche de la session', async () => {

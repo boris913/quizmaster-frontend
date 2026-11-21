@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useQuiz } from '@/hooks/useQuiz';
 import { QuestionImporter } from '@/components/creator/QuestionImporter';
 import { FileQuizImporter } from '@/components/creator/FileQuizImporter';
@@ -14,13 +15,15 @@ import { deleteDraftQuiz, deleteDraftQuizOnPageHide } from '@/lib/quizSharing';
 
 type ImportTab = 'markdown' | 'spreadsheet' | 'kahoot';
 
-const TABS: { id: ImportTab; label: string }[] = [
-  { id: 'markdown', label: 'Markdown' },
-  { id: 'spreadsheet', label: 'Tableur (CSV / XLSX)' },
-  { id: 'kahoot', label: 'Kahoot (XLSX)' },
+const TABS: { id: ImportTab; labelKey: string }[] = [
+  { id: 'markdown', labelKey: 'import.tabMarkdown' },
+  { id: 'spreadsheet', labelKey: 'import.tabSpreadsheet' },
+  { id: 'kahoot', labelKey: 'import.tabKahoot' },
 ];
 
 export default function ImportQuizPage() {
+  const t = useTranslations('importer');
+  const ts = useTranslations('sharing');
   const router = useRouter();
   const { createQuiz, importQuestions, isLoading } = useQuiz();
   const [title, setTitle] = useState('');
@@ -38,7 +41,7 @@ export default function ImportQuizPage() {
   const getFileQuizId = (): Promise<string> => {
     if (draft.current.promise) return draft.current.promise;
     const promise: Promise<string> = createQuiz({
-      title: title || 'Quiz importé',
+      title: title || t('defaultTitle'),
       description,
       global_timer_seconds: globalTimer,
       use_global_timer: useGlobalTimer,
@@ -92,7 +95,7 @@ export default function ImportQuizPage() {
     try {
       // Créer d'abord le quiz
       const quiz = await createQuiz({
-        title: title || 'Quiz importé',
+        title: title || t('defaultTitle'),
         description,
         global_timer_seconds: globalTimer,
         use_global_timer: useGlobalTimer,
@@ -111,34 +114,34 @@ export default function ImportQuizPage() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-3xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Importer un quiz</h1>
+        <h1 className="text-h1">{t('pageTitle')}</h1>
 
         <Card className="p-6 space-y-4">
-          <h3 className="font-medium">Informations du quiz</h3>
+          <h3 className="font-medium">{t('quizInfo')}</h3>
           <Input
-            label="Titre"
+            label={t('quizTitle')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Titre du quiz"
+            placeholder={t('quizTitlePlaceholder')}
           />
           <Input
-            label="Description (optionnel)"
+            label={t('quizDescription')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-small">
               <input
                 type="checkbox"
                 checked={useGlobalTimer}
                 onChange={(e) => setUseGlobalTimer(e.target.checked)}
                 className="rounded border-borderc"
               />
-              Timer global
+              {t('globalTimer')}
             </label>
             {useGlobalTimer && (
               <Input
-                label="Secondes"
+                label={t('seconds')}
                 type="number"
                 value={globalTimer}
                 onChange={(e) => setGlobalTimer(Number(e.target.value))}
@@ -148,21 +151,21 @@ export default function ImportQuizPage() {
           </div>
         </Card>
 
-        <div role="tablist" aria-label="Format d’import" className="flex flex-wrap gap-2">
-          {TABS.map((t) => (
+        <div role="tablist" aria-label={ts('import.tabsAria')} className="flex flex-wrap gap-2">
+          {TABS.map((item) => (
             <button
-              key={t.id}
+              key={item.id}
               type="button"
               role="tab"
-              id={`import-tab-${t.id}`}
-              aria-selected={tab === t.id}
-              aria-controls={`import-panel-${t.id}`}
-              onClick={() => setTab(t.id)}
+              id={`import-tab-${item.id}`}
+              aria-selected={tab === item.id}
+              aria-controls={`import-panel-${item.id}`}
+              onClick={() => setTab(item.id)}
               className={`min-h-[44px] rounded-md px-4 text-small font-medium transition-colors ${
-                tab === t.id ? 'bg-primary-50 text-primary-700' : 'text-ink-secondary hover:bg-black/[0.04]'
+                tab === item.id ? 'bg-primary-50 text-primary-700' : 'text-ink-secondary hover:bg-ink/[0.04]'
               }`}
             >
-              {t.label}
+              {ts(item.labelKey)}
             </button>
           ))}
         </div>

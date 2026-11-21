@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { createTranslator } from 'next-intl';
+import fr from '../../../messages/fr.json';
+import en from '../../../messages/en.json';
 import {
   IMPORT_MAX_BYTES,
   buildShareUrl,
@@ -16,6 +19,12 @@ import {
   resolveImportFile,
   safeRedirectPath,
 } from '@/lib/quizSharing';
+
+const t = createTranslator({ locale: 'fr', messages: fr, namespace: 'sharing' as never, timeZone: 'Europe/Paris' }) as unknown as (
+  key: string,
+  values?: Record<string, string | number>
+) => string;
+const tEn = createTranslator({ locale: 'en', messages: en, namespace: 'sharing' as never, timeZone: 'Europe/Paris' }) as unknown as typeof t;
 
 function fileOf(name: string, size: number): File {
   const file = new File(['x'], name);
@@ -48,10 +57,10 @@ describe('quizSharing : duplication et copie', () => {
   });
 
   it('libellé d’un avertissement', () => {
-    expect(copyWarningLabel({ questionNumber: 3, message: 'question non copiée : texte requis' })).toBe(
+    expect(copyWarningLabel({ questionNumber: 3, message: 'question non copiée : texte requis' }, t)).toBe(
       'Question 3 : question non copiée : texte requis'
     );
-    expect(copyWarningLabel({ questionNumber: null, message: 'x' })).toBe('x');
+    expect(copyWarningLabel({ questionNumber: null, message: 'x' }, t)).toBe('x');
   });
 
   it('transmet les avertissements à la page de la copie, une seule fois', () => {
@@ -114,16 +123,18 @@ describe('quizSharing : retour après connexion', () => {
 
 describe('quizSharing : import de fichier', () => {
   it('contrôle le type selon l’onglet', () => {
-    expect(resolveImportFile(fileOf('q.csv', 10), 'spreadsheet')).toEqual({ format: 'csv' });
-    expect(resolveImportFile(fileOf('q.XLSX', 10), 'spreadsheet')).toEqual({ format: 'xlsx' });
-    expect(resolveImportFile(fileOf('k.xlsx', 10), 'kahoot')).toEqual({ format: 'kahoot' });
-    expect(resolveImportFile(fileOf('k.csv', 10), 'kahoot')).toHaveProperty('error');
-    expect(resolveImportFile(fileOf('q.pdf', 10), 'spreadsheet')).toHaveProperty('error');
+    expect(resolveImportFile(fileOf('q.csv', 10), 'spreadsheet', t)).toEqual({ format: 'csv' });
+    expect(resolveImportFile(fileOf('q.XLSX', 10), 'spreadsheet', t)).toEqual({ format: 'xlsx' });
+    expect(resolveImportFile(fileOf('k.xlsx', 10), 'kahoot', t)).toEqual({ format: 'kahoot' });
+    expect(resolveImportFile(fileOf('k.csv', 10), 'kahoot', t)).toHaveProperty('error');
+    expect(resolveImportFile(fileOf('q.pdf', 10), 'spreadsheet', t)).toHaveProperty('error');
   });
 
   it('contrôle la taille', () => {
-    expect(resolveImportFile(fileOf('q.csv', IMPORT_MAX_BYTES + 1), 'spreadsheet')).toHaveProperty('error');
-    expect(resolveImportFile(fileOf('q.csv', 0), 'spreadsheet')).toHaveProperty('error');
+    expect(resolveImportFile(fileOf('q.csv', IMPORT_MAX_BYTES + 1), 'spreadsheet', t)).toEqual({
+      error: 'Fichier trop volumineux (2 Mo) : 2 Mo maximum.',
+    });
+    expect(resolveImportFile(fileOf('q.csv', 0), 'spreadsheet', t)).toHaveProperty('error');
   });
 
   it('en dryRun, lit les questions valides dans `valid` (imported vaut 0)', () => {
@@ -136,9 +147,10 @@ describe('quizSharing : import de fichier', () => {
 
   it('résume la confirmation : questions importées et lignes ignorées', () => {
     const err = { row: 2, message: 'x' };
-    expect(importSummary({ valid: 3, errors: [err, err] })).toBe('3 questions seront importées, 2 lignes ignorées.');
-    expect(importSummary({ valid: 1, errors: [err] })).toBe('1 question sera importée, 1 ligne ignorée.');
-    expect(importSummary({ valid: 4, errors: [] })).toBe('4 questions seront importées, 0 lignes ignorées.');
+    expect(importSummary({ valid: 3, errors: [err, err] }, t)).toBe('3 questions seront importées, 2 lignes ignorées.');
+    expect(importSummary({ valid: 1, errors: [err] }, t)).toBe('1 question sera importée, 1 ligne ignorée.');
+    expect(importSummary({ valid: 4, errors: [] }, t)).toBe('4 questions seront importées, 0 ligne ignorée.');
+    expect(importSummary({ valid: 3, errors: [err, err] }, tEn)).toBe('3 questions will be imported, 2 rows ignored.');
   });
 
   it('normalise le rapport', () => {

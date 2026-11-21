@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { useSessionStore } from '@/store/sessionStore';
 
@@ -13,13 +14,10 @@ interface DeleteSessionButtonProps {
   onDeleted?: () => void;
 }
 
-function getErrorMessage(err: unknown): string {
+function getErrorKey(err: unknown) {
   const status = (err as { response?: { status?: number } })?.response?.status;
-  if (status === 404) {
-    // Le backend répond 404 si la session n'existe pas ou si le demandeur n'en est pas le créateur.
-    return "Session introuvable, ou vous n'en êtes pas le créateur.";
-  }
-  return 'La suppression a échoué. Réessayez dans un instant.';
+  // Le backend répond 404 si la session n'existe pas ou si le demandeur n'en est pas le créateur.
+  return status === 404 ? ('errors.notFound' as const) : ('errors.generic' as const);
 }
 
 /**
@@ -27,6 +25,8 @@ function getErrorMessage(err: unknown): string {
  * Appelle DELETE /api/sessions/:id (suppression en cascade des participants et réponses côté backend).
  */
 export function DeleteSessionButton({ sessionId, sessionLabel, onDeleted }: DeleteSessionButtonProps) {
+  const t = useTranslations('deleteSession');
+  const tc = useTranslations('common');
   const deleteSession = useSessionStore((state) => state.deleteSession);
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -58,7 +58,7 @@ export function DeleteSessionButton({ sessionId, sessionLabel, onDeleted }: Dele
       setIsOpen(false);
       onDeleted?.();
     } catch (err) {
-      setError(getErrorMessage(err));
+      setError(t(getErrorKey(err)));
     } finally {
       setIsDeleting(false);
     }
@@ -71,8 +71,8 @@ export function DeleteSessionButton({ sessionId, sessionLabel, onDeleted }: Dele
         variant="ghost"
         size="sm"
         onClick={open}
-        aria-label={`Supprimer la session et ses données${sessionLabel ? ` : ${sessionLabel}` : ''}`}
-        title="Supprimer la session et ses données"
+        aria-label={sessionLabel ? t('actionAria', { label: sessionLabel }) : t('action')}
+        title={t('action')}
         className="text-danger hover:bg-danger-50"
       >
         <Trash2 className="w-4 h-4" aria-hidden="true" />
@@ -87,20 +87,19 @@ export function DeleteSessionButton({ sessionId, sessionLabel, onDeleted }: Dele
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={descId}
-            className="w-full max-w-md rounded-lg bg-surface p-6 shadow-lg space-y-4"
+            className="w-full max-w-md rounded-lg border border-borderc bg-surface p-6 shadow-md space-y-4"
           >
             <h2 id={titleId} className="text-card-title text-ink">
-              Supprimer la session et ses données ?
+              {t('title')}
             </h2>
             <div id={descId} className="space-y-2 text-small text-ink-secondary">
               {sessionLabel && (
                 <p>
-                  Session : <strong className="text-ink">{sessionLabel}</strong>
+                  {t('sessionLabel')} <strong className="text-ink">{sessionLabel}</strong>
                 </p>
               )}
               <p>
-                La session, la liste des participants et toutes leurs réponses seront supprimées
-                définitivement. Cette action est irréversible.
+                {t('warning')}
               </p>
             </div>
             {error && (
@@ -116,10 +115,10 @@ export function DeleteSessionButton({ sessionId, sessionLabel, onDeleted }: Dele
                 onClick={() => setIsOpen(false)}
                 disabled={isDeleting}
               >
-                Annuler
+                {tc('cancel')}
               </Button>
               <Button type="button" variant="danger" onClick={confirm} isLoading={isDeleting}>
-                Supprimer définitivement
+                {t('confirm')}
               </Button>
             </div>
           </div>

@@ -72,7 +72,7 @@ describe('Import de quiz', () => {
     expect(screen.getByRole('tab', { name: 'Markdown' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByTestId('import-format-example')).toHaveTextContent('Question 1 [timer:30] [points:100]');
     expect(screen.getByTestId('import-types-help')).toBeInTheDocument();
-    expect(screen.getByText('Questions.md')).toBeInTheDocument();
+    expect(screen.getByText('Fichier de questions (.md, .txt)')).toBeInTheDocument();
 
     // L'envoi Markdown garde son contrat JSON (questions_content / answers_content).
     const file = new File(['Question 1\nTexte ?\nA) Oui [correct]\nB) Non'], 'q.md', { type: 'text/markdown' });

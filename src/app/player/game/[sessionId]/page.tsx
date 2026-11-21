@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useSocket } from '@/hooks/useSocket';
 import { usePlayerStore } from '@/store/playerStore';
 import { QuestionView } from '@/components/player/QuestionView';
@@ -24,6 +25,8 @@ import {
   normalizeQuestionReveal,
 } from '@/types';
 import { Card } from '@/components/ui/Card';
+import { BarChart3, Check, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { ScoreCounter } from '@/components/ui/ScoreCounter';
 
 const pageTransition = {
@@ -34,6 +37,8 @@ const pageTransition = {
 };
 
 export default function GamePage() {
+  const t = useTranslations('player');
+  const tc = useTranslations('common');
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -57,7 +62,7 @@ export default function GamePage() {
   const [questionNumber, setQuestionNumber] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [timerSeconds, setTimerSeconds] = useState(0);
-  const [isAnsweredLocal, setIsAnsweredLocal] = useState(false);  // ✅ renommé
+  const [isAnsweredLocal, setIsAnsweredLocal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<PlayerAnswerResult | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -68,7 +73,7 @@ export default function GamePage() {
   const [finalLeaderboard, setFinalLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [finalMessage, setFinalMessage] = useState('');
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
-  const [scoreState, setScoreState] = useState(0);  // ✅ renommé
+  const [scoreState, setScoreState] = useState(0);
   const [rankState, setRankState] = useState<number | null>(null);
   const [totalParts, setTotalParts] = useState(0);
   const [gapToNext, setGapToNext] = useState<number | null>(null);
@@ -320,7 +325,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <WaitingScreen
-          message={paused ? 'Le quiz est en pause...' : 'En attente du début du quiz...'}
+          message={paused ? t('game.paused') : t('game.waitingStart')}
           isPaused={paused}
         />
       </div>
@@ -335,9 +340,24 @@ export default function GamePage() {
       <div className="min-h-screen bg-background p-6">
         <motion.div key="result" {...pageTransition} className="max-w-2xl mx-auto space-y-6">
           <div className="flex justify-between items-center text-small text-ink-secondary">
-            <span>Question {questionNumber}/{totalQuestions}</span>
-            <span className="font-medium">
-              {isPoll ? '📊 Sondage' : `${isCorrect ? '✅' : '❌'} ${result?.points_earned ?? 0} pts`}
+            <span>{t('question.counterShort', { current: questionNumber, total: totalQuestions })}</span>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 font-medium',
+                isPoll ? 'text-ink-secondary' : isCorrect ? 'text-success' : 'text-danger'
+              )}
+            >
+              {isPoll ? (
+                <>
+                  <BarChart3 className="h-4 w-4" aria-hidden />
+                  {t('game.poll')}
+                </>
+              ) : (
+                <>
+                  {isCorrect ? <Check className="h-4 w-4" aria-hidden /> : <X className="h-4 w-4" aria-hidden />}
+                  {tc('pointsCount', { count: result?.points_earned ?? 0 })}
+                </>
+              )}
             </span>
           </div>
           <AnswerFeedback
@@ -371,7 +391,7 @@ export default function GamePage() {
             correctCount={correctCount}
           />
           <p className="text-center text-small text-ink-secondary">
-            {reveal ? 'En attente de la prochaine question...' : 'Correction à la fin de la question...'}
+            {reveal ? t('game.waitingNext') : t('game.revealAtEnd')}
           </p>
         </motion.div>
       </div>
@@ -385,10 +405,10 @@ export default function GamePage() {
         <motion.div key={question.id} {...pageTransition} className="max-w-2xl mx-auto">
           <div className="flex justify-between items-center mb-4 text-small">
             <span className="text-ink-secondary">
-              Question {questionNumber}/{totalQuestions}
+              {t('question.counterShort', { current: questionNumber, total: totalQuestions })}
             </span>
             <span className="font-semibold text-ink bg-surface border border-borderc rounded-full px-3 py-1">
-              {participant?.pseudo} • <ScoreCounter value={scoreState} durationMs={500} /> pts
+              {participant?.pseudo} • <ScoreCounter value={scoreState} durationMs={500} /> {tc('points')}
             </span>
           </div>
           <QuestionView
@@ -409,7 +429,7 @@ export default function GamePage() {
   return (
     <div className="min-h-screen bg-background p-6 flex items-center justify-center">
       <Card tier="primary" className="p-8 text-center">
-        <p className="text-ink-secondary">Chargement du quiz...</p>
+        <p className="text-ink-secondary">{t('game.loading')}</p>
       </Card>
     </div>
   );
