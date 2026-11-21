@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
+import { redirectAfterLogin, REDIRECT_PARAM, safeRedirectPath } from '@/lib/quizSharing';
 
 type RegisterForm = { pseudo: string; password: string; confirmPassword: string };
 
@@ -19,6 +20,12 @@ export default function RegisterPage() {
   const registerUser = useAuthStore((state) => state.register);
   const router = useRouter();
   const [error, setError] = useState('');
+  // Conserve la page de retour (`?next=`) entre connexion et inscription.
+  const [returnQuery, setReturnQuery] = useState('');
+  useEffect(() => {
+    const next = safeRedirectPath(new URLSearchParams(window.location.search).get(REDIRECT_PARAM));
+    if (next) setReturnQuery(`?${REDIRECT_PARAM}=${encodeURIComponent(next)}`);
+  }, []);
 
   const registerSchema = useMemo(
     () =>
@@ -50,7 +57,8 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     try {
       await registerUser(data.pseudo, data.password);
-      router.push('/creator/dashboard');
+      // Retour sur la page d'origine (`?next=/…`, chemin interne uniquement).
+      router.push(redirectAfterLogin(window.location.search));
     } catch (err: any) {
       setError(err.response?.data?.message || t('errors.register'));
     }
@@ -89,7 +97,7 @@ export default function RegisterPage() {
         </form>
         <p className="text-small text-center mt-4">
           {t('register.hasAccount')}{' '}
-          <Link href="/login" className="text-primary hover:underline">
+          <Link href={`/login${returnQuery}`} className="text-primary hover:underline">
             {t('register.toLogin')}
           </Link>
         </p>

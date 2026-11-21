@@ -1,0 +1,179 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { useParams, useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { QuestionImage } from '@/components/ui/QuestionImage';
+import { useAuthStore } from '@/store/authStore';
+import { LinkIcon, Plus } from 'lucide-react';
+import {
+  copiedQuizPath,
+  copySharedQuiz,
+  rememberCopyWarnings,
+  countQuestionTypes,
+  fetchSharedQuiz,
+  httpStatus,
+  isInvalidShareTokenError,
+  loginUrlWithReturn,
+  serverMessage,
+  type SharedQuizPreview,
+} from '@/lib/quizSharing';
+
+type LoadState =
+  | { kind: 'loading' }
+  | { kind: 'ready'; quiz: SharedQuizPreview }
+  | { kind: 'invalid' }
+  | { kind: 'error'; network: boolean; serverMessage: string | null };
+
+/**
+ * Aperçu public d'un quiz partagé par un collègue (sans les bonnes réponses) et copie dans
+ * son propre compte. Non connecté : « Ajouter à mes quiz » renvoie vers la connexion, puis ici.
+ */
+export default function SharedQuizPage() {
+  const t = useTranslations('sharing');
+  const tq = useTranslations('questionTypes');
+  const params = useParams();
+  const router = useRouter();
+  const token = String(params?.token ?? '');
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const [state, setState] = useState<LoadState>({ kind: 'loading' });
+  const [copying, setCopying] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setState({ kind: 'loading' });
+    try {
+      setState({ kind: 'ready', quiz: await fetchSharedQuiz(token) });
+    } catch (e) {
+      if (isInvalidShareTokenError(e)) setState({ kind: 'invalid' });
+      else
+        setState({ kind: 'error', network: httpStatus(e) === null, serverMessage: serverMessage(e) });
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) load();
+  }, [token, load]);
+
+  const goToLogin = () => router.push(loginUrlWithReturn(`/creator/quiz/shared/${encodeURIComponent(token)}`));
+
+  const handleCopy = async () => {
+    if (!isAuthenticated) {
+      goToLogin();
+      return;
+    }
+    setCopying(true);
+    setCopyError(null);
+    try {
+      const copy = await copySharedQuiz(token);
+      rememberCopyWarnings(copy);
+      router.push(copiedQuizPath(copy));
+    } catch (e) {
+      if (httpStatus(e) === 401) goToLogin();
+      else if (isInvalidShareTokenError(e)) setState({ kind: 'invalid' });
+      else setCopyError(serverMessage(e) ?? t('errors.duplicateFailed'));
+      setCopying(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {state.kind === 'loading' && <p className="text-ink-secondary">{t('shared.loading')}</p>}
+
+        {state.kind === 'invalid' && (
+          <Card className="p-6 space-y-3" role="alert" data-testid="shared-invalid">
+            <h1 className="text-h2 flex items-center gap-2">
+              <LinkIcon className="w-5 h-5" aria-hidden="true" />
+              {t('shared.invalidTitle')}
+            </h1>
+            <p className="text-ink-secondary">{t('shared.invalidText')}</p>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/creator/dashboard">{t('shared.toMyQuizzes')}</Link>
+            </Button>
+          </Card>
+        )}
+
+        {state.kind === 'error' && (
+          <Card className="p-6 space-y-3">
+            <p role="alert" className="text-danger">
+              {state.network ? t('errors.network') : state.serverMessage ?? t('errors.previewFailed')}
+            </p>
+            <Button variant="outline" size="sm" onClick={load}>
+              {t('shared.retry')}
+            </Button>
+          </Card>
+        )}
+
+        {state.kind === 'ready' && (
+          <>
+            <Card className="p-6 space-y-4">
+              <p className="text-caption font-medium text-primary">{t('shared.eyebrow')}</p>
+              <h1 className="text-h1">{state.quiz.title || t('shared.untitled')}</h1>
+              {state.quiz.authorPseudo && (
+                <p className="text-small text-ink-secondary">{t('shared.by', { pseudo: state.quiz.authorPseudo })}</p>
+              )}
+              {state.quiz.description && <p className="text-ink-secondary">{state.quiz.description}</p>}
+              <div className="flex flex-wrap gap-2 text-small" data-testid="shared-summary">
+                <span className="font-semibold">{t('shared.questionCount', { count: state.quiz.questionCount })}</span>
+                {countQuestionTypes(state.quiz.questions).map(([type, count]) => (
+                  <span key={type} className="rounded-sm bg-ink/[0.05] px-2 py-0.5 text-ink-secondary">
+                    {t('shared.typeCount', { type: tq(type), count })}
+                  </span>
+                ))}
+              </div>
+              <p className="text-small text-ink-secondary">{t('shared.copyNote')}</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button onClick={handleCopy} isLoading={copying}>
+                  <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
+                  {t('shared.add')}
+                </Button>
+                {!isAuthenticated && (
+                  <span className="text-small text-ink-secondary">{t('shared.loginNeeded')}</span>
+                )}
+              </div>
+              {copyError && (
+                <p role="alert" className="rounded-md bg-danger-50 p-3 text-small text-danger">
+                  {copyError}
+                </p>
+              )}
+            </Card>
+
+            <section aria-label={t('shared.questionsAria')} className="space-y-3">
+              {state.quiz.questions.map((q, index) => (
+                <Card key={index} className="p-4" data-testid="shared-question">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                    <div className="min-w-0 flex-1">
+                      <span className="text-small text-ink-secondary">
+                        {t('shared.questionHeader', { number: index + 1, type: tq(q.type) })}
+                      </span>
+                      <p className="font-medium">{q.text}</p>
+                      {q.options.length > 0 && q.type !== 'true_false' && (
+                        <ul className="flex flex-wrap gap-1 mt-1">
+                          {q.options.map((o) => (
+                            <li
+                              key={o.id}
+                              className="px-2 py-0.5 text-caption rounded-sm bg-ink/[0.05] text-ink-secondary"
+                            >
+                              {o.text}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    {q.imageUrl && (
+                      <QuestionImage src={q.imageUrl} questionText={q.text} className="max-h-28 sm:w-40" />
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </section>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
