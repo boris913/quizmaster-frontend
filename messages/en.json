@@ -932,5 +932,119 @@
       "kilobytes": "{value} KB",
       "megabytes": "{value} MB"
     }
+  },
+  "aiGeneration": {
+    "tabs": {
+      "label": "Creation mode",
+      "manual": "Create manually",
+      "ai": "Generate from a lesson",
+      "import": "Import a file"
+    },
+    "form": {
+      "sourceLegend": "Lesson to use",
+      "sourceGroup": "Lesson source",
+      "sourceText": "Paste text",
+      "sourceFile": "Upload a PDF",
+      "textLabel": "Lesson text",
+      "textPlaceholder": "Paste the content of your lesson, a chapter or a handout here…",
+      "charCount": "{count, plural, one {# character} other {# characters}}",
+      "dropHint": "Drop your PDF here ({maxMb} MB max) or",
+      "browse": "Browse",
+      "chooseOther": "Choose another PDF",
+      "fileLabel": "Lesson PDF file",
+      "removeFile": "Remove the PDF",
+      "fileSize": "{name} ({size} MB)",
+      "settings": "Settings",
+      "level": "Level",
+      "levelPlaceholder": "Choose…",
+      "count": "Number of questions ({min} to {max})",
+      "types": "Question types",
+      "submit": "Generate the draft",
+      "submitting": "Generating…",
+      "remaining": "Generations left this month: {remaining} of {limit}",
+      "remainingNoLimit": "Generations left this month: {remaining}",
+      "resetOn": "Resets on {date}.",
+      "privacyNotice": "The lesson text or PDF is sent to an AI provider to write the questions. Do not include any student data (names, grades, work). Nothing is saved until you have reviewed and saved the quiz.",
+      "privacyLink": "Learn more"
+    },
+    "steps": {
+      "send": "Sending the lesson…",
+      "read": "Reading the document…",
+      "write": "Writing the questions…",
+      "check": "Checking the questions…",
+      "upload": "Uploading the PDF: {percent}%.",
+      "patience": "This usually takes less than a minute, and up to four minutes for a long lesson. Do not close the page."
+    },
+    "validation": {
+      "notPdf": "Only PDF files are accepted.",
+      "tooLarge": "The PDF is larger than {maxMb} MB. Make it smaller or paste the lesson text.",
+      "empty": "This file is empty.",
+      "textTooShort": "Paste the lesson text (at least {min} characters) or upload a PDF.",
+      "textTooLong": "The text is longer than {max} characters: paste an excerpt or a chapter.",
+      "fileRequired": "Upload a PDF or switch to pasted text.",
+      "levelRequired": "Choose a level.",
+      "countRange": "Between {min} and {max} questions.",
+      "typesRequired": "Tick at least one question type."
+    },
+    "errorTitles": {
+      "quota": "Monthly quota reached",
+      "unavailable": "AI generation unavailable",
+      "generic": "Generation failed"
+    },
+    "errors": {
+      "unavailable": "AI generation is unavailable right now (not configured or temporarily offline). You can create the quiz manually.",
+      "unauthorized": "Your session has expired. Sign in again and retry.",
+      "too_large": "The PDF is larger than {maxMb} MB. Make it smaller or paste the lesson text.",
+      "unsupported_file": "The file must be a valid PDF.",
+      "no_questions": "No usable question could be generated from this lesson. Try again or use a richer excerpt (no quota used).",
+      "pdf_no_text": "No text could be extracted from this PDF (scanned document, images or protected file?). Paste the lesson text instead.",
+      "unprocessable": "This content could not be processed (too short, or declined by the AI). Check the lesson and try again.",
+      "provider_error": "AI generation failed. Try again (no quota used).",
+      "invalid": "The server rejected the settings. Check the form.",
+      "timeout": "Generation is taking too long. Try a shorter lesson or fewer questions.",
+      "network": "Cannot reach the server. Check your connection and try again.",
+      "unknown": "Generation failed. Try again in a moment."
+    },
+    "quota": {
+      "reachedLimit": "You have used your {limit} generations for this month.",
+      "reachedGeneric": "You have reached your monthly generation quota.",
+      "resetOn": "The counter resets on {date}.",
+      "resetNextMonth": "The counter resets at the start of next month.",
+      "alternatives": "In the meantime, you can create the quiz manually or import it."
+    },
+    "review": {
+      "banner": "AI-generated draft — check before use",
+      "intro": "{count, plural, one {# question generated} other {# questions generated}}. Review each question, the correct answers and the explanations: the AI can make mistakes. Nothing is saved until you click “Save the quiz”.",
+      "truncated": "The lesson was long: only its beginning was used to generate the questions.",
+      "discarded": "{count, plural, one {# question was discarded as invalid} other {# questions were discarded as invalid}} (inconsistent or incomplete answer).",
+      "discard": "Discard and start over",
+      "discardConfirm": "Discard this draft? The generated questions will be lost.",
+      "leaveConfirm": "The generated draft is not saved. Leave anyway?",
+      "save": "Save the quiz"
+    },
+    "privacy": {
+      "title": "AI question generation",
+      "text": "A teacher may choose to generate a draft quiz from a lesson (pasted text or PDF). Only in that case, the lesson content is sent to an artificial intelligence provider, which drafts question suggestions. This provider is a processor: {provider}",
+      "provider": "[provider, processing region and retention period at the provider to be confirmed].",
+      "noStudentData": "<b>no student data</b> is sent: no nickname, answer or result. Only the lesson content chosen by the teacher is sent, and we ask them not to leave any personal information in it;",
+      "notKept": "Kwizora does not keep the lesson after generation: only the questions the teacher reviews and saves are kept, like a quiz created by hand;",
+      "explicit": "nothing is saved without the teacher’s action; they must review and correct the draft before using it;",
+      "quota": "the number of generations per teacher account is limited each month."
+    },
+    "levels": {
+      "lcp": "CP (age 6–7)",
+      "lce1": "CE1 (age 7–8)",
+      "lce2": "CE2 (age 8–9)",
+      "lcm1": "CM1 (age 9–10)",
+      "lcm2": "CM2 (age 10–11)",
+      "l6e": "6e (age 11–12)",
+      "l5e": "5e (age 12–13)",
+      "l4e": "4e (age 13–14)",
+      "l3e": "3e (age 14–15)",
+      "lseconde": "Seconde (age 15–16)",
+      "lpremiere": "Première (age 16–17)",
+      "lterminale": "Terminale (age 17–18)",
+      "lsuperieur": "Higher education"
+    }
   }
 }

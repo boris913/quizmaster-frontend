@@ -932,5 +932,119 @@
       "kilobytes": "{value} Ko",
       "megabytes": "{value} Mo"
     }
+  },
+  "aiGeneration": {
+    "tabs": {
+      "label": "Mode de création",
+      "manual": "Création manuelle",
+      "ai": "Générer depuis un cours",
+      "import": "Importer un fichier"
+    },
+    "form": {
+      "sourceLegend": "Cours à utiliser",
+      "sourceGroup": "Source du cours",
+      "sourceText": "Coller le texte",
+      "sourceFile": "Déposer un PDF",
+      "textLabel": "Texte du cours",
+      "textPlaceholder": "Collez ici le contenu de votre cours, d’un chapitre ou d’une fiche…",
+      "charCount": "{count, plural, one {# caractère} other {# caractères}}",
+      "dropHint": "Glissez votre PDF ici ({maxMb} Mo maximum) ou",
+      "browse": "Parcourir",
+      "chooseOther": "Choisir un autre PDF",
+      "fileLabel": "Fichier PDF du cours",
+      "removeFile": "Retirer le PDF",
+      "fileSize": "{name} ({size} Mo)",
+      "settings": "Paramètres",
+      "level": "Niveau",
+      "levelPlaceholder": "Choisir…",
+      "count": "Nombre de questions ({min} à {max})",
+      "types": "Types de questions",
+      "submit": "Générer le brouillon",
+      "submitting": "Génération en cours…",
+      "remaining": "Générations restantes ce mois-ci : {remaining} sur {limit}",
+      "remainingNoLimit": "Générations restantes ce mois-ci : {remaining}",
+      "resetOn": "Remise à zéro le {date}.",
+      "privacyNotice": "Le texte ou le PDF du cours est envoyé à un fournisseur d’IA pour rédiger les questions. N’y mettez aucune donnée d’élève (noms, notes, copies). Rien n’est enregistré tant que vous n’avez pas relu et enregistré le quiz.",
+      "privacyLink": "En savoir plus"
+    },
+    "steps": {
+      "send": "Envoi du cours…",
+      "read": "Lecture du document…",
+      "write": "Rédaction des questions…",
+      "check": "Vérification des questions…",
+      "upload": "Envoi du PDF : {percent} %.",
+      "patience": "Cela prend en général moins d’une minute, et jusqu’à quatre minutes pour un long cours. Ne fermez pas la page."
+    },
+    "validation": {
+      "notPdf": "Seuls les fichiers PDF sont acceptés.",
+      "tooLarge": "Le PDF dépasse {maxMb} Mo. Allégez-le ou collez le texte du cours.",
+      "empty": "Ce fichier est vide.",
+      "textTooShort": "Collez le texte du cours ({min} caractères au moins) ou déposez un PDF.",
+      "textTooLong": "Le texte dépasse {max} caractères : collez un extrait ou un chapitre.",
+      "fileRequired": "Déposez un PDF ou passez au texte collé.",
+      "levelRequired": "Choisissez un niveau.",
+      "countRange": "Entre {min} et {max} questions.",
+      "typesRequired": "Cochez au moins un type de question."
+    },
+    "errorTitles": {
+      "quota": "Quota mensuel atteint",
+      "unavailable": "Génération par IA indisponible",
+      "generic": "La génération n’a pas abouti"
+    },
+    "errors": {
+      "unavailable": "La génération par IA est indisponible pour le moment (service non configuré ou momentanément hors ligne). Vous pouvez créer le quiz manuellement.",
+      "unauthorized": "Votre session a expiré. Reconnectez-vous puis réessayez.",
+      "too_large": "Le PDF dépasse {maxMb} Mo. Allégez-le ou collez le texte du cours.",
+      "unsupported_file": "Le fichier doit être un PDF valide.",
+      "no_questions": "Aucune question exploitable n’a pu être générée à partir de ce cours. Réessayez ou utilisez un extrait plus riche (aucun quota consommé).",
+      "pdf_no_text": "Aucun texte n’a pu être extrait de ce PDF (document scanné, image ou fichier protégé ?). Collez le texte du cours à la place.",
+      "unprocessable": "Ce contenu n’a pas pu être traité (trop court, ou refusé par l’IA). Vérifiez le cours puis réessayez.",
+      "provider_error": "La génération par IA a échoué. Réessayez (aucun quota consommé).",
+      "invalid": "Paramètres refusés par le serveur. Vérifiez le formulaire.",
+      "timeout": "La génération prend trop de temps. Réessayez avec un cours plus court ou moins de questions.",
+      "network": "Impossible de joindre le serveur. Vérifiez votre connexion puis réessayez.",
+      "unknown": "La génération a échoué. Réessayez dans un instant."
+    },
+    "quota": {
+      "reachedLimit": "Vous avez utilisé vos {limit} générations du mois.",
+      "reachedGeneric": "Vous avez atteint votre quota mensuel de générations.",
+      "resetOn": "Le compteur sera remis à zéro le {date}.",
+      "resetNextMonth": "Le compteur est remis à zéro au début du mois prochain.",
+      "alternatives": "En attendant, vous pouvez créer le quiz manuellement ou l’importer."
+    },
+    "review": {
+      "banner": "Brouillon généré par IA — à vérifier avant utilisation",
+      "intro": "{count, plural, one {# question générée} other {# questions générées}}. Relisez chaque énoncé, les bonnes réponses et les explications : l’IA peut se tromper. Rien n’est enregistré tant que vous ne cliquez pas sur « Enregistrer le quiz ».",
+      "truncated": "Le cours était long : seul son début a été utilisé pour générer les questions.",
+      "discarded": "{count, plural, one {# question a été écartée car invalide} other {# questions ont été écartées car invalides}} (réponse incohérente ou incomplète).",
+      "discard": "Abandonner et recommencer",
+      "discardConfirm": "Abandonner ce brouillon ? Les questions générées seront perdues.",
+      "leaveConfirm": "Le brouillon généré n’est pas enregistré. Quitter quand même ?",
+      "save": "Enregistrer le quiz"
+    },
+    "privacy": {
+      "title": "Génération de questions par IA",
+      "text": "Un enseignant peut, s’il le souhaite, générer un brouillon de quiz à partir d’un cours (texte collé ou PDF). Dans ce cas seulement, le contenu du cours est transmis à un fournisseur d’intelligence artificielle, qui rédige des propositions de questions. Ce fournisseur est un sous-traitant : {provider}",
+      "provider": "[fournisseur, région de traitement et durée de conservation côté fournisseur à confirmer].",
+      "noStudentData": "<b>aucune donnée d’élève</b> n’est envoyée : ni pseudo, ni réponse, ni résultat. Seul le contenu du cours choisi par l’enseignant est transmis, et nous lui demandons de n’y laisser aucune information personnelle ;",
+      "notKept": "le cours n’est pas conservé par Kwizora après la génération : seules les questions que l’enseignant relit puis enregistre sont gardées, comme un quiz créé à la main ;",
+      "explicit": "rien n’est enregistré sans action de l’enseignant, qui doit relire et corriger le brouillon avant de l’utiliser ;",
+      "quota": "le nombre de générations est limité chaque mois par compte enseignant."
+    },
+    "levels": {
+      "lcp": "CP",
+      "lce1": "CE1",
+      "lce2": "CE2",
+      "lcm1": "CM1",
+      "lcm2": "CM2",
+      "l6e": "6e",
+      "l5e": "5e",
+      "l4e": "4e",
+      "l3e": "3e",
+      "lseconde": "Seconde",
+      "lpremiere": "Première",
+      "lterminale": "Terminale",
+      "lsuperieur": "Supérieur"
+    }
   }
 }

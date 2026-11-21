@@ -18,6 +18,9 @@ import { getTranslations } from 'next-intl/server';
  * - DERNIERE_MISE_A_JOUR : date de validation du texte.
  * - La durée de conservation (30 jours puis anonymisation) reprend boris913/quizmaster-backend#9 :
  *   elle n'est vraie que si la purge planifiée décrite dans cette issue est déployée et active.
+ * - Génération par IA (clé aiGeneration.privacy.provider) : fournisseur d'IA (backend#11), région
+ *   de traitement et conservation des requêtes chez lui. « Cours non conservé par Kwizora »
+ *   suppose que le backend ne stocke ni le texte ni le PDF reçus.
  * - Préférences d'affichage : le thème (localStorage, next-themes) et la langue (cookie
  *   NEXT_LOCALE) ne sont écrits que si l'utilisateur les change lui-même.
  */
@@ -43,6 +46,7 @@ const strong = (chunks: React.ReactNode) => <strong className="text-ink">{chunks
 
 export default async function ConfidentialitePage() {
   const t = await getTranslations('privacy');
+  const tai = await getTranslations('aiGeneration.privacy');
   const days = DUREE_CONSERVATION_JOURS;
   const frenchPrevails = t('frenchPrevails');
 
@@ -108,6 +112,16 @@ export default async function ConfidentialitePage() {
         <Section id="suppression" title={t('deletion.title')}>
           <p>{t('deletion.teacher')}</p>
           <p>{t('deletion.student')}</p>
+        </Section>
+
+        <Section id="generation-ia" title={tai('title')}>
+          <p>{tai('text', { provider: tai('provider') })}</p>
+          <ul className="list-disc pl-5 space-y-1.5">
+            <li>{tai.rich('noStudentData', { b: strong })}</li>
+            <li>{tai('notKept')}</li>
+            <li>{tai('explicit')}</li>
+            <li>{tai('quota')}</li>
+          </ul>
         </Section>
 
         <Section id="hebergement" title={t('hostingSection.title')}>
