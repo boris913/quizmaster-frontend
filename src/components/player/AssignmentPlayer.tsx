@@ -283,7 +283,7 @@ export function AssignmentPlayer({ code }: { code: string }) {
           <div className="space-y-1 text-center">
             <h1 className="text-h2">Devoir à faire à ton rythme</h1>
             <p className="text-small text-ink-secondary">
-              Code <span className="font-mono font-semibold">{code}</span>
+              Code <span className="font-display tabular-nums font-semibold">{code}</span>
             </p>
           </div>
           {notice && (

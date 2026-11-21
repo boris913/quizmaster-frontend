@@ -24,6 +24,8 @@ import {
   normalizeQuestionReveal,
 } from '@/types';
 import { Card } from '@/components/ui/Card';
+import { BarChart3, Check, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { ScoreCounter } from '@/components/ui/ScoreCounter';
 
 const pageTransition = {
@@ -57,7 +59,7 @@ export default function GamePage() {
   const [questionNumber, setQuestionNumber] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [timerSeconds, setTimerSeconds] = useState(0);
-  const [isAnsweredLocal, setIsAnsweredLocal] = useState(false);  // ✅ renommé
+  const [isAnsweredLocal, setIsAnsweredLocal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<PlayerAnswerResult | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -68,7 +70,7 @@ export default function GamePage() {
   const [finalLeaderboard, setFinalLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [finalMessage, setFinalMessage] = useState('');
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
-  const [scoreState, setScoreState] = useState(0);  // ✅ renommé
+  const [scoreState, setScoreState] = useState(0);
   const [rankState, setRankState] = useState<number | null>(null);
   const [totalParts, setTotalParts] = useState(0);
   const [gapToNext, setGapToNext] = useState<number | null>(null);
@@ -336,8 +338,23 @@ export default function GamePage() {
         <motion.div key="result" {...pageTransition} className="max-w-2xl mx-auto space-y-6">
           <div className="flex justify-between items-center text-small text-ink-secondary">
             <span>Question {questionNumber}/{totalQuestions}</span>
-            <span className="font-medium">
-              {isPoll ? '📊 Sondage' : `${isCorrect ? '✅' : '❌'} ${result?.points_earned ?? 0} pts`}
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 font-medium',
+                isPoll ? 'text-ink-secondary' : isCorrect ? 'text-success' : 'text-danger'
+              )}
+            >
+              {isPoll ? (
+                <>
+                  <BarChart3 className="h-4 w-4" aria-hidden />
+                  Sondage
+                </>
+              ) : (
+                <>
+                  {isCorrect ? <Check className="h-4 w-4" aria-hidden /> : <X className="h-4 w-4" aria-hidden />}
+                  {result?.points_earned ?? 0} pts
+                </>
+              )}
             </span>
           </div>
           <AnswerFeedback

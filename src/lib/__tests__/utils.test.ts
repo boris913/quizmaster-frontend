@@ -22,3 +22,14 @@ describe('cn', () => {
     expect(cn()).toBe('');
   });
 });
+
+describe('cn (tailwind-merge et tailles de police nommées)', () => {
+  it('garde la couleur du texte à côté d’une taille nommée', () => {
+    expect(cn('text-on-primary', 'text-body')).toBe('text-on-primary text-body');
+    expect(cn('text-ink-secondary', 'text-small')).toBe('text-ink-secondary text-small');
+  });
+
+  it('fusionne toujours deux tailles concurrentes', () => {
+    expect(cn('text-small', 'text-body')).toBe('text-body');
+  });
+});

@@ -132,7 +132,7 @@ export function QuestionBuilder({
           type="button"
           onClick={() => removeOption(opt.id)}
           aria-label={`Supprimer l'option ${opt.id}`}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink-secondary hover:bg-black/[0.05] hover:text-danger"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink-secondary hover:bg-ink/[0.05] hover:text-danger"
         >
           <X className="h-4 w-4" aria-hidden />
         </button>
@@ -147,7 +147,7 @@ export function QuestionBuilder({
       <div className="flex justify-between items-start">
         <h3 className="font-medium">Question {index + 1}</h3>
         <Button type="button" variant="ghost" size="sm" onClick={onRemove} aria-label={`Supprimer la question ${index + 1}`}>
-          <Trash2 className="w-4 h-4 text-red-500" />
+          <Trash2 className="w-4 h-4 text-danger" />
         </Button>
       </div>
 
@@ -165,7 +165,7 @@ export function QuestionBuilder({
             <label
               key={t}
               className={cn(
-                'flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors',
+                'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-small transition-colors',
                 type === t ? 'border-primary bg-primary-50 text-primary-700' : 'border-borderc hover:border-primary/40'
               )}
             >
@@ -241,7 +241,7 @@ export function QuestionBuilder({
           <p className="text-sm font-medium">Options</p>
           {options.map((opt) => (
             <div key={opt.id} className="flex items-center gap-2">
-              <span className="w-6 font-mono text-sm">{opt.id}</span>
+              <span className="w-6 font-display tabular-nums text-sm">{opt.id}</span>
               {optionInput(opt, `Option ${opt.id}`)}
               {type !== 'poll' && (
                 <button
@@ -253,10 +253,10 @@ export function QuestionBuilder({
                     'px-2 py-1 text-xs rounded border transition-colors',
                     correctAnswers.includes(opt.id)
                       ? 'bg-success-50 border-success text-success'
-                      : 'bg-white border-borderc text-ink-secondary/70'
+                      : 'bg-surface border-borderc text-ink-tertiary'
                   )}
                 >
-                  {correctAnswers.includes(opt.id) ? '✓ Correct' : 'Marquer'}
+                  {correctAnswers.includes(opt.id) ? 'Correcte' : 'Marquer correcte'}
                 </button>
               )}
             </div>
@@ -292,7 +292,7 @@ export function QuestionBuilder({
                   type="button"
                   onClick={() => set('correct_answers', variants.filter((_, j) => j !== i))}
                   aria-label={`Supprimer la réponse acceptée ${i + 1}`}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink-secondary hover:bg-black/[0.05] hover:text-danger"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink-secondary hover:bg-ink/[0.05] hover:text-danger"
                 >
                   <X className="h-4 w-4" aria-hidden />
                 </button>
@@ -324,7 +324,7 @@ export function QuestionBuilder({
           aria-describedby={`${explanationId}-count`}
           aria-invalid={!!errors?.explanation}
           className={cn(
-            'w-full rounded-md border border-borderc bg-surface px-3 py-2 text-body placeholder:text-ink-secondary/60',
+            'w-full rounded-md border border-borderc bg-surface px-3 py-2 text-body placeholder:text-ink-tertiary',
             'focus:outline-none focus:border-primary focus:shadow-glow',
             errors?.explanation && 'border-danger'
           )}

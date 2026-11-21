@@ -126,7 +126,7 @@ export function QuestionImageField({ quizId, imageUrl, file, onChange, alt }: Qu
                 type="button"
                 onClick={openPicker}
                 disabled={isUploading}
-                className="inline-flex items-center gap-1 rounded-md border border-borderc px-3 py-1.5 text-small hover:bg-black/[0.04]"
+                className="inline-flex items-center gap-1 rounded-md border border-borderc px-3 py-1.5 text-small hover:bg-ink/[0.04]"
               >
                 <RefreshCw className="h-4 w-4" aria-hidden /> Remplacer
               </button>
@@ -156,7 +156,7 @@ export function QuestionImageField({ quizId, imageUrl, file, onChange, alt }: Qu
               type="button"
               onClick={openPicker}
               disabled={isUploading}
-              className="rounded-md border border-borderc bg-surface px-3 py-1.5 font-medium text-ink hover:bg-black/[0.04]"
+              className="rounded-md border border-borderc bg-surface px-3 py-1.5 font-medium text-ink hover:bg-ink/[0.04]"
             >
               Choisir une image
             </button>

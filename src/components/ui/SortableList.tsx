@@ -144,7 +144,7 @@ export function SortableList<T extends SortableListItem>({
                 onLostPointerCapture={endDrag}
                 className={cn(
                   'flex shrink-0 items-center justify-center rounded-md text-ink-secondary touch-none select-none',
-                  'hover:bg-black/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                  'hover:bg-ink/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                   isDragging ? 'cursor-grabbing' : 'cursor-grab',
                   isLarge ? 'h-11 w-11' : 'h-9 w-9'
                 )}
@@ -153,7 +153,7 @@ export function SortableList<T extends SortableListItem>({
               </button>
               <span
                 className={cn(
-                  'font-mono text-small font-semibold min-w-7 h-7 flex shrink-0 items-center justify-center rounded-md bg-black/[0.05] text-ink-secondary'
+                  'font-display tabular-nums text-small font-semibold min-w-7 h-7 flex shrink-0 items-center justify-center rounded-md bg-ink/[0.05] text-ink-secondary'
                 )}
                 aria-hidden
               >
@@ -167,7 +167,7 @@ export function SortableList<T extends SortableListItem>({
                   onClick={() => moveTo(index, index - 1)}
                   aria-label={`Monter « ${item.label} »`}
                   className={cn(
-                    'flex items-center justify-center rounded text-ink-secondary hover:bg-black/[0.05] disabled:opacity-30',
+                    'flex items-center justify-center rounded text-ink-secondary hover:bg-ink/[0.05] disabled:opacity-30',
                     isLarge ? 'h-8 w-11' : 'h-6 w-8'
                   )}
                 >
@@ -179,7 +179,7 @@ export function SortableList<T extends SortableListItem>({
                   onClick={() => moveTo(index, index + 1)}
                   aria-label={`Descendre « ${item.label} »`}
                   className={cn(
-                    'flex items-center justify-center rounded text-ink-secondary hover:bg-black/[0.05] disabled:opacity-30',
+                    'flex items-center justify-center rounded text-ink-secondary hover:bg-ink/[0.05] disabled:opacity-30',
                     isLarge ? 'h-8 w-11' : 'h-6 w-8'
                   )}
                 >

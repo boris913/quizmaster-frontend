@@ -164,7 +164,7 @@ export function JoinForm({ onSubmit, isSubmitting, error }: JoinFormProps) {
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}
-            className="font-mono uppercase tracking-widest"
+            className="font-display font-semibold uppercase tracking-[0.12em] placeholder:font-sans placeholder:font-normal placeholder:normal-case placeholder:tracking-normal"
             {...passwordField}
             onChange={(e) => {
               // Normalisation à la saisie : majuscules, sans espaces.

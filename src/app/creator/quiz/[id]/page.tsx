@@ -25,7 +25,7 @@ function QuestionAnswers({ question }: { question: Question }) {
     <span
       key={key}
       className={`px-2 py-0.5 text-xs rounded ${
-        correct ? 'bg-success-50 text-success' : 'bg-black/[0.05] text-ink-secondary'
+        correct ? 'bg-success-50 text-success' : 'bg-ink/[0.05] text-ink-secondary'
       }`}
     >
       {label}

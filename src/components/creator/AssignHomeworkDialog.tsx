@@ -160,7 +160,7 @@ export function AssignHomeworkDialog({ quizId, quizTitle, onClose, onCreated }: 
               label={`QR code du devoir ${created.password}`}
               size={180}
             />
-            <div className="flex items-center gap-2 rounded-md bg-black/[0.04] p-2">
+            <div className="flex items-center gap-2 rounded-md bg-ink/[0.04] p-2">
               <code className="flex-1 break-all text-left text-small" data-testid="assignment-link">
                 {link}
               </code>
@@ -170,7 +170,7 @@ export function AssignHomeworkDialog({ quizId, quizTitle, onClose, onCreated }: 
               </Button>
             </div>
             <p className="text-caption text-ink-secondary">
-              Code : <span className="font-mono font-semibold">{created.password}</span>
+              Code : <span className="font-display tabular-nums font-semibold">{created.password}</span>
             </p>
             <Button type="button" className="w-full" onClick={onClose}>
               Terminé

@@ -7,7 +7,7 @@ import { useQuiz } from '@/hooks/useQuiz';
 import { useSession } from '@/hooks/useSession';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ArrowLeft, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Copy, Check, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { NicknameMode } from '@/lib/nickname';
 import type { ScoringMode } from '@/types';
@@ -104,18 +104,18 @@ export default function NewSessionPage() {
     return (
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <Card className="max-w-md w-full p-8 text-center space-y-6">
-          <div className="text-5xl">🎉</div>
+          <CheckCircle2 className="mx-auto h-12 w-12 text-success" strokeWidth={1.5} aria-hidden />
           <h2 className="text-2xl font-bold">Session créée !</h2>
           <p className="text-ink-secondary">
             Partagez ce mot de passe avec vos participants :
           </p>
-          <div className="flex items-center justify-center gap-3 bg-black/[0.05] rounded-lg p-4">
-            <span className="text-3xl font-mono font-bold tracking-widest">
+          <div className="flex items-center justify-center gap-3 bg-ink/[0.05] rounded-lg p-4">
+            <span className="font-display text-3xl font-bold tracking-[0.12em] tabular-nums">
               {session.password}
             </span>
             <button
               onClick={handleCopyPassword}
-              className="p-2 hover:bg-black/[0.08] rounded transition-colors"
+              className="p-2 hover:bg-ink/[0.08] rounded transition-colors"
             >
               {copied ? (
                 <Check className="w-5 h-5 text-success" />

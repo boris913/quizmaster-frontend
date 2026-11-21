@@ -113,7 +113,7 @@ export function QuestionImporter({ onImport, isImporting }: QuestionImporterProp
 
         <div className="bg-background p-4 rounded-lg text-sm text-ink-secondary space-y-1">
           <p>Format attendu :</p>
-          <pre className="bg-white p-2 rounded text-xs overflow-x-auto" data-testid="import-format-example">
+          <pre className="bg-subtle p-2 rounded text-xs overflow-x-auto" data-testid="import-format-example">
             {IMPORT_FORMAT_EXAMPLE}
           </pre>
           <p data-testid="import-explanation-help">

@@ -105,12 +105,12 @@ function AnswerHistogram({ question }: { question: SessionResultsQuestion }) {
         const correct = !isPoll && question.correctAnswers.includes(optionId);
         return (
           <div key={optionId} className="flex items-center gap-2 text-small">
-            <span className="w-10 shrink-0 font-mono font-semibold text-ink">
+            <span className="w-10 shrink-0 font-display font-semibold text-ink">
               {question.type === 'true_false' ? answerLabel(optionId, null) : optionId}
             </span>
-            <div className="h-3 flex-1 overflow-hidden rounded-full bg-black/[0.06]">
+            <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink/[0.06]">
               <div
-                className={cn('h-full rounded-full', correct ? 'bg-success' : isPoll ? 'bg-primary' : 'bg-ink-secondary/40')}
+                className={cn('h-full rounded-full', correct ? 'bg-success-solid' : isPoll ? 'bg-primary' : 'bg-ink-tertiary/40')}
                 style={{ width: `${(count / max) * 100}%` }}
               />
             </div>

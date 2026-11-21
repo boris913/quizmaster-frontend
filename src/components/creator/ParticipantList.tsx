@@ -22,11 +22,11 @@ interface ParticipantListProps {
 }
 
 const statusIcon = {
-  waiting: <Clock className="w-3 h-3 text-ink-secondary/70" />,
+  waiting: <Clock className="w-3 h-3 text-ink-tertiary" />,
   answering: <Clock className="w-3 h-3 text-warning animate-pulse" />,
   answered: <CheckCircle className="w-3 h-3 text-success" />,
   timeout: <UserX className="w-3 h-3 text-danger" />,
-  disconnected: <UserX className="w-3 h-3 text-ink-secondary/70" />,
+  disconnected: <UserX className="w-3 h-3 text-ink-tertiary" />,
 };
 
 const statusLabel = {
@@ -96,14 +96,14 @@ export function ParticipantList({ participants, progressMap = {}, liveScores = {
                 className="space-y-2"
               >
                 <div className="flex items-center gap-3 text-small">
-                  <span className="w-5 text-ink-secondary/70 font-mono">
+                  <span className="w-5 text-ink-tertiary font-display tabular-nums">
                     {statusIcon[p.status]}
                   </span>
                   <span className="flex-1 font-medium truncate">{p.pseudo}</span>
                   <span className="text-caption text-ink-secondary">
                     {statusLabel[p.status]}
                   </span>
-                  <span className="font-mono font-semibold min-w-12 text-right tabular-nums">
+                  <span className="font-display tabular-nums font-semibold min-w-12 text-right tabular-nums">
                     <ScoreCounter value={p.score} durationMs={500} />
                   </span>
                   <ProgressBar value={progress} max={100} className="w-24" barClassName="bg-primary" />

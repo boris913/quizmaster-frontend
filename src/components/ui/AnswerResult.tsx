@@ -68,7 +68,7 @@ export function AnswerResult({
         </motion.div>
 
         <h3 className="text-h3 mt-3">
-          {isCorrect ? 'Bonne réponse !' : 'Continuez comme ça 💪'}
+          {isCorrect ? 'Bonne réponse !' : 'Continuez comme ça'}
         </h3>
         <p className="text-small text-ink-secondary mt-1">
           Répondu en {(timeTakenMs / 1000).toFixed(1)}s
@@ -86,10 +86,10 @@ export function AnswerResult({
           {isCorrect ? `+${pointsEarned}` : '+0'}
           <span className="text-h3 font-medium ml-1">pts</span>
         </motion.p>
-        {maxPoints > 0 && <p className="text-caption text-ink-secondary/80">sur {maxPoints} pts max</p>}
+        {maxPoints > 0 && <p className="text-caption text-ink-tertiary">sur {maxPoints} pts max</p>}
 
         {showRecap && !isCorrect && correctAnswers.length > 0 && (
-          <div className="mt-5 text-small text-left bg-white/60 rounded-md p-3 space-y-1">
+          <div className="mt-5 text-small text-left bg-surface/70 rounded-md p-3 space-y-1">
             <p className="text-ink-secondary">
               Votre réponse : <span className="font-medium text-ink">{yourAnswers.join(', ') || '—'}</span>
             </p>

@@ -112,8 +112,8 @@ function AssignmentRow({ session }: { session: Session }) {
                 } terminé`
               : // Contrat backend #10 : GET /sessions ne fournit pas la complétion (voir le rapport).
                 'Complétion détaillée dans le rapport'}
-            <span className="text-ink-secondary/40"> • </span>
-            <span className="font-mono text-caption">{session.password}</span>
+            <span className="text-ink-tertiary"> • </span>
+            <span className="font-display tabular-nums text-caption">{session.password}</span>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

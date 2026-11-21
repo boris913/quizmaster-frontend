@@ -72,8 +72,8 @@ export function FinalScreen({
 
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-8">
           <div>
-            <p className="text-caption text-ink-secondary uppercase tracking-wide">Votre score</p>
-            <p className="text-display gradient-text tabular-nums">
+            <p className="text-small text-ink-secondary">Votre score</p>
+            <p className="font-display text-display text-ink tabular-nums">
               <ScoreCounter value={yourScore} />
             </p>
           </div>
@@ -95,9 +95,9 @@ export function FinalScreen({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
-            className="mt-6 bg-warning-50 border border-warning/30 rounded-md py-3 px-4 font-semibold text-warning"
+            className="mt-6 bg-warning-50 border border-warning-100 rounded-md py-3 px-4 font-semibold text-warning"
           >
-            🏆 Félicitations, vous êtes le grand gagnant !
+            Félicitations, vous êtes le grand gagnant !
           </motion.div>
         )}
         {winnerPseudo && !isWinner && (
@@ -106,7 +106,7 @@ export function FinalScreen({
           </p>
         )}
         {onPodium && !isWinner && (
-          <p className="text-small font-medium text-success mt-2">🎉 Vous êtes sur le podium !</p>
+          <p className="text-small font-medium text-success mt-2">Vous êtes sur le podium !</p>
         )}
       </Card>
 
@@ -119,7 +119,7 @@ export function FinalScreen({
 
       {onPlayAgain && (
         <Button onClick={onPlayAgain} size="lg" className="w-full">
-          <RotateCcw className="w-4 h-4 mr-2" />
+          <RotateCcw className="w-4 h-4" />
           Rejouer
         </Button>
       )}
@@ -157,8 +157,8 @@ function HiddenRankingFinalScreen({
 
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-8">
           <div>
-            <p className="text-caption text-ink-secondary uppercase tracking-wide">Votre score</p>
-            <p className="text-display gradient-text tabular-nums">
+            <p className="text-small text-ink-secondary">Votre score</p>
+            <p className="font-display text-display text-ink tabular-nums">
               <ScoreCounter value={yourScore} />
             </p>
           </div>
@@ -174,7 +174,7 @@ function HiddenRankingFinalScreen({
 
       {onPlayAgain && (
         <Button onClick={onPlayAgain} size="lg" className="w-full">
-          <RotateCcw className="w-4 h-4 mr-2" />
+          <RotateCcw className="w-4 h-4" />
           Rejouer
         </Button>
       )}
