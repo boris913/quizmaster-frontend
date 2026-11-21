@@ -2,24 +2,29 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import { FileText, Sparkles, Upload, X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { cn } from '@/lib/utils';
-import { QUESTION_TYPE_LABELS, type QuestionType } from '@/types';
+import type { QuestionType } from '@/types';
 import {
   AI_DEFAULT_COUNT,
   AI_GENERATABLE_TYPES,
   AI_LEVELS,
   AI_MAX_COUNT,
   AI_MIN_COUNT,
+  AI_PDF_MAX_BYTES,
+  AI_TEXT_MAX_LENGTH,
+  AI_TEXT_MIN_LENGTH,
   classifyGenerationError,
   formatResetDate,
   generateQuizDraft,
-  quotaReachedMessage,
   validateCourseFile,
   validateGenerationRequest,
   type GenerationError,
+  type GenerationField,
+  type GenerationFieldError,
   type GenerationQuota,
   type GenerationRequest,
   type GenerationResult,
@@ -27,14 +32,28 @@ import {
 
 /** Étapes affichées pendant la génération (le serveur ne renvoie pas de progression). */
 export const GENERATION_STEPS = [
-  { after: 0, label: 'Envoi du cours…' },
-  { after: 3, label: 'Lecture du document…' },
-  { after: 10, label: 'Rédaction des questions…' },
-  { after: 35, label: 'Vérification des questions…' },
+  { after: 0, key: 'send' },
+  { after: 3, key: 'read' },
+  { after: 10, key: 'write' },
+  { after: 35, key: 'check' },
 ] as const;
 
+const MAX_MB = AI_PDF_MAX_BYTES / (1024 * 1024);
+
 type Source = 'text' | 'file';
-type FieldErrors = ReturnType<typeof validateGenerationRequest>;
+type FieldErrors = Partial<Record<GenerationField, GenerationFieldError>>;
+
+/** Message de quota atteint (limite et date de remise à zéro quand le serveur les donne). */
+export function useQuotaReachedMessage() {
+  const t = useTranslations('aiGeneration.quota');
+  const locale = useLocale();
+  return (quota: GenerationQuota | null) =>
+    [
+      quota?.limit ? t('reachedLimit', { limit: quota.limit }) : t('reachedGeneric'),
+      quota?.resetAt ? t('resetOn', { date: formatResetDate(quota.resetAt, locale) }) : t('resetNextMonth'),
+      t('alternatives'),
+    ].join(' ');
+}
 
 interface AiQuizGeneratorProps {
   onGenerated: (result: GenerationResult, request: GenerationRequest) => void;
@@ -43,6 +62,10 @@ interface AiQuizGeneratorProps {
 }
 
 export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
+  const t = useTranslations('aiGeneration');
+  const tq = useTranslations('questionTypes');
+  const locale = useLocale();
+  const quotaReachedMessage = useQuotaReachedMessage();
   const [source, setSource] = useState<Source>('text');
   const [text, setText] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -66,9 +89,26 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
     return () => window.clearInterval(id);
   }, [loading]);
 
-  const quotaExhausted = quota?.remaining === 0;
   const step = [...GENERATION_STEPS].reverse().find((s) => elapsed >= s.after) ?? GENERATION_STEPS[0];
   const stepIndex = GENERATION_STEPS.indexOf(step);
+  const quotaExhausted = quota?.remaining === 0;
+  const number = (n: number) => n.toLocaleString(locale === 'en' ? 'en-GB' : 'fr-FR');
+
+  const fieldError = (key: GenerationFieldError | undefined) =>
+    key
+      ? t(`validation.${key}`, {
+          maxMb: MAX_MB,
+          min: number(key === 'countRange' ? AI_MIN_COUNT : AI_TEXT_MIN_LENGTH),
+          max: number(key === 'countRange' ? AI_MAX_COUNT : AI_TEXT_MAX_LENGTH),
+        })
+      : undefined;
+
+  const failureMessage = (f: GenerationError) => {
+    if (f.kind === 'quota') return quotaReachedMessage(f.quota);
+    const message = t(`errors.${f.kind}`, { maxMb: MAX_MB });
+    // Les messages du serveur sont en français : on les ajoute en complément dans cette langue.
+    return locale === 'fr' && f.detail && f.detail !== message ? `${message} (${f.detail})` : message;
+  };
 
   const pickFile = (picked: File | null | undefined) => {
     if (!picked) return;
@@ -96,8 +136,8 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
       count,
       types: AI_GENERATABLE_TYPES.filter((t) => types.includes(t)),
     };
-    const fieldErrors = validateGenerationRequest(request);
-    if (source === 'file' && !file) fieldErrors.source = 'Déposez un PDF ou passez au texte collé.';
+    const fieldErrors: FieldErrors = validateGenerationRequest(request);
+    if (source === 'file' && !file) fieldErrors.source = 'fileRequired';
     setErrors(fieldErrors);
     setFailure(null);
     if (Object.values(fieldErrors).some(Boolean)) return;
@@ -110,11 +150,7 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
         onUploadProgress: request.file ? setUpload : undefined,
       });
       if (result.questions.length === 0) {
-        setFailure({
-          kind: 'no_questions',
-          message: 'Aucune question exploitable n’a pu être générée à partir de ce cours. Essayez un extrait plus riche.',
-          quota: result.quota,
-        });
+        setFailure({ kind: 'no_questions', detail: null, quota: result.quota });
         return;
       }
       onGenerated(result, request);
@@ -127,18 +163,16 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
     }
   };
 
+  const inputClass =
+    'w-full min-h-[44px] rounded-md border border-borderc-strong bg-surface px-3 py-2 text-body text-ink focus:outline-none focus:border-primary focus:shadow-glow';
+
   return (
     <Card className="p-6 space-y-6">
       <form onSubmit={submit} className="space-y-6" noValidate aria-busy={loading}>
         <fieldset className="space-y-3" disabled={loading}>
-          <legend className="text-card-title text-ink mb-2">Cours à utiliser</legend>
-          <div className="inline-flex rounded-md border border-borderc p-1" role="radiogroup" aria-label="Source du cours">
-            {(
-              [
-                ['text', 'Coller le texte'],
-                ['file', 'Déposer un PDF'],
-              ] as const
-            ).map(([value, label]) => (
+          <legend className="text-card-title text-ink mb-2">{t('form.sourceLegend')}</legend>
+          <div className="inline-flex rounded-md border border-borderc p-1" role="radiogroup" aria-label={t('form.sourceGroup')}>
+            {(['text', 'file'] as const).map((value) => (
               <button
                 key={value}
                 type="button"
@@ -153,7 +187,7 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
                   source === value ? 'bg-primary-50 text-primary-700' : 'text-ink-secondary hover:text-ink'
                 )}
               >
-                {label}
+                {value === 'text' ? t('form.sourceText') : t('form.sourceFile')}
               </button>
             ))}
           </div>
@@ -161,19 +195,19 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
           {source === 'text' ? (
             <div className="space-y-1.5">
               <label htmlFor="ai-course-text" className="text-small font-medium text-ink">
-                Texte du cours
+                {t('form.textLabel')}
               </label>
               <textarea
                 id="ai-course-text"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 rows={10}
-                placeholder="Collez ici le contenu de votre cours, d'un chapitre ou d'une fiche…"
-                className="w-full rounded-md border border-borderc bg-surface px-3 py-2 text-body focus:outline-none focus:border-primary focus:shadow-glow"
+                placeholder={t('form.textPlaceholder')}
+                className={cn(inputClass, 'placeholder:text-ink-tertiary')}
                 aria-invalid={!!errors.source}
                 aria-describedby={errors.source ? 'ai-source-error' : undefined}
               />
-              <p className="text-caption text-ink-secondary">{text.trim().length} caractères</p>
+              <p className="text-caption text-ink-tertiary">{t('form.charCount', { count: text.trim().length })}</p>
             </div>
           ) : (
             <div
@@ -189,22 +223,20 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
               }}
               className={cn(
                 'rounded-md border-2 border-dashed p-6 text-center space-y-2',
-                dragging ? 'border-primary bg-primary-50' : 'border-borderc'
+                dragging ? 'border-primary bg-primary-50' : 'border-borderc-strong'
               )}
             >
               {file ? (
                 <div className="flex items-center justify-center gap-2 text-body text-ink">
                   <FileText className="w-5 h-5 text-primary" aria-hidden />
-                  <span>
-                    {file.name} ({(file.size / (1024 * 1024)).toFixed(1)} Mo)
-                  </span>
+                  <span>{t('form.fileSize', { name: file.name, size: (file.size / (1024 * 1024)).toFixed(1) })}</span>
                   <button
                     type="button"
                     onClick={() => {
                       setFile(null);
                       if (fileInput.current) fileInput.current.value = '';
                     }}
-                    aria-label="Retirer le PDF"
+                    aria-label={t('form.removeFile')}
                     className="text-ink-secondary hover:text-danger"
                   >
                     <X className="w-4 h-4" />
@@ -212,18 +244,18 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
                 </div>
               ) : (
                 <>
-                  <Upload className="w-6 h-6 mx-auto text-ink-secondary" aria-hidden />
-                  <p className="text-small text-ink-secondary">Glissez votre PDF ici (10 Mo maximum) ou</p>
+                  <Upload className="w-6 h-6 mx-auto text-ink-tertiary" aria-hidden />
+                  <p className="text-small text-ink-secondary">{t('form.dropHint', { maxMb: MAX_MB })}</p>
                 </>
               )}
               <label className="inline-block cursor-pointer text-small font-medium text-primary-700 hover:underline">
-                {file ? 'Choisir un autre PDF' : 'Parcourir'}
+                {file ? t('form.chooseOther') : t('form.browse')}
                 <input
                   ref={fileInput}
                   type="file"
                   accept="application/pdf,.pdf"
                   className="sr-only"
-                  aria-label="Fichier PDF du cours"
+                  aria-label={t('form.fileLabel')}
                   onChange={(e) => pickFile(e.target.files?.[0])}
                 />
               </label>
@@ -231,36 +263,36 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
           )}
           {errors.source && (
             <p id="ai-source-error" role="alert" className="text-small text-danger">
-              {errors.source}
+              {fieldError(errors.source)}
             </p>
           )}
         </fieldset>
 
         <fieldset className="grid gap-4 sm:grid-cols-2" disabled={loading}>
-          <legend className="sr-only">Paramètres</legend>
+          <legend className="sr-only">{t('form.settings')}</legend>
           <div className="space-y-1.5">
             <label htmlFor="ai-level" className="text-small font-medium text-ink">
-              Niveau
+              {t('form.level')}
             </label>
             <select
               id="ai-level"
               value={level}
               onChange={(e) => setLevel(e.target.value)}
-              className="w-full min-h-[44px] rounded-md border border-borderc bg-surface px-3 py-2 text-body"
+              className={inputClass}
               aria-invalid={!!errors.level}
             >
-              <option value="">Choisir…</option>
+              <option value="">{t('form.levelPlaceholder')}</option>
               {AI_LEVELS.map((l) => (
                 <option key={l} value={l}>
                   {l}
                 </option>
               ))}
             </select>
-            {errors.level && <p className="text-small text-danger">{errors.level}</p>}
+            {errors.level && <p className="text-small text-danger">{fieldError(errors.level)}</p>}
           </div>
           <div className="space-y-1.5">
             <label htmlFor="ai-count" className="text-small font-medium text-ink">
-              Nombre de questions ({AI_MIN_COUNT} à {AI_MAX_COUNT})
+              {t('form.count', { min: AI_MIN_COUNT, max: AI_MAX_COUNT })}
             </label>
             <input
               id="ai-count"
@@ -269,15 +301,15 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
               max={AI_MAX_COUNT}
               value={Number.isNaN(count) ? '' : count}
               onChange={(e) => setCount(e.target.valueAsNumber)}
-              className="w-full min-h-[44px] rounded-md border border-borderc bg-surface px-3 py-2 text-body"
+              className={inputClass}
               aria-invalid={!!errors.count}
             />
-            {errors.count && <p className="text-small text-danger">{errors.count}</p>}
+            {errors.count && <p className="text-small text-danger">{fieldError(errors.count)}</p>}
           </div>
         </fieldset>
 
         <fieldset className="space-y-2" disabled={loading}>
-          <legend className="text-small font-medium text-ink mb-1">Types de questions</legend>
+          <legend className="text-small font-medium text-ink mb-1">{t('form.types')}</legend>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             {AI_GENERATABLE_TYPES.map((type) => (
               <label key={type} className="flex items-center gap-2 text-small text-ink">
@@ -285,13 +317,13 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
                   type="checkbox"
                   checked={types.includes(type)}
                   onChange={() => toggleType(type)}
-                  className="rounded border-borderc"
+                  className="rounded border-borderc-strong accent-primary"
                 />
-                {QUESTION_TYPE_LABELS[type]}
+                {tq(type)}
               </label>
             ))}
           </div>
-          {errors.types && <p className="text-small text-danger">{errors.types}</p>}
+          {errors.types && <p className="text-small text-danger">{fieldError(errors.types)}</p>}
         </fieldset>
 
         {failure && (
@@ -299,66 +331,69 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
             role="alert"
             data-testid={`ai-error-${failure.kind}`}
             className={cn(
-              'rounded-md p-4 text-small',
+              'rounded-md border p-4 text-small',
               failure.kind === 'quota' || failure.kind === 'unavailable'
-                ? 'bg-warning-50 text-ink'
-                : 'bg-danger-50 text-danger'
+                ? 'border-warning-100 bg-warning-50 text-ink'
+                : 'border-danger-100 bg-danger-50 text-danger'
             )}
           >
             <p className="font-medium">
               {failure.kind === 'quota'
-                ? 'Quota mensuel atteint'
+                ? t('errorTitles.quota')
                 : failure.kind === 'unavailable'
-                  ? 'Génération par IA indisponible'
-                  : 'La génération n’a pas abouti'}
+                  ? t('errorTitles.unavailable')
+                  : t('errorTitles.generic')}
             </p>
-            <p className="mt-1">{failure.message}</p>
+            <p className="mt-1">{failureMessage(failure)}</p>
           </div>
         )}
 
         {loading && (
           <div role="status" aria-live="polite" className="rounded-md bg-primary-50 p-4 space-y-2">
-            <p className="text-small font-medium text-primary-700">{step.label}</p>
+            <p className="text-small font-medium text-primary-700">{t(`steps.${step.key}`)}</p>
             <ol className="flex gap-1.5" aria-hidden>
               {GENERATION_STEPS.map((s, i) => (
                 <li
-                  key={s.label}
+                  key={s.key}
                   className={cn('h-1.5 flex-1 rounded-full', i <= stepIndex ? 'bg-primary' : 'bg-primary-100')}
                 />
               ))}
             </ol>
             <p className="text-caption text-ink-secondary">
-              {upload !== null && upload < 1 ? `Envoi du PDF : ${Math.round(upload * 100)} %. ` : ''}
-              Cela prend en général moins d’une minute, et jusqu’à quatre minutes pour un long cours. Ne fermez pas la page.
+              {upload !== null && upload < 1 ? `${t('steps.upload', { percent: Math.round(upload * 100) })} ` : ''}
+              {t('steps.patience')}
             </p>
           </div>
         )}
 
         <div className="space-y-2">
           {quotaExhausted && !failure && (
-            <p role="alert" data-testid="ai-quota-exhausted" className="rounded-md bg-warning-50 p-3 text-small text-ink">
+            <p
+              role="alert"
+              data-testid="ai-quota-exhausted"
+              className="rounded-md border border-warning-100 bg-warning-50 p-3 text-small text-ink"
+            >
               {quotaReachedMessage(quota ?? null)}
             </p>
           )}
           <Button type="submit" className="w-full" isLoading={loading} disabled={loading || quotaExhausted}>
             <Sparkles className="w-4 h-4 mr-2" aria-hidden />
-            {loading ? 'Génération en cours…' : 'Générer le brouillon'}
+            {loading ? t('form.submitting') : t('form.submit')}
           </Button>
           {quota && quota.remaining !== null && (
-            <p className="text-caption text-ink-secondary text-center">
-              Générations restantes ce mois-ci : {quota.remaining}
-              {quota.limit !== null ? ` sur ${quota.limit}` : ''}
-              {quota.resetAt ? ` (remise à zéro le ${formatResetDate(quota.resetAt)})` : ''}
+            <p className="text-caption text-ink-tertiary text-center">
+              {quota.limit !== null
+                ? t('form.remaining', { remaining: quota.remaining, limit: quota.limit })
+                : t('form.remainingNoLimit', { remaining: quota.remaining })}
+              {quota.resetAt ? ` ${t('form.resetOn', { date: formatResetDate(quota.resetAt, locale) })}` : ''}
             </p>
           )}
         </div>
 
-        <p className="text-caption text-ink-secondary" data-testid="ai-privacy-notice">
-          Le texte ou le PDF du cours est envoyé à un fournisseur d’IA pour rédiger les questions. N’y mettez
-          aucune donnée d’élève (noms, notes, copies). Rien n’est enregistré tant que vous n’avez pas relu et
-          enregistré le quiz.{' '}
+        <p className="text-caption text-ink-tertiary" data-testid="ai-privacy-notice">
+          {t('form.privacyNotice')}{' '}
           <Link href="/confidentialite#generation-ia" className="underline hover:text-ink">
-            En savoir plus
+            {t('form.privacyLink')}
           </Link>
         </p>
       </form>

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { useAnswerLabels } from '@/i18n/answerLabel';
 import { useQuiz } from '@/hooks/useQuiz';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -11,8 +13,6 @@ import { QuestionImage } from '@/components/ui/QuestionImage';
 import { ArrowLeft, Trash2, Plus, Play, CalendarClock } from 'lucide-react';
 import { AssignHomeworkDialog } from '@/components/creator/AssignHomeworkDialog';
 import {
-  QUESTION_TYPE_LABELS,
-  answerLabel,
   normalizeQuestionType,
   type Question,
   type QuestionPayload,
@@ -20,12 +20,14 @@ import {
 
 /** Rappel des réponses d'une question selon son type. */
 function QuestionAnswers({ question }: { question: Question }) {
+  const t = useTranslations('quizDetail');
+  const { answerLabel, optionText } = useAnswerLabels();
   const type = normalizeQuestionType(question.type);
   const chip = (key: string, label: string, correct: boolean) => (
     <span
       key={key}
-      className={`px-2 py-0.5 text-xs rounded ${
-        correct ? 'bg-success-50 text-success' : 'bg-black/[0.05] text-ink-secondary'
+      className={`px-2 py-0.5 text-caption rounded-sm ${
+        correct ? 'bg-success-50 text-success' : 'bg-ink/[0.05] text-ink-secondary'
       }`}
     >
       {label}
@@ -34,7 +36,7 @@ function QuestionAnswers({ question }: { question: Question }) {
   const correct = question.correct_answers ?? [];
   if (type === 'short_answer') {
     return (
-      <div className="flex flex-wrap gap-1 mt-1" aria-label="Réponses acceptées">
+      <div className="flex flex-wrap gap-1 mt-1" aria-label={t('acceptedAria')}>
         {correct.map((v) => chip(v, v, true))}
       </div>
     );
@@ -49,7 +51,7 @@ function QuestionAnswers({ question }: { question: Question }) {
   if (type === 'ordering') {
     const ids = correct.length ? correct : question.options.map((o) => o.id);
     return (
-      <ol className="flex flex-wrap gap-1 mt-1" aria-label="Ordre attendu">
+      <ol className="flex flex-wrap gap-1 mt-1" aria-label={t('orderAria')}>
         {ids.map((id, i) => (
           <li key={id}>{chip(id, `${i + 1}. ${answerLabel(id, question.options)}`, true)}</li>
         ))}
@@ -59,13 +61,16 @@ function QuestionAnswers({ question }: { question: Question }) {
   return (
     <div className="flex flex-wrap gap-1 mt-1">
       {question.options.map((opt) =>
-        chip(opt.id, `${opt.id}: ${opt.text}`, type !== 'poll' && correct.includes(opt.id))
+        chip(opt.id, `${opt.id}: ${optionText(opt.text)}`, type !== 'poll' && correct.includes(opt.id))
       )}
     </div>
   );
 }
 
 export default function QuizDetailPage() {
+  const t = useTranslations('quizDetail');
+  const tc = useTranslations('common');
+  const tq = useTranslations('questionTypes');
   const params = useParams();
   const router = useRouter();
   const quizId = params.id as string;
@@ -82,7 +87,7 @@ export default function QuizDetailPage() {
       setShowAddQuestion(false);
     } catch (e) {
       console.error('Erreur ajout de questions:', e);
-      setAddError("Les questions n'ont pas pu être enregistrées. Réessayez.");
+      setAddError(t('addError'));
     } finally {
       setIsAdding(false);
     }
@@ -96,7 +101,7 @@ export default function QuizDetailPage() {
   }, [quizId]);
 
   const handleDelete = async () => {
-    if (confirm('Supprimer ce quiz définitivement ?')) {
+    if (confirm(t('confirmDelete'))) {
       await deleteQuiz(quizId);
       router.push('/creator/dashboard');
     }
@@ -109,7 +114,7 @@ export default function QuizDetailPage() {
   if (!currentQuiz || currentQuiz.id !== quizId) {
     return (
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-        <p className="text-ink-secondary">Chargement...</p>
+        <p className="text-ink-secondary">{tc('loading')}</p>
       </div>
     );
   }
@@ -120,21 +125,21 @@ export default function QuizDetailPage() {
         <div className="flex flex-wrap items-center gap-4 mb-6">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/creator/dashboard">
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Retour
+              <ArrowLeft className="w-4 h-4" />
+              {tc('back')}
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold flex-1">{currentQuiz.title}</h1>
+          <h1 className="text-h2 flex-1">{currentQuiz.title}</h1>
           <Button variant="outline" size="sm" onClick={handleCreateSession}>
-            <Play className="w-4 h-4 mr-1" />
-            Lancer une session
+            <Play className="w-4 h-4" />
+            {t('startSession')}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setShowAssign(true)}>
-            <CalendarClock className="w-4 h-4 mr-1" aria-hidden="true" />
-            Assigner en devoir
+            <CalendarClock className="w-4 h-4" aria-hidden="true" />
+            {t('assign')}
           </Button>
-          <Button variant="danger" size="sm" onClick={handleDelete}>
-            <Trash2 className="w-4 h-4" />
+          <Button variant="danger" size="sm" onClick={handleDelete} aria-label={t('deleteAria')} title={t('deleteAria')}>
+            <Trash2 className="w-4 h-4" aria-hidden />
           </Button>
         </div>
 
@@ -147,22 +152,23 @@ export default function QuizDetailPage() {
         )}
 
         <Card className="p-6 mb-6">
-          <p className="text-ink-secondary">{currentQuiz.description || 'Aucune description'}</p>
-          <div className="flex gap-4 mt-3 text-sm">
-            <span><strong>{currentQuiz.total_questions}</strong> questions</span>
-            <span>Timer {currentQuiz.use_global_timer ? 'global' : 'par question'}</span>
-            {currentQuiz.use_global_timer && (
-              <span>{currentQuiz.global_timer_seconds}s</span>
-            )}
+          <p className="text-ink-secondary">{currentQuiz.description || t('noDescription')}</p>
+          <div className="flex gap-4 mt-3 text-small">
+            <span>{t.rich('questionsCount', { count: currentQuiz.total_questions, b: (chunks) => <strong>{chunks}</strong> })}</span>
+            <span>
+              {currentQuiz.use_global_timer
+                ? t('timerGlobal', { seconds: currentQuiz.global_timer_seconds })
+                : t('timerPerQuestion')}
+            </span>
           </div>
         </Card>
 
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Questions</h2>
+            <h2 className="text-h3">{t('questions')}</h2>
             <Button size="sm" onClick={() => setShowAddQuestion(!showAddQuestion)}>
-              <Plus className="w-4 h-4 mr-1" />
-              Ajouter
+              <Plus className="w-4 h-4" />
+              {t('add')}
             </Button>
           </div>
 
@@ -185,20 +191,24 @@ export default function QuizDetailPage() {
           )}
 
           {currentQuiz.questions?.length === 0 ? (
-            <p className="text-ink-secondary">Aucune question</p>
+            <p className="text-ink-secondary">{t('noQuestions')}</p>
           ) : (
             currentQuiz.questions?.map((q, index) => (
               <Card key={q.id} className="p-4" data-testid="quiz-question">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                   <div className="min-w-0 flex-1">
-                    <span className="text-sm text-ink-secondary">Q{index + 1}</span>
+                    <span className="text-small text-ink-secondary">{t('questionShort', { number: index + 1 })}</span>
                     <p className="font-medium">{q.text}</p>
-                    <div className="flex gap-2 mt-1 text-sm text-ink-secondary">
-                      <span>{QUESTION_TYPE_LABELS[normalizeQuestionType(q.type)]}</span>
+                    <div className="flex gap-2 mt-1 text-small text-ink-secondary">
+                      <span>{tq(normalizeQuestionType(q.type))}</span>
                       <span>•</span>
-                      <span>{normalizeQuestionType(q.type) === 'poll' ? 'non noté' : `${q.max_points} pts`}</span>
+                      <span>
+                        {normalizeQuestionType(q.type) === 'poll'
+                          ? t('notGraded')
+                          : tc('pointsCount', { count: q.max_points })}
+                      </span>
                       <span>•</span>
-                      <span>{q.timer_seconds}s</span>
+                      <span>{t('seconds', { seconds: q.timer_seconds })}</span>
                     </div>
                     <QuestionAnswers question={q} />
                   </div>

@@ -5,8 +5,8 @@ import { PrivacyNotice } from '@/components/player/PrivacyNotice';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 
 describe('page /confidentialite', () => {
-  it('affiche le titre et les sections attendues', () => {
-    render(<ConfidentialitePage />);
+  it('affiche le titre et les sections attendues', async () => {
+    render(await ConfidentialitePage());
     expect(
       screen.getByRole('heading', { level: 1, name: 'Confidentialité et données des élèves' })
     ).toBeInTheDocument();
@@ -24,8 +24,8 @@ describe('page /confidentialite', () => {
     }
   });
 
-  it('décrit les données élèves, l’absence de compte et la conservation de 30 jours', () => {
-    const { container } = render(<ConfidentialitePage />);
+  it('décrit les données élèves, l’absence de compte et la conservation de 30 jours', async () => {
+    const { container } = render(await ConfidentialitePage());
     const text = container.textContent ?? '';
     expect(text).toMatch(/pseudo/);
     expect(text).toMatch(/réponses/);
@@ -35,16 +35,16 @@ describe('page /confidentialite', () => {
     expect(text).toMatch(/anonymisées/);
   });
 
-  it('décrit la génération par IA : cours envoyé à un fournisseur, aucune donnée élève, fournisseur à confirmer', () => {
-    render(<ConfidentialitePage />);
+  it('décrit la génération par IA : cours envoyé à un fournisseur, aucune donnée élève, fournisseur à confirmer', async () => {
+    render(await ConfidentialitePage());
     const section = screen.getByRole('region', { name: 'Génération de questions par IA' });
-    expect(section).toHaveTextContent(/fournisseur d'intelligence artificielle/);
-    expect(section).toHaveTextContent(/aucune donnée d'élève/);
+    expect(section).toHaveTextContent(/fournisseur d’intelligence artificielle/);
+    expect(section).toHaveTextContent(/aucune donnée d’élève/);
     expect(section).toHaveTextContent('à confirmer');
   });
 
-  it("garde l'hébergement et le contact en placeholders (rien d'inventé)", () => {
-    render(<ConfidentialitePage />);
+  it("garde l'hébergement et le contact en placeholders (rien d'inventé)", async () => {
+    render(await ConfidentialitePage());
     const hebergement = screen.getByRole('region', { name: 'Hébergement' });
     expect(hebergement).toHaveTextContent('À confirmer');
     expect(screen.getByRole('region', { name: 'Contact' })).toHaveTextContent('à compléter');
@@ -52,10 +52,10 @@ describe('page /confidentialite', () => {
 });
 
 describe('liens vers /confidentialite', () => {
-  it('la mention du join élève contient le texte demandé et le lien', () => {
+  it('la mention du join élève contient le texte demandé et le lien', async () => {
     render(<PrivacyNotice />);
     expect(
-      screen.getByText(/Aucun compte, aucune donnée personnelle demandée\. N'utilise pas ton nom complet\./)
+      screen.getByText(/Aucun compte, aucune donnée personnelle demandée\. N.utilise pas ton nom complet\./)
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /confidentialité/i })).toHaveAttribute(
       'href',
@@ -63,7 +63,7 @@ describe('liens vers /confidentialite', () => {
     );
   });
 
-  it('le pied de page contient le lien Confidentialité', () => {
+  it('le pied de page contient le lien Confidentialité', async () => {
     render(<SiteFooter />);
     expect(screen.getByRole('link', { name: 'Confidentialité' })).toHaveAttribute(
       'href',

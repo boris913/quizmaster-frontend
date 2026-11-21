@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, FileUp, PenLine, Sparkles } from 'lucide-react';
 import { useQuiz } from '@/hooks/useQuiz';
 import { QuizForm, type QuizFormSubmitData } from '@/components/creator/QuizForm';
@@ -14,15 +15,14 @@ import { cn } from '@/lib/utils';
 
 type Mode = 'manual' | 'ai';
 
-const AI_DRAFT_BANNER = 'Brouillon généré par IA — à vérifier avant utilisation';
-const LEAVE_CONFIRMATION = 'Le brouillon généré n’est pas enregistré. Quitter quand même ?';
-
 interface AiDraft {
   id: number;
   result: GenerationResult;
 }
 
 export default function NewQuizPage() {
+  const t = useTranslations('newQuiz');
+  const ta = useTranslations('aiGeneration');
   const router = useRouter();
   const { createQuiz, addQuestions, isLoading } = useQuiz();
   const [mode, setMode] = useState<Mode>('manual');
@@ -32,6 +32,10 @@ export default function NewQuizPage() {
   const [error, setError] = useState<string | null>(null);
   /** Vrai une fois le quiz enregistré : la navigation qui suit ne doit plus être bloquée. */
   const saved = useRef(false);
+  const leaveConfirm = ta('review.leaveConfirm');
+  // Texte lu par le gestionnaire beforeunload sans le réabonner à chaque rendu.
+  const leaveConfirmRef = useRef(leaveConfirm);
+  leaveConfirmRef.current = leaveConfirm;
 
   // Quota affiché sous le bouton de génération dès l'ouverture de l'onglet (silencieux si indisponible).
   useEffect(() => {
@@ -51,8 +55,8 @@ export default function NewQuizPage() {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       if (saved.current) return;
       event.preventDefault();
-      event.returnValue = LEAVE_CONFIRMATION;
-      return LEAVE_CONFIRMATION;
+      event.returnValue = leaveConfirmRef.current;
+      return leaveConfirmRef.current;
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
@@ -77,15 +81,15 @@ export default function NewQuizPage() {
       await addQuestions(quiz.id, resolved.questions);
       if (resolved.failures.length > 0) {
         window.alert(
-          `Quiz créé, mais l'image n'a pas pu être envoyée pour : ${resolved.failures
-            .map((i) => `question ${i + 1}`)
-            .join(', ')}.`
+          t('imageFailures', {
+            list: resolved.failures.map((i) => t('questionN', { number: i + 1 })).join(', '),
+          })
         );
       }
       router.push(`/creator/quiz/${quiz.id}`);
     } catch (e) {
       console.error('Erreur création quiz:', e);
-      setError("Le quiz n'a pas pu être enregistré. Vérifiez les champs puis réessayez.");
+      setError(t('saveError'));
     } finally {
       setSaving(false);
     }
@@ -99,13 +103,13 @@ export default function NewQuizPage() {
   };
 
   const discardDraft = () => {
-    if (!window.confirm('Abandonner ce brouillon ? Les questions générées seront perdues.')) return;
+    if (!window.confirm(ta('review.discardConfirm'))) return;
     setDraft(null);
   };
 
   const selectMode = (next: Mode) => {
     if (next === mode) return;
-    if (draft && !window.confirm(LEAVE_CONFIRMATION)) return;
+    if (draft && !window.confirm(leaveConfirm)) return;
     setDraft(null);
     setError(null);
     setMode(next);
@@ -114,25 +118,26 @@ export default function NewQuizPage() {
   const tabClass = (active: boolean) =>
     cn(
       'inline-flex items-center gap-2 rounded-md px-4 py-2 text-small font-medium min-h-[44px] transition-colors',
-      active ? 'bg-primary-50 text-primary-700' : 'text-ink-secondary hover:bg-black/[0.04] hover:text-ink'
+      active ? 'bg-primary-50 text-primary-700' : 'text-ink-secondary hover:bg-ink/[0.04] hover:text-ink'
     );
 
+  const generatedCount = draft?.result.questions.length ?? 0;
   const discarded = draft?.result.discarded ?? 0;
 
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Créer un nouveau quiz</h1>
+        <h1 className="text-h1 mb-6">{t('title')}</h1>
 
-        <div role="tablist" aria-label="Mode de création" className="mb-6 flex flex-wrap gap-2 border-b border-borderc pb-3">
+        <div role="tablist" aria-label={ta('tabs.label')} className="mb-6 flex flex-wrap gap-2 border-b border-borderc pb-3">
           <button type="button" role="tab" aria-selected={mode === 'manual'} className={tabClass(mode === 'manual')} onClick={() => selectMode('manual')}>
-            <PenLine className="w-4 h-4" aria-hidden /> Création manuelle
+            <PenLine className="w-4 h-4" aria-hidden /> {ta('tabs.manual')}
           </button>
           <button type="button" role="tab" aria-selected={mode === 'ai'} className={tabClass(mode === 'ai')} onClick={() => selectMode('ai')}>
-            <Sparkles className="w-4 h-4" aria-hidden /> Générer depuis un cours
+            <Sparkles className="w-4 h-4" aria-hidden /> {ta('tabs.ai')}
           </button>
           <Link href="/creator/quiz/import" className={tabClass(false)}>
-            <FileUp className="w-4 h-4" aria-hidden /> Importer un fichier
+            <FileUp className="w-4 h-4" aria-hidden /> {ta('tabs.import')}
           </Link>
         </div>
 
@@ -151,34 +156,20 @@ export default function NewQuizPage() {
             <div
               role="note"
               data-testid="ai-draft-banner"
-              className="flex gap-3 rounded-lg border border-warning bg-warning-50 p-4 text-ink"
+              className="flex gap-3 rounded-lg border border-warning-100 bg-warning-50 p-4 text-ink"
             >
               <AlertTriangle className="w-5 h-5 shrink-0 text-warning" aria-hidden />
               <div className="space-y-1 text-small">
-                <p className="font-semibold">{AI_DRAFT_BANNER}</p>
-                <p>
-                  {draft.result.questions.length} question{draft.result.questions.length > 1 ? 's' : ''} générée
-                  {draft.result.questions.length > 1 ? 's' : ''}. Relisez chaque énoncé, les bonnes réponses et les
-                  explications : l’IA peut se tromper. Rien n’est enregistré tant que vous ne cliquez pas sur
-                  « Enregistrer le quiz ».
-                </p>
-                {draft.result.truncated && (
-                  <p data-testid="ai-truncated">
-                    Le cours était long : seul son début a été utilisé pour générer les questions.
-                  </p>
-                )}
-                {discarded > 0 && (
-                  <p data-testid="ai-discarded">
-                    {discarded} question{discarded > 1 ? 's ont été écartées' : ' a été écartée'} car invalide
-                    {discarded > 1 ? 's' : ''} (réponse incohérente ou incomplète).
-                  </p>
-                )}
+                <p className="font-semibold">{ta('review.banner')}</p>
+                <p>{ta('review.intro', { count: generatedCount })}</p>
+                {draft.result.truncated && <p data-testid="ai-truncated">{ta('review.truncated')}</p>}
+                {discarded > 0 && <p data-testid="ai-discarded">{ta('review.discarded', { count: discarded })}</p>}
               </div>
             </div>
 
             <div className="flex justify-end">
               <Button type="button" variant="outline" size="sm" onClick={discardDraft}>
-                Abandonner et recommencer
+                {ta('review.discard')}
               </Button>
             </div>
 
@@ -187,7 +178,7 @@ export default function NewQuizPage() {
               initialData={{ title: draft.result.title ?? '', questions: draft.result.questions }}
               onSubmit={handleSubmit}
               isSubmitting={isLoading || saving}
-              submitLabel="Enregistrer le quiz"
+              submitLabel={ta('review.save')}
             />
           </div>
         )}

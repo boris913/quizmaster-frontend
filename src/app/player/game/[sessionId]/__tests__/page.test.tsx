@@ -89,7 +89,7 @@ describe('Écran joueur : correction à la clôture', () => {
     // Réponse fausse mais donnée : pas d'écran « Temps écoulé », pas de correction prématurée.
     expect(screen.queryByText('Temps écoulé !')).not.toBeInTheDocument();
     expect(screen.queryByTestId('answer-reveal')).not.toBeInTheDocument();
-    expect(screen.getByText('Correction à la fin de la question...')).toBeInTheDocument();
+    expect(screen.getByText('Correction à la fin de la question…')).toBeInTheDocument();
 
     act(() =>
       socket.serverEmit('question:reveal', {
@@ -105,7 +105,7 @@ describe('Écran joueur : correction à la clôture', () => {
     expect(region).toHaveTextContent('Votre réponse :A. Londres');
     expect(region).toHaveTextContent('Bonne réponse :B. Paris');
     expect(screen.getByTestId('answer-explanation')).toHaveTextContent('Paris est la capitale depuis 987.');
-    expect(screen.getByText('En attente de la prochaine question...')).toBeInTheDocument();
+    expect(screen.getByText('En attente de la prochaine question…')).toBeInTheDocument();
   });
 
   it('joueur sans réponse : la correction arrive quand même à la clôture', () => {

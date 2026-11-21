@@ -31,7 +31,7 @@ export function ProgressBar({
         <div className="flex justify-between text-small">
           <span className="text-ink-secondary">{label}</span>
           {showValue && (
-            <span className="font-mono text-ink font-medium">
+            <span className="font-display tabular-nums text-ink font-medium">
               {value}/{max}
             </span>
           )}
@@ -43,12 +43,12 @@ export function ProgressBar({
         aria-valuemin={0}
         aria-valuemax={100}
         className={cn(
-          'w-full rounded-full bg-black/[0.06] overflow-hidden',
+          'w-full rounded-full bg-ink/[0.06] overflow-hidden',
           size === 'lg' ? 'h-3' : 'h-2'
         )}
       >
         <motion.div
-          className={cn('h-full rounded-full gradient-primary', barClassName)}
+          className={cn('h-full rounded-full bg-primary', barClassName)}
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={

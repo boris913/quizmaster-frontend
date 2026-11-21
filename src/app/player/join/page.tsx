@@ -2,16 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { JoinForm } from '@/components/player/JoinForm';
 import { PrivacyNotice } from '@/components/player/PrivacyNotice';
 import { useSession } from '@/hooks/useSession';
 import { usePlayerStore } from '@/store/playerStore';
 import { getJoinErrorMessage } from '@/lib/nickname';
+import { useJoinErrorMessages } from '@/components/player/JoinForm';
 import { isAssignmentCodeError } from '@/lib/assignments';
 import { normalizeSessionCode } from '@/lib/sessionCode';
 
 export default function JoinPage() {
   const router = useRouter();
+  const locale = useLocale();
+  const joinErrors = useJoinErrorMessages();
   const { joinSession } = useSession();
   const { setParticipant, setSessionId } = usePlayerStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +36,7 @@ export default function JoinPage() {
         return;
       }
       // 400 : pseudo refusé ; 403 : participant exclu ; 404 : code inconnu ; 409 : pseudo pris.
-      setError(getJoinErrorMessage(err));
+      setError(getJoinErrorMessage(err, joinErrors, { preferServer: locale === 'fr' }));
     } finally {
       setIsSubmitting(false);
     }

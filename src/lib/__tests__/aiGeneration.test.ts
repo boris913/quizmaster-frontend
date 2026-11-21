@@ -4,6 +4,7 @@ import {
   AI_PDF_MAX_BYTES,
   buildGenerationFormData,
   classifyGenerationError,
+  formatResetDate,
   normalizeGenerationResponse,
   validateCourseFile,
   validateGenerationRequest,
@@ -26,17 +27,15 @@ describe('aiGeneration : contrôles client', () => {
 
   it('refuse un fichier qui n’est pas un PDF, ou de plus de 10 Mo', () => {
     expect(validateCourseFile({ name: 'cours.pdf', type: 'application/pdf', size: 1000 })).toBeNull();
-    expect(validateCourseFile({ name: 'cours.docx', type: 'application/msword', size: 1000 })).toMatch(/PDF/);
-    expect(validateCourseFile({ name: 'cours.pdf', type: 'application/pdf', size: AI_PDF_MAX_BYTES + 1 })).toMatch(
-      /10 Mo/
-    );
+    expect(validateCourseFile({ name: 'cours.docx', type: 'application/msword', size: 1000 })).toBe('notPdf');
+    expect(validateCourseFile({ name: 'cours.pdf', type: 'application/pdf', size: AI_PDF_MAX_BYTES + 1 })).toBe('tooLarge');
     // Type MIME absent (certains navigateurs) : on se fie à l'extension.
     expect(validateCourseFile({ name: 'cours.PDF', type: '', size: 10 })).toBeNull();
   });
 
   it('valide les paramètres (source, niveau, nombre 1-30, types)', () => {
     const errors = validateGenerationRequest({ text: 'court', level: '', count: 31, types: [] });
-    expect(Object.keys(errors).sort()).toEqual(['count', 'level', 'source', 'types']);
+    expect(errors).toEqual({ source: 'textTooShort', level: 'levelRequired', count: 'countRange', types: 'typesRequired' });
     expect(
       validateGenerationRequest({ text: 'x'.repeat(250), level: '4e', count: 30, types: ['single'] })
     ).toEqual({});
@@ -136,14 +135,15 @@ describe('aiGeneration : erreurs', () => {
       axiosError(429, { message: 'Quota atteint', quota: { limit: 3, used: 3, remaining: 0, resets_at: '2026-12-01T12:00:00.000Z' } })
     );
     expect(error.kind).toBe('quota');
-    expect(error.message).toContain('vos 3 générations du mois');
-    expect(error.message).toContain('1 décembre 2026');
+    expect(error.quota).toEqual({ limit: 3, used: 3, remaining: 0, resetAt: '2026-12-01T12:00:00.000Z' });
+    expect(formatResetDate(error.quota!.resetAt!, 'fr')).toBe('1 décembre 2026');
+    expect(formatResetDate(error.quota!.resetAt!, 'en')).toBe('1 December 2026');
   });
 
-  it('429 sans détail : message générique', () => {
+  it('429 sans détail : quota inconnu', () => {
     const error = classifyGenerationError(axiosError(429));
     expect(error.kind).toBe('quota');
-    expect(error.message).toMatch(/quota mensuel/);
+    expect(error.quota).toBeNull();
   });
 
   it('503, 422, 413, réseau et délai dépassé', () => {
@@ -158,11 +158,11 @@ describe('aiGeneration : erreurs', () => {
   it('messages serveur : 415, 422 contenu trop court, 502 sans question valide', () => {
     expect(classifyGenerationError(axiosError(415, { message: 'Le fichier doit être un PDF (application/pdf).' }))).toMatchObject({
       kind: 'unsupported_file',
-      message: 'Le fichier doit être un PDF (application/pdf).',
+      detail: 'Le fichier doit être un PDF (application/pdf).',
     });
     expect(
       classifyGenerationError(axiosError(422, { message: 'Le contenu fourni est trop court pour générer des questions.' }))
-    ).toMatchObject({ kind: 'unprocessable', message: 'Le contenu fourni est trop court pour générer des questions.' });
+    ).toMatchObject({ kind: 'unprocessable', detail: 'Le contenu fourni est trop court pour générer des questions.' });
     expect(
       classifyGenerationError(axiosError(502, { message: "L'IA n'a produit aucune question valide. Réessayez (aucun quota consommé)." })).kind
     ).toBe('no_questions');

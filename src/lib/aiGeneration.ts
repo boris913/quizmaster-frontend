@@ -100,30 +100,38 @@ function isPdf(file: { name: string; type: string }): boolean {
   return /\.pdf$/i.test(file.name);
 }
 
-/** Message d'erreur si le fichier n'est pas un PDF de 10 Mo au plus, `null` sinon. */
-export function validateCourseFile(file: { name: string; type: string; size: number }): string | null {
-  if (!isPdf(file)) return 'Seuls les fichiers PDF sont acceptés.';
-  if (file.size > AI_PDF_MAX_BYTES) return 'Le PDF dépasse 10 Mo. Allégez-le ou collez le texte du cours.';
-  if (file.size === 0) return 'Ce fichier est vide.';
+/**
+ * Erreurs de saisie : des clés de `aiGeneration.validation.*` (messages/*.json), jamais du texte.
+ * Les paramètres (`min`, `max`, `maxMb`) viennent des constantes ci-dessus.
+ */
+export type CourseFileError = 'notPdf' | 'tooLarge' | 'empty';
+export type GenerationFieldError = CourseFileError | 'textTooShort' | 'textTooLong' | 'fileRequired' | 'levelRequired' | 'countRange' | 'typesRequired';
+export type GenerationField = 'source' | 'level' | 'count' | 'types';
+
+/** Clé d'erreur si le fichier n'est pas un PDF de 10 Mo au plus, `null` sinon. */
+export function validateCourseFile(file: { name: string; type: string; size: number }): CourseFileError | null {
+  if (!isPdf(file)) return 'notPdf';
+  if (file.size > AI_PDF_MAX_BYTES) return 'tooLarge';
+  if (file.size === 0) return 'empty';
   return null;
 }
 
 /** Erreurs de saisie du formulaire de génération (clé = champ). */
-export function validateGenerationRequest(req: GenerationRequest): Partial<Record<'source' | 'level' | 'count' | 'types', string>> {
-  const errors: Partial<Record<'source' | 'level' | 'count' | 'types', string>> = {};
+export function validateGenerationRequest(req: GenerationRequest): Partial<Record<GenerationField, GenerationFieldError>> {
+  const errors: Partial<Record<GenerationField, GenerationFieldError>> = {};
   if (req.file) {
     const fileError = validateCourseFile(req.file);
     if (fileError) errors.source = fileError;
   } else if ((req.text ?? '').trim().length < AI_TEXT_MIN_LENGTH) {
-    errors.source = `Collez le texte du cours (${AI_TEXT_MIN_LENGTH} caractères au moins) ou déposez un PDF.`;
+    errors.source = 'textTooShort';
   } else if ((req.text ?? '').trim().length > AI_TEXT_MAX_LENGTH) {
-    errors.source = `Le texte dépasse ${AI_TEXT_MAX_LENGTH.toLocaleString('fr-FR')} caractères : collez un extrait ou un chapitre.`;
+    errors.source = 'textTooLong';
   }
-  if (!req.level.trim()) errors.level = 'Choisissez un niveau.';
+  if (!req.level.trim()) errors.level = 'levelRequired';
   if (!Number.isInteger(req.count) || req.count < AI_MIN_COUNT || req.count > AI_MAX_COUNT) {
-    errors.count = `Entre ${AI_MIN_COUNT} et ${AI_MAX_COUNT} questions.`;
+    errors.count = 'countRange';
   }
-  if (req.types.length === 0) errors.types = 'Cochez au moins un type de question.';
+  if (req.types.length === 0) errors.types = 'typesRequired';
   return errors;
 }
 
@@ -286,33 +294,23 @@ export type GenerationErrorKind =
   | 'unauthorized'
   | 'unknown';
 
+/**
+ * Erreur classée. Le texte affiché vient de `aiGeneration.errors.<kind>` ; `detail` est le message
+ * du serveur (en français), affiché en complément quand l'interface est en français.
+ */
 export interface GenerationError {
   kind: GenerationErrorKind;
-  message: string;
+  detail: string | null;
   quota: GenerationQuota | null;
 }
 
-const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-
-export function formatResetDate(iso: string): string {
-  return DATE_FORMAT.format(new Date(iso));
-}
-
-/** Message de quota atteint : limite et date de remise à zéro quand le serveur les donne. */
-export function quotaReachedMessage(quota: GenerationQuota | null): string {
-  const limit = quota?.limit;
-  const parts = [
-    limit
-      ? `Vous avez utilisé vos ${limit} générations du mois.`
-      : 'Vous avez atteint votre quota mensuel de générations.',
-  ];
-  parts.push(
-    quota?.resetAt
-      ? `Le compteur sera remis à zéro le ${formatResetDate(quota.resetAt)}.`
-      : 'Le compteur est remis à zéro au début du mois prochain.'
-  );
-  parts.push('En attendant, vous pouvez créer le quiz manuellement ou l’importer.');
-  return parts.join(' ');
+/** Date de remise à zéro du quota, au format long de la langue d'affichage. */
+export function formatResetDate(iso: string, locale = 'fr'): string {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(iso));
 }
 
 function serverMessage(data: unknown): string {
@@ -328,25 +326,15 @@ function errorCode(data: unknown): string {
   return typeof code === 'string' ? code.toUpperCase() : '';
 }
 
+function failure(kind: GenerationErrorKind, detail = '', quota: GenerationQuota | null = null): GenerationError {
+  return { kind, detail: detail || null, quota };
+}
+
 export function classifyGenerationError(error: unknown): GenerationError {
-  if (!axios.isAxiosError(error)) {
-    return { kind: 'unknown', message: 'La génération a échoué. Réessayez dans un instant.', quota: null };
-  }
-  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-    return {
-      kind: 'timeout',
-      message: 'La génération prend trop de temps. Réessayez avec un cours plus court ou moins de questions.',
-      quota: null,
-    };
-  }
+  if (!axios.isAxiosError(error)) return failure('unknown');
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') return failure('timeout');
   const response = error.response;
-  if (!response) {
-    return {
-      kind: 'network',
-      message: 'Impossible de joindre le serveur. Vérifiez votre connexion puis réessayez.',
-      quota: null,
-    };
-  }
+  if (!response) return failure('network');
   const { status, data } = response;
   const code = errorCode(data);
   const text = serverMessage(data);
@@ -356,67 +344,20 @@ export function classifyGenerationError(error: unknown): GenerationError {
       normalizeQuota(pick(body, 'quota', 'usage')) ??
       normalizeQuota(body) ??
       normalizeQuota({ resetAt: response.headers?.['x-quota-reset'] });
-    return { kind: 'quota', message: quotaReachedMessage(quota), quota };
+    return failure('quota', '', quota);
   }
-  if (status === 503) {
-    return {
-      kind: 'unavailable',
-      message:
-        'La génération par IA est indisponible pour le moment (service non configuré ou momentanément hors ligne). Vous pouvez créer le quiz manuellement.',
-      quota: null,
-    };
-  }
-  if (status === 401) {
-    return { kind: 'unauthorized', message: 'Votre session a expiré. Reconnectez-vous puis réessayez.', quota: null };
-  }
-  if (status === 413) {
-    return { kind: 'too_large', message: 'Le PDF dépasse 10 Mo. Allégez-le ou collez le texte du cours.', quota: null };
-  }
-  if (status === 415) {
-    return { kind: 'unsupported_file', message: text || 'Le fichier doit être un PDF valide.', quota: null };
-  }
-  if (code.includes('NO_QUESTION') || /aucune question/i.test(text)) {
-    return {
-      kind: 'no_questions',
-      message:
-        'Aucune question exploitable n’a pu être générée à partir de ce cours. Réessayez ou utilisez un extrait plus riche (aucun quota consommé).',
-      quota: null,
-    };
-  }
+  if (status === 503) return failure('unavailable', text);
+  if (status === 401) return failure('unauthorized');
+  if (status === 413) return failure('too_large');
+  if (status === 415) return failure('unsupported_file', text);
+  if (code.includes('NO_QUESTION') || /aucune question/i.test(text)) return failure('no_questions', text);
   if (status === 422) {
-    // 422 du backend : PDF sans texte, PDF illisible, contenu trop court, refus du modèle.
-    // Les messages serveur sont en français et destinés à l'enseignant.
-    if (/pdf/i.test(text) || code.includes('NO_TEXT') || !text) {
-      return {
-        kind: 'pdf_no_text',
-        message:
-          text ||
-          'Aucun texte n’a pu être extrait de ce PDF (document scanné ou image ?). Collez le texte du cours à la place.',
-        quota: null,
-      };
-    }
-    return { kind: 'unprocessable', message: text, quota: null };
+    // 422 du backend : PDF sans texte ou illisible, contenu trop court, refus du modèle.
+    if (/pdf/i.test(text) || code.includes('NO_TEXT') || !text) return failure('pdf_no_text', text);
+    return failure('unprocessable', text);
   }
-  if (status === 504) {
-    return {
-      kind: 'timeout',
-      message: 'La génération prend trop de temps. Réessayez avec un cours plus court ou moins de questions.',
-      quota: null,
-    };
-  }
-  if (status === 502) {
-    return {
-      kind: 'provider_error',
-      message: text || 'La génération par IA a échoué. Réessayez (aucun quota consommé).',
-      quota: null,
-    };
-  }
-  if (status === 400) {
-    return {
-      kind: 'invalid',
-      message: text ? `Paramètres refusés : ${text}` : 'Paramètres refusés par le serveur. Vérifiez le formulaire.',
-      quota: null,
-    };
-  }
-  return { kind: 'unknown', message: 'La génération a échoué. Réessayez dans un instant.', quota: null };
+  if (status === 504) return failure('timeout', text);
+  if (status === 502) return failure('provider_error', text);
+  if (status === 400) return failure('invalid', text);
+  return failure('unknown', text);
 }

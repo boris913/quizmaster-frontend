@@ -3,6 +3,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Copy, X } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useLocalizedMessage } from '@/i18n/localizeMessage';
 import { Button } from '@/components/ui/Button';
 import { JoinQrCode } from '@/components/ui/JoinQrCode';
 import { cn } from '@/lib/utils';
@@ -26,43 +28,35 @@ interface AssignHomeworkDialogProps {
   onCreated?: (session: Session) => void;
 }
 
-const SCORING_OPTIONS: { value: ScoringMode; label: string; description: string }[] = [
-  {
-    value: 'accuracy',
-    label: 'Précision',
-    description: 'Toute bonne réponse donnée dans le temps rapporte le maximum.',
-  },
-  {
-    value: 'speed',
-    label: 'Vitesse',
-    description: 'Plus l’élève répond vite et juste, plus il marque de points.',
-  },
-];
+const SCORING_VALUES: ScoringMode[] = ['accuracy', 'speed'];
+const EXPLANATION_VALUES: ExplanationTiming[] = ['each', 'end'];
 
-const EXPLANATION_OPTIONS: { value: ExplanationTiming; label: string; description: string }[] = [
-  {
-    value: 'each',
-    label: 'Après chaque question',
-    description: 'L’élève voit la correction et l’explication dès qu’il a répondu.',
-  },
-  {
-    value: 'end',
-    label: 'À la fin du devoir',
-    description: 'La correction complète n’apparaît qu’une fois toutes les questions faites.',
-  },
-];
-
-function getCreateErrorMessage(err: unknown): string {
+/** Message du serveur (en français) seulement en français ; sinon un message traduit. */
+function getCreateErrorMessage(err: unknown, t: (key: 'errors.network' | 'errors.generic') => string, locale: string): string {
   const response = (err as { response?: { status?: number; data?: { message?: unknown } } })?.response;
-  if (!response) return 'Impossible de joindre le serveur. Réessayez.';
+  if (!response) return t('errors.network');
   const message = response.data?.message;
-  if (typeof message === 'string' && message.trim()) return message;
-  if (Array.isArray(message) && message.length > 0) return message.join(' ');
-  return 'La création du devoir a échoué. Réessayez dans un instant.';
+  if (locale === 'fr' && typeof message === 'string' && message.trim()) return message;
+  if (locale === 'fr' && Array.isArray(message) && message.length > 0) return message.join(' ');
+  return t('errors.generic');
 }
 
 /** Modale « Assigner en devoir » : échéance, mode de score, explications, puis lien et QR. */
 export function AssignHomeworkDialog({ quizId, quizTitle, onClose, onCreated }: AssignHomeworkDialogProps) {
+  const t = useTranslations('assignDialog');
+  const tc = useTranslations('common');
+  const locale = useLocale();
+  const localize = useLocalizedMessage();
+  const SCORING_OPTIONS = SCORING_VALUES.map((value) => ({
+    value,
+    label: t(`scoring.${value}.label`),
+    description: t(`scoring.${value}.desc`),
+  }));
+  const EXPLANATION_OPTIONS = EXPLANATION_VALUES.map((value) => ({
+    value,
+    label: t(`expl.${value}.label`),
+    description: t(`expl.${value}.desc`),
+  }));
   const titleId = useId();
   const [due, setDue] = useState(() => toDateTimeLocalValue(defaultDueDate()));
   const [minDue] = useState(() => toDateTimeLocalValue(new Date(Date.now() + MIN_DUE_DELAY_MS)));
@@ -111,7 +105,7 @@ export function AssignHomeworkDialog({ quizId, quizTitle, onClose, onCreated }: 
       setCreated(session);
       onCreated?.(session);
     } catch (err) {
-      setSubmitError(getCreateErrorMessage(err));
+      setSubmitError(getCreateErrorMessage(err, t, locale));
     } finally {
       setIsSubmitting(false);
     }
@@ -134,16 +128,16 @@ export function AssignHomeworkDialog({ quizId, quizTitle, onClose, onCreated }: 
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-surface p-6 shadow-lg space-y-5"
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-borderc bg-surface p-6 shadow-md space-y-5"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id={titleId} className="text-card-title text-ink">
-              {created ? 'Devoir créé' : 'Assigner en devoir'}
+              {created ? t('titleCreated') : t('title')}
             </h2>
             {quizTitle && <p className="text-small text-ink-secondary">{quizTitle}</p>}
           </div>
-          <Button type="button" variant="ghost" size="sm" onClick={onClose} aria-label="Fermer">
+          <Button type="button" variant="ghost" size="sm" onClick={onClose} aria-label={t('close')}>
             <X className="w-4 h-4" aria-hidden="true" />
           </Button>
         </div>
@@ -151,36 +145,41 @@ export function AssignHomeworkDialog({ quizId, quizTitle, onClose, onCreated }: 
         {created ? (
           <div className="space-y-4 text-center" data-testid="assignment-created">
             <p className="text-small text-ink-secondary">
-              À rendre avant le <strong className="text-ink">{formatDueDate(created.due_at ?? null) || formatDueDate(parseDateTimeLocalValue(due)?.toISOString())}</strong>.
-              Partagez ce lien ou ce QR code avec vos élèves :
+              {t.rich('dueBefore', {
+                date:
+                  formatDueDate(created.due_at ?? null, locale) ||
+                  formatDueDate(parseDateTimeLocalValue(due)?.toISOString(), locale),
+                b: (chunks) => <strong className="text-ink">{chunks}</strong>,
+              })}{' '}
+              {t('share')}
             </p>
             <JoinQrCode
               code={created.password}
               href={link || undefined}
-              label={`QR code du devoir ${created.password}`}
+              label={t('qrLabel', { code: created.password })}
               size={180}
             />
-            <div className="flex items-center gap-2 rounded-md bg-black/[0.04] p-2">
+            <div className="flex items-center gap-2 rounded-md bg-ink/[0.04] p-2">
               <code className="flex-1 break-all text-left text-small" data-testid="assignment-link">
                 {link}
               </code>
-              <Button type="button" variant="outline" size="sm" onClick={handleCopy} aria-label="Copier le lien">
+              <Button type="button" variant="outline" size="sm" onClick={handleCopy} aria-label={t('copyLink')}>
                 {copied ? <Check className="w-4 h-4 text-success" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
-                <span className="ml-1">{copied ? 'Copié' : 'Copier'}</span>
+                <span>{copied ? t('copied') : t('copy')}</span>
               </Button>
             </div>
             <p className="text-caption text-ink-secondary">
-              Code : <span className="font-mono font-semibold">{created.password}</span>
+              {t.rich('code', { code: created.password, b: (chunks) => <span className="font-display tabular-nums font-semibold">{chunks}</span> })}
             </p>
             <Button type="button" className="w-full" onClick={onClose}>
-              Terminé
+              {t('done')}
             </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
             <div className="space-y-1.5">
               <label htmlFor="assignment-due" className="text-small font-medium text-ink">
-                Échéance
+                {t('due')}
               </label>
               <input
                 ref={firstFieldRef}
@@ -195,24 +194,24 @@ export function AssignHomeworkDialog({ quizId, quizTitle, onClose, onCreated }: 
                 aria-invalid={!!dueError}
                 aria-describedby={dueError ? 'assignment-due-error' : 'assignment-due-hint'}
                 className={cn(
-                  'w-full min-h-[44px] rounded-md border border-borderc bg-surface px-3 py-2 text-body',
+                  'w-full min-h-[44px] rounded-md border border-borderc-strong bg-surface px-3 py-2 text-body text-ink',
                   'focus:outline-none focus:border-primary focus:shadow-glow',
                   dueError && 'border-danger'
                 )}
               />
               {dueError ? (
                 <p id="assignment-due-error" role="alert" className="text-small text-danger">
-                  {dueError}
+                  {localize(dueError)}
                 </p>
               ) : (
                 <p id="assignment-due-hint" className="text-caption text-ink-secondary">
-                  Au moins 15 minutes après maintenant.
+                  {t('dueHint')}
                 </p>
               )}
             </div>
 
             <fieldset className="space-y-2">
-              <legend className="text-small font-medium text-ink mb-2">Mode de score</legend>
+              <legend className="text-small font-medium text-ink mb-2">{t('scoringLegend')}</legend>
               {SCORING_OPTIONS.map((option) => (
                 <label
                   key={option.value}
@@ -244,7 +243,7 @@ export function AssignHomeworkDialog({ quizId, quizTitle, onClose, onCreated }: 
             </fieldset>
 
             <fieldset className="space-y-2">
-              <legend className="text-small font-medium text-ink mb-2">Correction et explications</legend>
+              <legend className="text-small font-medium text-ink mb-2">{t('explLegend')}</legend>
               {EXPLANATION_OPTIONS.map((option) => (
                 <label
                   key={option.value}
@@ -283,10 +282,10 @@ export function AssignHomeworkDialog({ quizId, quizTitle, onClose, onCreated }: 
 
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Annuler
+                {tc('cancel')}
               </Button>
               <Button type="submit" isLoading={isSubmitting}>
-                Créer le devoir
+                {t('create')}
               </Button>
             </div>
           </form>

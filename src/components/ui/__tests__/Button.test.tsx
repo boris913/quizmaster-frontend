@@ -13,7 +13,7 @@ describe('Button', () => {
     );
     const button = screen.getByRole('button', { name: 'Supprimer' });
     expect(button.tagName).toBe('BUTTON');
-    expect(button).toHaveClass('bg-danger', 'h-9', 'extra');
+    expect(button).toHaveClass('bg-danger-solid', 'h-9', 'extra');
   });
 
   it('appelle onClick au clic', async () => {

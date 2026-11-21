@@ -22,16 +22,15 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, Conf
 }
 
 const baseStyles =
-  'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 min-h-[44px]';
+  'inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 min-h-[44px]';
 
 const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
-  primary:
-    'gradient-primary text-white shadow-sm hover:shadow-md disabled:shadow-none',
+  primary: 'bg-primary text-on-primary shadow-xs hover:bg-primary-hover',
   secondary: 'bg-primary-50 text-primary-700 hover:bg-primary-100',
-  outline: 'border border-borderc bg-transparent text-ink hover:bg-black/[0.03]',
-  ghost: 'hover:bg-black/[0.04] text-ink-secondary',
-  success: 'bg-success text-white hover:brightness-95 shadow-sm',
-  danger: 'bg-danger text-white hover:brightness-95 shadow-sm',
+  outline: 'border border-borderc-strong bg-surface text-ink hover:bg-subtle',
+  ghost: 'text-ink-secondary hover:bg-ink/[0.05] hover:text-ink',
+  success: 'bg-success-solid text-white shadow-xs hover:brightness-95',
+  danger: 'bg-danger-solid text-white shadow-xs hover:brightness-95',
 };
 
 const sizes: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -61,7 +60,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       // so the DOM stays semantically correct (no <a> nested in <button>).
       const child = children as React.ReactElement<{ className?: string }>;
       return cloneElement(child, {
-        className: cn(classes, 'active:scale-[0.98] transition-transform', child.props.className),
+        className: cn(classes, 'active:scale-[0.98]', child.props.className),
       });
     }
 
@@ -72,7 +71,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || isLoading}
         {...props}
       >
-        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
         {children}
       </MotionButton>
     );
@@ -81,8 +80,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 /**
- * A plain <button> wrapped with subtle spring-based hover/press motion.
- * Falls back to no motion if the user prefers reduced motion.
+ * A plain <button> with a short press feedback (no hover lift: motion answers
+ * the user's action, it does not decorate). Disabled under reduced motion.
  */
 const MotionButton = forwardRef<HTMLButtonElement, HTMLMotionProps<'button'>>(
   ({ children, ...props }, ref) => {
@@ -90,7 +89,6 @@ const MotionButton = forwardRef<HTMLButtonElement, HTMLMotionProps<'button'>>(
     return (
       <motion.button
         ref={ref}
-        whileHover={shouldReduceMotion ? undefined : { y: -2 }}
         whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 400, damping: 20 }}
         {...props}

@@ -7,14 +7,14 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
    * primary cards should draw the eye first, tertiary cards recede.
    */
   tier?: 'primary' | 'secondary' | 'tertiary';
-  /** Adds hover lift + shadow, for clickable / navigable cards. */
+  /** Hover state for clickable / navigable cards (border, no lift). */
   interactive?: boolean;
 }
 
 const tierStyles: Record<NonNullable<CardProps['tier']>, string> = {
-  primary: 'bg-surface border border-borderc shadow-md',
-  secondary: 'bg-surface border border-borderc shadow-sm',
-  tertiary: 'bg-background border border-borderc/70 shadow-none',
+  primary: 'bg-surface border border-borderc shadow-sm',
+  secondary: 'bg-surface border border-borderc shadow-xs',
+  tertiary: 'bg-subtle border border-transparent shadow-none',
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
@@ -23,10 +23,10 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          'rounded-lg transition-all duration-200',
+          'rounded-lg transition-colors duration-150',
           tierStyles[tier],
           interactive &&
-            'hover:-translate-y-0.5 hover:shadow-md cursor-pointer will-change-transform',
+            'cursor-pointer hover:border-borderc-strong hover:bg-subtle/60',
           className
         )}
         {...props}
