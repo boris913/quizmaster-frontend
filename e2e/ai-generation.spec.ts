@@ -10,7 +10,8 @@ const cors = {
 };
 
 const COURSE =
-  'La photosynthèse permet aux plantes de fabriquer leur matière à partir de lumière, d’eau et de dioxyde de carbone.';
+  'La photosynthèse permet aux plantes de fabriquer leur matière à partir de lumière, d’eau et de dioxyde de carbone. ' +
+  'Elle a lieu dans les chloroplastes des feuilles et rejette du dioxygène dans l’atmosphère, ce qui est vital pour les êtres vivants.';
 
 const generated = {
   title: 'La photosynthèse',
@@ -27,8 +28,9 @@ const generated = {
     },
     { text: 'La photosynthèse rejette du dioxygène.', type: 'true_false', options: [], correct_answers: ['true'] },
   ],
-  discarded: 1,
-  quota: { limit: 3, used: 1, resetAt: '2026-12-01T12:00:00.000Z' },
+  rejected: 1,
+  source: { type: 'text', chars: 230, used_chars: 230, truncated: false },
+  quota: { limit: 3, used: 1, remaining: 2, resets_at: '2026-12-01T12:00:00.000Z' },
 };
 
 function json(route: Route, status: number, body: unknown) {
@@ -51,7 +53,8 @@ type Log = { generate: { contentType: string; body: string }[]; saves: unknown[]
 
 async function mockApi(page: Page, generateStatus = 200): Promise<Log> {
   const log: Log = { generate: [], saves: [] };
-  await page.route('**/api/quizzes**', async (route) => {
+  // Expression régulière : en glob, « quizzes** » ne traverse pas les « / » (pas de /generate).
+  await page.route(/\/api\/quizzes(\/|\?|$)/, async (route) => {
     const request = route.request();
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
     const url = new URL(request.url());
@@ -60,8 +63,8 @@ async function mockApi(page: Page, generateStatus = 200): Promise<Log> {
       if (generateStatus === 429) {
         return json(route, 429, {
           statusCode: 429,
-          message: 'Quota mensuel atteint',
-          quota: { limit: 3, used: 3, resetAt: '2026-12-01T12:00:00.000Z' },
+          message: 'Quota de générations IA atteint (3 par mois).',
+          quota: { limit: 3, used: 3, remaining: 0, resets_at: '2026-12-01T12:00:00.000Z' },
         });
       }
       if (generateStatus !== 200) return json(route, generateStatus, { statusCode: generateStatus, message: 'Erreur' });
@@ -96,7 +99,8 @@ test('génère un brouillon, le relit puis l’enregistre explicitement', async 
   expect(log.generate).toHaveLength(1);
   expect(log.generate[0].contentType).toMatch(/^multipart\/form-data; boundary=/);
   expect(log.generate[0].body).toContain('name="text"');
-  expect(log.generate[0].body).toContain('name="types[]"');
+  expect(log.generate[0].body).toContain('name="types"');
+  expect(log.generate[0].body).not.toContain('name="types[]"');
   // Rien n'est enregistré tant que l'enseignant n'a pas cliqué.
   expect(log.saves).toHaveLength(0);
 

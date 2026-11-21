@@ -38,13 +38,13 @@ describe('aiGeneration : contrôles client', () => {
     const errors = validateGenerationRequest({ text: 'court', level: '', count: 31, types: [] });
     expect(Object.keys(errors).sort()).toEqual(['count', 'level', 'source', 'types']);
     expect(
-      validateGenerationRequest({ text: 'x'.repeat(60), level: '4e', count: 30, types: ['single'] })
+      validateGenerationRequest({ text: 'x'.repeat(250), level: '4e', count: 30, types: ['single'] })
     ).toEqual({});
   });
 });
 
 describe('aiGeneration : corps multipart', () => {
-  it('texte : text, level, count et types[]', () => {
+  it('texte : text, level, count et types (champ répété)', () => {
     const form = buildGenerationFormData({
       text: '  Les volcans  ',
       level: '4e',
@@ -55,7 +55,8 @@ describe('aiGeneration : corps multipart', () => {
     expect(form.get('file')).toBeNull();
     expect(form.get('level')).toBe('4e');
     expect(form.get('count')).toBe('5');
-    expect(form.getAll('types[]')).toEqual(['single', 'short_answer']);
+    expect(form.getAll('types')).toEqual(['single', 'short_answer']);
+    expect(form.getAll('types[]')).toEqual([]);
   });
 
   it('PDF : le fichier remplace le texte', () => {
@@ -99,6 +100,24 @@ describe('aiGeneration : normalisation de la réponse', () => {
     expect(result.quota).toEqual({ limit: 3, used: 1, remaining: 2, resetAt: '2026-12-01T00:00:00.000Z' });
   });
 
+  it('forme du backend : rejected, source.truncated, quota.resets_at, points et durée fournis', () => {
+    const result = normalizeGenerationResponse({
+      questions: [
+        { text: 'Vrai ?', type: 'true_false', options: [], correct_answers: ['true'], max_points: 200, timer_seconds: 45 },
+      ],
+      requested: 3,
+      generated: 3,
+      rejected: 2,
+      source: { type: 'pdf', chars: 70000, used_chars: 60000, truncated: true },
+      model: 'claude-sonnet-5-5',
+      quota: { limit: 3, used: 2, remaining: 1, resets_at: '2026-12-01T00:00:00.000Z' },
+    });
+    expect(result.discarded).toBe(2);
+    expect(result.truncated).toBe(true);
+    expect(result.questions[0]).toMatchObject({ max_points: 200, timer_seconds: 45 });
+    expect(result.quota).toEqual({ limit: 3, used: 2, remaining: 1, resetAt: '2026-12-01T00:00:00.000Z' });
+  });
+
   it('tolère les variantes camelCase et un brouillon imbriqué', () => {
     const result = normalizeGenerationResponse({
       draft: { title: 'Les volcans', questions: [{ text: 'Vrai ?', type: 'true_false', correctAnswers: ['false'] }] },
@@ -114,7 +133,7 @@ describe('aiGeneration : normalisation de la réponse', () => {
 describe('aiGeneration : erreurs', () => {
   it('429 : quota avec limite et date de remise à zéro', () => {
     const error = classifyGenerationError(
-      axiosError(429, { message: 'Quota atteint', quota: { limit: 3, used: 3, resetAt: '2026-12-01T12:00:00.000Z' } })
+      axiosError(429, { message: 'Quota atteint', quota: { limit: 3, used: 3, remaining: 0, resets_at: '2026-12-01T12:00:00.000Z' } })
     );
     expect(error.kind).toBe('quota');
     expect(error.message).toContain('vos 3 générations du mois');
@@ -134,5 +153,20 @@ describe('aiGeneration : erreurs', () => {
     expect(classifyGenerationError(axiosError(null)).kind).toBe('network');
     expect(classifyGenerationError(axiosError(null, {}, 'ECONNABORTED')).kind).toBe('timeout');
     expect(classifyGenerationError(new Error('boom')).kind).toBe('unknown');
+  });
+
+  it('messages serveur : 415, 422 contenu trop court, 502 sans question valide', () => {
+    expect(classifyGenerationError(axiosError(415, { message: 'Le fichier doit être un PDF (application/pdf).' }))).toMatchObject({
+      kind: 'unsupported_file',
+      message: 'Le fichier doit être un PDF (application/pdf).',
+    });
+    expect(
+      classifyGenerationError(axiosError(422, { message: 'Le contenu fourni est trop court pour générer des questions.' }))
+    ).toMatchObject({ kind: 'unprocessable', message: 'Le contenu fourni est trop court pour générer des questions.' });
+    expect(
+      classifyGenerationError(axiosError(502, { message: "L'IA n'a produit aucune question valide. Réessayez (aucun quota consommé)." })).kind
+    ).toBe('no_questions');
+    expect(classifyGenerationError(axiosError(502, { message: 'La génération par IA a échoué.' })).kind).toBe('provider_error');
+    expect(classifyGenerationError(axiosError(504)).kind).toBe('timeout');
   });
 });

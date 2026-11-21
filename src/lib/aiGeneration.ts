@@ -5,12 +5,16 @@
  *
  * `POST /api/quizzes/generate` (authentifié), `multipart/form-data` :
  * - `text?` : texte du cours, ou `file?` : PDF de 10 Mo au plus ;
- * - `level` (ex. « 4e »), `count` (1-30), `types[]` (types de question demandés, sans sondage).
+ * - `level` (ex. « 4e »), `count` (1-30), `types` (champ répété, un par type, sans sondage).
+ * Tout autre champ est refusé (400).
  *
  * Réponse : un brouillon de questions (rien n'est enregistré côté serveur), le nombre de
  * questions écartées par la validation et, si fourni, l'état du quota mensuel.
- * Erreurs : 429 quota atteint, 503 IA non configurée, 422 PDF sans texte exploitable,
- * 413 fichier trop lourd, 400 paramètres invalides.
+ * Erreurs : 429 quota atteint (`quota` dans le corps), 503 IA non configurée ou indisponible,
+ * 422 PDF sans texte / illisible / contenu trop court, 415 fichier non PDF, 413 fichier trop
+ * lourd, 400 paramètres invalides, 502 réponse IA inexploitable, 504 délai dépassé.
+ * Champs lus côté backend (branche feat/11-generation-ia) : `questions`, `rejected`,
+ * `source.truncated`, `quota { limit, used, remaining, resets_at }`.
  */
 import axios from 'axios';
 import api from '@/lib/api';
@@ -23,14 +27,17 @@ import {
 } from '@/types';
 
 export const AI_GENERATE_ENDPOINT = '/quizzes/generate';
+export const AI_QUOTA_ENDPOINT = '/quizzes/generate/quota';
 export const AI_PDF_MAX_BYTES = 10 * 1024 * 1024;
 export const AI_MIN_COUNT = 1;
 export const AI_MAX_COUNT = 30;
 export const AI_DEFAULT_COUNT = 10;
-/** Le texte est découpé côté serveur ; on refuse seulement l'absurde côté client. */
-export const AI_TEXT_MIN_LENGTH = 50;
-/** Délai d'attente : la génération peut prendre plus d'une minute sur un long cours. */
-export const AI_GENERATE_TIMEOUT_MS = 180_000;
+/** Minimum du serveur (`AI_MIN_SOURCE_CHARS`) : en dessous, 422 « contenu trop court ». */
+export const AI_TEXT_MIN_LENGTH = 200;
+/** Maximum du champ `text` côté serveur (`AI_TEXT_FIELD_MAX_CHARS`). Au-delà de 60 000, le serveur tronque. */
+export const AI_TEXT_MAX_LENGTH = 200_000;
+/** Délai d'attente : jusqu'à environ 4 min côté serveur dans le pire cas (PR backend#25 : ≥ 260 s). */
+export const AI_GENERATE_TIMEOUT_MS = 270_000;
 
 /** Types proposés à la génération : tous sauf le sondage (pas de bonne réponse à générer). */
 export const AI_GENERATABLE_TYPES: readonly QuestionType[] = QUESTION_TYPES.filter((t) => t !== 'poll');
@@ -79,6 +86,8 @@ export interface GenerationResult {
   discarded: number;
   /** Titre suggéré, si le serveur en propose un. */
   title: string | null;
+  /** Vrai si le cours a été tronqué côté serveur (60 000 caractères envoyés au modèle). */
+  truncated: boolean;
   quota: GenerationQuota | null;
 }
 
@@ -107,6 +116,8 @@ export function validateGenerationRequest(req: GenerationRequest): Partial<Recor
     if (fileError) errors.source = fileError;
   } else if ((req.text ?? '').trim().length < AI_TEXT_MIN_LENGTH) {
     errors.source = `Collez le texte du cours (${AI_TEXT_MIN_LENGTH} caractères au moins) ou déposez un PDF.`;
+  } else if ((req.text ?? '').trim().length > AI_TEXT_MAX_LENGTH) {
+    errors.source = `Le texte dépasse ${AI_TEXT_MAX_LENGTH.toLocaleString('fr-FR')} caractères : collez un extrait ou un chapitre.`;
   }
   if (!req.level.trim()) errors.level = 'Choisissez un niveau.';
   if (!Number.isInteger(req.count) || req.count < AI_MIN_COUNT || req.count > AI_MAX_COUNT) {
@@ -129,7 +140,8 @@ export function buildGenerationFormData(req: GenerationRequest): FormData {
   form.append('count', String(req.count));
   req.types
     .filter((t) => AI_GENERATABLE_TYPES.includes(t))
-    .forEach((t) => form.append('types[]', t));
+    // Champ répété `types` (sans crochets) : tout champ inconnu, dont `types[]`, peut être refusé.
+    .forEach((t) => form.append('types', t));
   return form;
 }
 
@@ -153,6 +165,16 @@ export async function generateQuizDraft(req: GenerationRequest, options: Generat
       : undefined,
   });
   return normalizeGenerationResponse(data);
+}
+
+/** `GET /api/quizzes/generate/quota` : état du quota, `null` si indisponible (route absente, IA non déployée…). */
+export async function fetchGenerationQuota(): Promise<GenerationQuota | null> {
+  try {
+    const { data } = await api.get(AI_QUOTA_ENDPOINT);
+    return normalizeQuota(data);
+  } catch {
+    return null;
+  }
 }
 
 // ------------------------------------------------------------
@@ -209,13 +231,15 @@ export function normalizeGeneratedQuestion(raw: unknown, allowed?: readonly Ques
   const correctRaw = pick(raw, 'correct_answers', 'correctAnswers');
   const correct = Array.isArray(correctRaw) ? correctRaw.map((v) => String(v)) : [];
   const explanation = typeof raw.explanation === 'string' ? raw.explanation : undefined;
+  const points = toCount(pick(raw, 'max_points', 'maxPoints'));
+  const timer = toCount(pick(raw, 'timer_seconds', 'timerSeconds'));
   return {
     text,
     type: raw.type,
     options,
     correct_answers: correct,
-    max_points: DEFAULT_MAX_POINTS,
-    timer_seconds: DEFAULT_TIMER_SECONDS,
+    max_points: points && points >= 10 && points <= 1000 ? points : DEFAULT_MAX_POINTS,
+    timer_seconds: timer && timer >= 5 && timer <= 300 ? timer : DEFAULT_TIMER_SECONDS,
     explanation,
     image_url: null,
   };
@@ -233,10 +257,12 @@ export function normalizeGenerationResponse(raw: unknown, allowed?: readonly Que
     toCount(pick(container, 'discarded', 'discardedCount', 'discarded_count')) ??
     0;
   const title = pick(container, 'title', 'suggestedTitle');
+  const source = isObject(body.source) ? body.source : {};
   return {
     questions,
     discarded: serverDiscarded + (list.length - questions.length),
     title: typeof title === 'string' && title.trim() ? title.trim() : null,
+    truncated: source.truncated === true || body.truncated === true,
     quota: normalizeQuota(pick(body, 'quota', 'usage')),
   };
 }
@@ -251,6 +277,9 @@ export type GenerationErrorKind =
   | 'pdf_no_text'
   | 'too_large'
   | 'invalid'
+  | 'unsupported_file'
+  | 'unprocessable'
+  | 'provider_error'
   | 'no_questions'
   | 'timeout'
   | 'network'
@@ -343,25 +372,42 @@ export function classifyGenerationError(error: unknown): GenerationError {
   if (status === 413) {
     return { kind: 'too_large', message: 'Le PDF dépasse 10 Mo. Allégez-le ou collez le texte du cours.', quota: null };
   }
-  if (code.includes('NO_QUESTION') || (status === 422 && /aucune question/i.test(text))) {
+  if (status === 415) {
+    return { kind: 'unsupported_file', message: text || 'Le fichier doit être un PDF valide.', quota: null };
+  }
+  if (code.includes('NO_QUESTION') || /aucune question/i.test(text)) {
     return {
       kind: 'no_questions',
-      message: 'Aucune question exploitable n’a pu être générée à partir de ce cours. Essayez un extrait plus riche.',
+      message:
+        'Aucune question exploitable n’a pu être générée à partir de ce cours. Réessayez ou utilisez un extrait plus riche (aucun quota consommé).',
       quota: null,
     };
   }
-  if (status === 422 || code.includes('NO_TEXT')) {
-    return {
-      kind: 'pdf_no_text',
-      message:
-        'Aucun texte n’a pu être extrait de ce PDF (document scanné ou image ?). Collez le texte du cours à la place.',
-      quota: null,
-    };
+  if (status === 422) {
+    // 422 du backend : PDF sans texte, PDF illisible, contenu trop court, refus du modèle.
+    // Les messages serveur sont en français et destinés à l'enseignant.
+    if (/pdf/i.test(text) || code.includes('NO_TEXT') || !text) {
+      return {
+        kind: 'pdf_no_text',
+        message:
+          text ||
+          'Aucun texte n’a pu être extrait de ce PDF (document scanné ou image ?). Collez le texte du cours à la place.',
+        quota: null,
+      };
+    }
+    return { kind: 'unprocessable', message: text, quota: null };
   }
   if (status === 504) {
     return {
       kind: 'timeout',
       message: 'La génération prend trop de temps. Réessayez avec un cours plus court ou moins de questions.',
+      quota: null,
+    };
+  }
+  if (status === 502) {
+    return {
+      kind: 'provider_error',
+      message: text || 'La génération par IA a échoué. Réessayez (aucun quota consommé).',
       quota: null,
     };
   }

@@ -9,7 +9,7 @@ import { QuizForm, type QuizFormSubmitData } from '@/components/creator/QuizForm
 import { AiQuizGenerator } from '@/components/creator/AiQuizGenerator';
 import { Button } from '@/components/ui/Button';
 import { resolvePendingQuestionImages } from '@/lib/questionImage';
-import type { GenerationQuota, GenerationResult } from '@/lib/aiGeneration';
+import { fetchGenerationQuota, type GenerationQuota, type GenerationResult } from '@/lib/aiGeneration';
 import { cn } from '@/lib/utils';
 
 type Mode = 'manual' | 'ai';
@@ -32,6 +32,18 @@ export default function NewQuizPage() {
   const [error, setError] = useState<string | null>(null);
   /** Vrai une fois le quiz enregistré : la navigation qui suit ne doit plus être bloquée. */
   const saved = useRef(false);
+
+  // Quota affiché sous le bouton de génération dès l'ouverture de l'onglet (silencieux si indisponible).
+  useEffect(() => {
+    if (mode !== 'ai' || quota) return;
+    let cancelled = false;
+    fetchGenerationQuota().then((q) => {
+      if (!cancelled && q) setQuota((current) => current ?? q);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, quota]);
 
   // Brouillon IA non enregistré : confirmation avant de fermer ou recharger l'onglet.
   useEffect(() => {
@@ -150,6 +162,11 @@ export default function NewQuizPage() {
                   explications : l’IA peut se tromper. Rien n’est enregistré tant que vous ne cliquez pas sur
                   « Enregistrer le quiz ».
                 </p>
+                {draft.result.truncated && (
+                  <p data-testid="ai-truncated">
+                    Le cours était long : seul son début a été utilisé pour générer les questions.
+                  </p>
+                )}
                 {discarded > 0 && (
                   <p data-testid="ai-discarded">
                     {discarded} question{discarded > 1 ? 's ont été écartées' : ' a été écartée'} car invalide

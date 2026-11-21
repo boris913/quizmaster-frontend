@@ -16,6 +16,7 @@ import {
   classifyGenerationError,
   formatResetDate,
   generateQuizDraft,
+  quotaReachedMessage,
   validateCourseFile,
   validateGenerationRequest,
   type GenerationError,
@@ -65,6 +66,7 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
     return () => window.clearInterval(id);
   }, [loading]);
 
+  const quotaExhausted = quota?.remaining === 0;
   const step = [...GENERATION_STEPS].reverse().find((s) => elapsed >= s.after) ?? GENERATION_STEPS[0];
   const stepIndex = GENERATION_STEPS.indexOf(step);
 
@@ -327,13 +329,18 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
             </ol>
             <p className="text-caption text-ink-secondary">
               {upload !== null && upload < 1 ? `Envoi du PDF : ${Math.round(upload * 100)} %. ` : ''}
-              Cela peut prendre jusqu’à une minute ou deux. Ne fermez pas la page.
+              Cela prend en général moins d’une minute, et jusqu’à quatre minutes pour un long cours. Ne fermez pas la page.
             </p>
           </div>
         )}
 
         <div className="space-y-2">
-          <Button type="submit" className="w-full" isLoading={loading} disabled={loading}>
+          {quotaExhausted && !failure && (
+            <p role="alert" data-testid="ai-quota-exhausted" className="rounded-md bg-warning-50 p-3 text-small text-ink">
+              {quotaReachedMessage(quota ?? null)}
+            </p>
+          )}
+          <Button type="submit" className="w-full" isLoading={loading} disabled={loading || quotaExhausted}>
             <Sparkles className="w-4 h-4 mr-2" aria-hidden />
             {loading ? 'Génération en cours…' : 'Générer le brouillon'}
           </Button>

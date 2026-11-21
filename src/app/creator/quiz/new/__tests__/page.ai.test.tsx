@@ -20,7 +20,10 @@ vi.mock('@/lib/api', () => ({
   },
 }));
 
-const COURSE = 'Les volcans sont des reliefs formés par la remontée du magma vers la surface de la Terre.';
+// 200 caractères au moins (minimum du serveur).
+const COURSE =
+  'Les volcans sont des reliefs formés par la remontée du magma vers la surface de la Terre. ' +
+  'Une éruption peut être effusive, avec des coulées de lave fluide, ou explosive, avec des nuées ardentes et des cendres.';
 
 /** Réponse type de POST /api/quizzes/generate (contrat backend#11) : un exemple par type. */
 const generated = {
@@ -75,8 +78,12 @@ const generated = {
       correct_answers: ['A'],
     },
   ],
-  discarded: 2,
-  quota: { limit: 3, used: 1, resetAt: '2026-12-01T12:00:00.000Z' },
+  // Forme du backend (branche feat/11-generation-ia) : `rejected`, `quota.resets_at`.
+  requested: 6,
+  generated: 8,
+  rejected: 2,
+  source: { type: 'text', chars: 210, used_chars: 210, truncated: false },
+  quota: { limit: 3, used: 1, remaining: 2, resets_at: '2026-12-01T12:00:00.000Z' },
 };
 
 function mockPost(generate: () => Promise<unknown>) {
@@ -148,7 +155,7 @@ describe('Nouveau quiz : générer depuis un cours', () => {
     expect(form.get('file')).toBeNull();
     expect(form.get('level')).toBe('5e');
     expect(form.get('count')).toBe('6');
-    expect(form.getAll('types[]')).toEqual(['single', 'multiple', 'true_false', 'ordering', 'short_answer']);
+    expect(form.getAll('types')).toEqual(['single', 'multiple', 'true_false', 'ordering', 'short_answer']);
     expect((config as { headers: Record<string, string> }).headers['Content-Type']).toBe('multipart/form-data');
   });
 
@@ -283,8 +290,10 @@ describe('Nouveau quiz : générer depuis un cours', () => {
   it('quota atteint : message clair avec la limite et la date de remise à zéro', async () => {
     mockPost(async () => {
       throw axiosError(429, {
-        message: 'Quota mensuel atteint',
-        quota: { limit: 3, used: 3, resetAt: '2026-12-01T12:00:00.000Z' },
+        statusCode: 429,
+        error: 'Too Many Requests',
+        message: 'Quota de générations IA atteint (3 par mois).',
+        quota: { limit: 3, used: 3, remaining: 0, resets_at: '2026-12-01T12:00:00.000Z' },
       });
     });
     openAiTab();
@@ -295,6 +304,29 @@ describe('Nouveau quiz : générer depuis un cours', () => {
     expect(alert).toHaveTextContent('Vous avez utilisé vos 3 générations du mois.');
     expect(alert).toHaveTextContent('1 décembre 2026');
     expect(screen.queryByTestId('ai-draft-banner')).not.toBeInTheDocument();
+  });
+
+  it('affiche le quota restant avant la génération et bloque le bouton quand il est épuisé', async () => {
+    vi.mocked(api.get).mockImplementation(async (url: string) =>
+      url === '/quizzes/generate/quota'
+        ? { data: { limit: 3, used: 3, remaining: 0, resets_at: '2026-12-01T12:00:00.000Z' } }
+        : { data: [] }
+    );
+    openAiTab();
+    expect(await screen.findByTestId('ai-quota-exhausted')).toHaveTextContent('1 décembre 2026');
+    expect(screen.getByRole('button', { name: /Générer le brouillon/ })).toBeDisabled();
+    vi.mocked(api.get).mockImplementation(async () => ({ data: [] }));
+  });
+
+  it('affiche les générations restantes', async () => {
+    vi.mocked(api.get).mockImplementation(async (url: string) =>
+      url === '/quizzes/generate/quota'
+        ? { data: { limit: 3, used: 1, remaining: 2, resets_at: '2026-12-01T12:00:00.000Z' } }
+        : { data: [] }
+    );
+    openAiTab();
+    expect(await screen.findByText(/Générations restantes ce mois-ci : 2 sur 3/)).toBeInTheDocument();
+    vi.mocked(api.get).mockImplementation(async () => ({ data: [] }));
   });
 
   it('503 : IA indisponible', async () => {
@@ -312,12 +344,15 @@ describe('Nouveau quiz : générer depuis un cours', () => {
 
   it('PDF sans texte (422) et erreur réseau', async () => {
     mockPost(async () => {
-      throw axiosError(422, { message: 'Aucun texte extractible du PDF' });
+      throw axiosError(422, {
+        message:
+          'Ce PDF ne contient pas de texte extractible (document scanné ou composé d’images). Copiez le texte du cours dans le champ texte.',
+      });
     });
     openAiTab();
     fillTextForm();
     generate();
-    expect(await screen.findByTestId('ai-error-pdf_no_text')).toHaveTextContent(/Aucun texte n’a pu être extrait/);
+    expect(await screen.findByTestId('ai-error-pdf_no_text')).toHaveTextContent(/ne contient pas de texte extractible/);
 
     mockPost(async () => {
       throw { isAxiosError: true, message: 'Network Error' };
