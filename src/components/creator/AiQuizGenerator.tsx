@@ -283,8 +283,8 @@ export function AiQuizGenerator({ onGenerated, quota }: AiQuizGeneratorProps) {
             >
               <option value="">{t('form.levelPlaceholder')}</option>
               {AI_LEVELS.map((l) => (
-                <option key={l} value={l}>
-                  {l}
+                <option key={l.value} value={l.value}>
+                  {t(`levels.${l.key}`)}
                 </option>
               ))}
             </select>

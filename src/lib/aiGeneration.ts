@@ -42,20 +42,24 @@ export const AI_GENERATE_TIMEOUT_MS = 270_000;
 /** Types proposés à la génération : tous sauf le sondage (pas de bonne réponse à générer). */
 export const AI_GENERATABLE_TYPES: readonly QuestionType[] = QUESTION_TYPES.filter((t) => t !== 'poll');
 
+/**
+ * Niveaux proposés : `value` est envoyé tel quel au serveur (prompt en français), `key` désigne
+ * le libellé affiché dans `aiGeneration.levels`.
+ */
 export const AI_LEVELS = [
-  'CP',
-  'CE1',
-  'CE2',
-  'CM1',
-  'CM2',
-  '6e',
-  '5e',
-  '4e',
-  '3e',
-  'Seconde',
-  'Première',
-  'Terminale',
-  'Supérieur',
+  { value: 'CP', key: 'lcp' },
+  { value: 'CE1', key: 'lce1' },
+  { value: 'CE2', key: 'lce2' },
+  { value: 'CM1', key: 'lcm1' },
+  { value: 'CM2', key: 'lcm2' },
+  { value: '6e', key: 'l6e' },
+  { value: '5e', key: 'l5e' },
+  { value: '4e', key: 'l4e' },
+  { value: '3e', key: 'l3e' },
+  { value: 'Seconde', key: 'lseconde' },
+  { value: 'Première', key: 'lpremiere' },
+  { value: 'Terminale', key: 'lterminale' },
+  { value: 'Supérieur', key: 'lsuperieur' },
 ] as const;
 
 /** Valeurs par défaut d'une question générée (le backend ne fournit ni points ni durée). */

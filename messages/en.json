@@ -1030,6 +1030,21 @@
       "notKept": "Kwizora does not keep the lesson after generation: only the questions the teacher reviews and saves are kept, like a quiz created by hand;",
       "explicit": "nothing is saved without the teacher’s action; they must review and correct the draft before using it;",
       "quota": "the number of generations per teacher account is limited each month."
+    },
+    "levels": {
+      "lcp": "CP (age 6–7)",
+      "lce1": "CE1 (age 7–8)",
+      "lce2": "CE2 (age 8–9)",
+      "lcm1": "CM1 (age 9–10)",
+      "lcm2": "CM2 (age 10–11)",
+      "l6e": "6e (age 11–12)",
+      "l5e": "5e (age 12–13)",
+      "l4e": "4e (age 13–14)",
+      "l3e": "3e (age 14–15)",
+      "lseconde": "Seconde (age 15–16)",
+      "lpremiere": "Première (age 16–17)",
+      "lterminale": "Terminale (age 17–18)",
+      "lsuperieur": "Higher education"
     }
   }
 }

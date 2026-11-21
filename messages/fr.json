@@ -1030,6 +1030,21 @@
       "notKept": "le cours n’est pas conservé par Kwizora après la génération : seules les questions que l’enseignant relit puis enregistre sont gardées, comme un quiz créé à la main ;",
       "explicit": "rien n’est enregistré sans action de l’enseignant, qui doit relire et corriger le brouillon avant de l’utiliser ;",
       "quota": "le nombre de générations est limité chaque mois par compte enseignant."
+    },
+    "levels": {
+      "lcp": "CP",
+      "lce1": "CE1",
+      "lce2": "CE2",
+      "lcm1": "CM1",
+      "lcm2": "CM2",
+      "l6e": "6e",
+      "l5e": "5e",
+      "l4e": "4e",
+      "l3e": "3e",
+      "lseconde": "Seconde",
+      "lpremiere": "Première",
+      "lterminale": "Terminale",
+      "lsuperieur": "Supérieur"
     }
   }
 }
