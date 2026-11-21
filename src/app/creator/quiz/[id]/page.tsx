@@ -1,15 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useQuiz } from '@/hooks/useQuiz';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AddQuestionsForm } from '@/components/creator/AddQuestionsForm';
 import { QuestionImage } from '@/components/ui/QuestionImage';
-import { ArrowLeft, Trash2, Plus, Play, CalendarClock } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Play, CalendarClock, Copy, Share2, X } from 'lucide-react';
 import { AssignHomeworkDialog } from '@/components/creator/AssignHomeworkDialog';
+import { ShareQuizPanel } from '@/components/creator/ShareQuizPanel';
+import {
+  copiedQuizPath,
+  duplicateErrorMessage,
+  duplicateQuiz,
+  readShareToken,
+} from '@/lib/quizSharing';
 import {
   QUESTION_TYPE_LABELS,
   answerLabel,
@@ -88,6 +95,25 @@ export default function QuizDetailPage() {
     }
   };
   const [showAssign, setShowAssign] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const imagesNotCopied = Number(searchParams?.get('imagesNonCopiees') ?? 0) || 0;
+  const [showImagesWarning, setShowImagesWarning] = useState(true);
+
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    setDuplicateError(null);
+    try {
+      const copy = await duplicateQuiz(quizId);
+      router.push(copiedQuizPath(copy));
+    } catch (e) {
+      setDuplicateError(duplicateErrorMessage(e));
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
 
   useEffect(() => {
     if (quizId) {
@@ -133,10 +159,61 @@ export default function QuizDetailPage() {
             <CalendarClock className="w-4 h-4 mr-1" aria-hidden="true" />
             Assigner en devoir
           </Button>
-          <Button variant="danger" size="sm" onClick={handleDelete}>
+          <Button variant="outline" size="sm" onClick={handleDuplicate} isLoading={isDuplicating}>
+            <Copy className="w-4 h-4 mr-1" aria-hidden="true" />
+            Dupliquer
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowShare((v) => !v)}
+            aria-expanded={showShare}
+          >
+            <Share2 className="w-4 h-4 mr-1" aria-hidden="true" />
+            Partager
+          </Button>
+          <Button variant="danger" size="sm" onClick={handleDelete} aria-label="Supprimer le quiz">
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
+
+        {duplicateError && (
+          <p role="alert" className="mb-6 rounded-md bg-danger-50 p-3 text-small text-danger">
+            {duplicateError}
+          </p>
+        )}
+
+        {imagesNotCopied > 0 && showImagesWarning && (
+          <div
+            role="status"
+            data-testid="images-not-copied"
+            className="mb-6 flex items-start justify-between gap-3 rounded-md border border-warning/40 bg-warning-50 p-3 text-small text-ink"
+          >
+            <p>
+              Copie créée, mais{' '}
+              {imagesNotCopied === 1
+                ? 'une image n’a pas pu être copiée'
+                : `${imagesNotCopied} images n’ont pas pu être copiées`}{' '}
+              : ajoutez-les à nouveau aux questions concernées.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowImagesWarning(false)}
+              aria-label="Masquer l’avertissement"
+              className="shrink-0 text-ink-secondary hover:text-ink"
+            >
+              <X className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
+        {showShare && (
+          <ShareQuizPanel
+            quizId={quizId}
+            initialToken={readShareToken(currentQuiz)}
+            onClose={() => setShowShare(false)}
+          />
+        )}
 
         {showAssign && (
           <AssignHomeworkDialog
