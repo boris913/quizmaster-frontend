@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import SharedQuizPage from '@/app/creator/quiz/shared/[token]/page';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
+import { takeCopyWarnings } from '@/lib/quizSharing';
 
 vi.setConfig({ testTimeout: 30_000 });
 
@@ -71,10 +72,14 @@ describe('Page d’un quiz partagé', () => {
 
   it('« Ajouter à mes quiz » copie le quiz puis ouvre la copie', async () => {
     const user = userEvent.setup();
-    vi.mocked(api.post).mockResolvedValue({ data: { quiz: { id: 'quiz-9' }, warnings: [] } });
+    vi.mocked(api.post).mockResolvedValue({
+      data: { quiz: { id: 'quiz-9' }, warnings: [{ question_number: 2, message: 'question non copiée : texte requis' }] },
+    });
     render(<SharedQuizPage />);
     await user.click(await screen.findByRole('button', { name: /Ajouter à mes quiz/ }));
     await waitFor(() => expect(push).toHaveBeenCalledWith('/creator/quiz/quiz-9'));
+    // Les avertissements de la copie sont transmis à la page du quiz copié.
+    expect(takeCopyWarnings('quiz-9')).toEqual([{ questionNumber: 2, message: 'question non copiée : texte requis' }]);
     expect(api.post).toHaveBeenCalledWith('/quizzes/shared/tok123/copy');
   });
 

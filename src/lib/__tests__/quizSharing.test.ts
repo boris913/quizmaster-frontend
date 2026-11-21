@@ -3,6 +3,10 @@ import {
   IMPORT_MAX_BYTES,
   buildShareUrl,
   copiedQuizPath,
+  copyWarningLabel,
+  importSummary,
+  rememberCopyWarnings,
+  takeCopyWarnings,
   countQuestionTypes,
   normalizeImportReport,
   normalizeQuizCopy,
@@ -20,14 +24,7 @@ function fileOf(name: string, size: number): File {
 }
 
 describe('quizSharing : duplication et copie', () => {
-  it('lit l’identifiant à plat ou enveloppé et le compteur d’images', () => {
-    expect(normalizeQuizCopy({ id: 'q2' })).toEqual({ quizId: 'q2', imagesNotCopied: 0 });
-    expect(normalizeQuizCopy({ quiz: { id: 'q3' }, imagesNotCopied: 2 })).toEqual({ quizId: 'q3', imagesNotCopied: 2 });
-    expect(normalizeQuizCopy({ id: 'q4', failed_images: ['a', 'b', 'c'] }).imagesNotCopied).toBe(3);
-    expect(
-      normalizeQuizCopy({ id: 'q5', warnings: [{ code: 'IMAGE_NOT_COPIED' }, { code: 'OTHER' }] }).imagesNotCopied
-    ).toBe(1);
-    // Forme du backend #12 : `{ quiz, warnings: [{ question_number, message }] }`.
+  it('lit le contrat du backend #12 : quiz enveloppé et tous les avertissements', () => {
     expect(
       normalizeQuizCopy({
         quiz: { id: 'q6' },
@@ -36,13 +33,36 @@ describe('quizSharing : duplication et copie', () => {
           { question_number: 3, message: 'question non copiée : texte requis' },
         ],
       })
-    ).toEqual({ quizId: 'q6', imagesNotCopied: 1 });
+    ).toEqual({
+      quizId: 'q6',
+      warnings: [
+        { questionNumber: 2, message: 'image non copiée (erreur du stockage) : question copiée sans image' },
+        { questionNumber: 3, message: 'question non copiée : texte requis' },
+      ],
+    });
+    expect(normalizeQuizCopy({ id: 'q2' })).toEqual({ quizId: 'q2', warnings: [] });
+    expect(normalizeQuizCopy({ id: 'q3', warnings: ['à vérifier'] }).warnings).toEqual([
+      { questionNumber: null, message: 'à vérifier' },
+    ]);
     expect(() => normalizeQuizCopy({})).toThrow();
   });
 
-  it('construit le chemin de la copie avec l’avertissement éventuel', () => {
-    expect(copiedQuizPath({ quizId: 'q2', imagesNotCopied: 0 })).toBe('/creator/quiz/q2');
-    expect(copiedQuizPath({ quizId: 'q2', imagesNotCopied: 2 })).toBe('/creator/quiz/q2?imagesNonCopiees=2');
+  it('libellé d’un avertissement', () => {
+    expect(copyWarningLabel({ questionNumber: 3, message: 'question non copiée : texte requis' })).toBe(
+      'Question 3 : question non copiée : texte requis'
+    );
+    expect(copyWarningLabel({ questionNumber: null, message: 'x' })).toBe('x');
+  });
+
+  it('transmet les avertissements à la page de la copie, une seule fois', () => {
+    const warnings = [{ questionNumber: 1, message: 'image non copiée' }];
+    rememberCopyWarnings({ quizId: 'q9', warnings });
+    expect(takeCopyWarnings('q9')).toEqual(warnings);
+    expect(takeCopyWarnings('q9')).toEqual([]);
+  });
+
+  it('construit le chemin de la copie', () => {
+    expect(copiedQuizPath({ quizId: 'q2' })).toBe('/creator/quiz/q2');
   });
 });
 
@@ -112,6 +132,13 @@ describe('quizSharing : import de fichier', () => {
       imported: 0,
       errors: [],
     });
+  });
+
+  it('résume la confirmation : questions importées et lignes ignorées', () => {
+    const err = { row: 2, message: 'x' };
+    expect(importSummary({ valid: 3, errors: [err, err] })).toBe('3 questions seront importées, 2 lignes ignorées.');
+    expect(importSummary({ valid: 1, errors: [err] })).toBe('1 question sera importée, 1 ligne ignorée.');
+    expect(importSummary({ valid: 4, errors: [] })).toBe('4 questions seront importées, 0 lignes ignorées.');
   });
 
   it('normalise le rapport', () => {

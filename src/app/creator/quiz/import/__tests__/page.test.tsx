@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/lib/api', () => ({
-  default: { get: vi.fn(), post: vi.fn() },
+  default: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
 }));
 
 function makeFile(name: string, size = 120): File {
@@ -36,6 +36,8 @@ describe('Import de quiz', () => {
     vi.mocked(api.get).mockReset();
     vi.mocked(api.get).mockResolvedValue({ data: [] });
     vi.mocked(api.post).mockReset();
+    vi.mocked(api.delete).mockReset();
+    vi.mocked(api.delete).mockResolvedValue({ data: {} });
     vi.mocked(api.post).mockImplementation(async (url: string, body?: unknown, config?: unknown) => {
       const params = (config as { params?: Call['params'] } | undefined)?.params;
       calls.push({ url, body, params });
@@ -100,7 +102,7 @@ describe('Import de quiz', () => {
     await user.click(screen.getByRole('button', { name: /Prévisualiser/ }));
 
     const preview = await screen.findByTestId('import-preview');
-    expect(within(preview).getByRole('status')).toHaveTextContent('2 questions valides prêtes à importer.');
+    expect(within(preview).getByRole('status')).toHaveTextContent('2 questions seront importées, 2 lignes ignorées.');
     const rows = within(preview).getAllByRole('row');
     expect(rows).toHaveLength(3);
     expect(rows[1]).toHaveTextContent('4');
@@ -119,8 +121,73 @@ describe('Import de quiz', () => {
     const importCalls = calls.filter((c) => c.url.endsWith('/import'));
     expect(importCalls).toHaveLength(2);
     expect(importCalls[1].params).toEqual({ format: 'csv', dryRun: false });
-    // Le quiz n'est créé qu'une fois pour l'aperçu et l'import.
+    // Le quiz n'est créé qu'une fois pour l'aperçu et l'import, et il est conservé.
     expect(calls.filter((c) => c.url === '/quizzes')).toHaveLength(1);
+    expect(api.delete).not.toHaveBeenCalled();
+  });
+
+  it('« Annuler » après l’aperçu supprime le quiz créé pour l’aperçu', async () => {
+    const user = userEvent.setup();
+    render(<ImportQuizPage />);
+    await user.click(screen.getByRole('tab', { name: /Tableur/ }));
+    chooseFile(/Fichier tableur/, makeFile('questions.csv'));
+    await user.click(screen.getByRole('button', { name: /Prévisualiser/ }));
+    await screen.findByTestId('import-preview');
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/quizzes/quiz-new'));
+    expect(screen.queryByTestId('import-preview')).not.toBeInTheDocument();
+    expect(calls.filter((c) => c.url.endsWith('/import'))).toHaveLength(1);
+  });
+
+  it('import réel sans aucune question enregistrée : supprime le quiz et l’explique', async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.post).mockImplementation(async (url: string, _body?: unknown, config?: unknown) => {
+      const params = (config as { params?: Call['params'] } | undefined)?.params;
+      if (url === '/quizzes') return { data: { id: 'quiz-new' } };
+      return params?.dryRun
+        ? { data: { dry_run: true, valid: 1, imported: 0, errors: [] } }
+        : { data: { dry_run: false, valid: 0, imported: 0, errors: [{ row: 2, message: 'Énoncé manquant' }] } };
+    });
+    render(<ImportQuizPage />);
+    await user.click(screen.getByRole('tab', { name: /Tableur/ }));
+    chooseFile(/Fichier tableur/, makeFile('questions.csv'));
+    await user.click(screen.getByRole('button', { name: /Prévisualiser/ }));
+    await user.click(await screen.findByRole('button', { name: 'Importer 1 question' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Aucune question n’a été importée');
+    await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/quizzes/quiz-new'));
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('quitter la page sans import confirmé supprime le quiz créé pour l’aperçu', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<ImportQuizPage />);
+    await user.click(screen.getByRole('tab', { name: /Kahoot/ }));
+    chooseFile(/Fichier Kahoot/, makeFile('export.xlsx'));
+    await user.click(screen.getByRole('button', { name: /Prévisualiser/ }));
+    await screen.findByTestId('import-preview');
+    expect(api.delete).not.toHaveBeenCalled();
+    unmount();
+    await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/quizzes/quiz-new'));
+  });
+
+  it('fermeture de l’onglet (pagehide) : suppression au mieux via fetch keepalive', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      render(<ImportQuizPage />);
+      await user.click(screen.getByRole('tab', { name: /Tableur/ }));
+      chooseFile(/Fichier tableur/, makeFile('questions.csv'));
+      await user.click(screen.getByRole('button', { name: /Prévisualiser/ }));
+      await screen.findByTestId('import-preview');
+      window.dispatchEvent(new Event('pagehide'));
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringMatching(/\/api\/quizzes\/quiz-new$/),
+        expect.objectContaining({ method: 'DELETE', keepalive: true })
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('Kahoot : envoie format=kahoot et refuse un fichier qui n’est pas .xlsx', async () => {

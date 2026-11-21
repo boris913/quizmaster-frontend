@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuiz } from '@/hooks/useQuiz';
 import { Button } from '@/components/ui/Button';
@@ -13,9 +13,13 @@ import { AssignHomeworkDialog } from '@/components/creator/AssignHomeworkDialog'
 import { ShareQuizPanel } from '@/components/creator/ShareQuizPanel';
 import {
   copiedQuizPath,
+  copyWarningLabel,
   duplicateErrorMessage,
   duplicateQuiz,
   readShareToken,
+  rememberCopyWarnings,
+  takeCopyWarnings,
+  type CopyWarning,
 } from '@/lib/quizSharing';
 import {
   QUESTION_TYPE_LABELS,
@@ -98,15 +102,18 @@ export default function QuizDetailPage() {
   const [showShare, setShowShare] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  const imagesNotCopied = Number(searchParams?.get('imagesNonCopiees') ?? 0) || 0;
-  const [showImagesWarning, setShowImagesWarning] = useState(true);
+  // Avertissements d'une duplication ou d'une copie qui vient d'ouvrir cette page.
+  const [copyWarnings, setCopyWarnings] = useState<CopyWarning[]>([]);
+  useEffect(() => {
+    if (quizId) setCopyWarnings(takeCopyWarnings(quizId));
+  }, [quizId]);
 
   const handleDuplicate = async () => {
     setIsDuplicating(true);
     setDuplicateError(null);
     try {
       const copy = await duplicateQuiz(quizId);
+      rememberCopyWarnings(copy);
       router.push(copiedQuizPath(copy));
     } catch (e) {
       setDuplicateError(duplicateErrorMessage(e));
@@ -183,23 +190,30 @@ export default function QuizDetailPage() {
           </p>
         )}
 
-        {imagesNotCopied > 0 && showImagesWarning && (
+        {copyWarnings.length > 0 && (
           <div
             role="status"
-            data-testid="images-not-copied"
+            data-testid="copy-warnings"
             className="mb-6 flex items-start justify-between gap-3 rounded-md border border-warning/40 bg-warning-50 p-3 text-small text-ink"
           >
-            <p>
-              Copie créée, mais{' '}
-              {imagesNotCopied === 1
-                ? 'une image n’a pas pu être copiée'
-                : `${imagesNotCopied} images n’ont pas pu être copiées`}{' '}
-              : ajoutez-les à nouveau aux questions concernées.
-            </p>
+            <div className="space-y-1">
+              <p className="font-medium">
+                Copie créée avec{' '}
+                {copyWarnings.length === 1 ? 'un avertissement' : `${copyWarnings.length} avertissements`} :
+              </p>
+              <ul className="list-disc pl-5 space-y-0.5">
+                {copyWarnings.map((w, i) => (
+                  <li key={i}>{copyWarningLabel(w)}</li>
+                ))}
+              </ul>
+              <p className="text-ink-secondary">
+                Ajoutez à nouveau les images manquantes et recréez les questions non copiées si besoin.
+              </p>
+            </div>
             <button
               type="button"
-              onClick={() => setShowImagesWarning(false)}
-              aria-label="Masquer l’avertissement"
+              onClick={() => setCopyWarnings([])}
+              aria-label="Masquer les avertissements"
               className="shrink-0 text-ink-secondary hover:text-ink"
             >
               <X className="w-4 h-4" aria-hidden="true" />

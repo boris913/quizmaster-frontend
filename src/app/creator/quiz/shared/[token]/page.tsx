@@ -12,6 +12,7 @@ import { QUESTION_TYPE_LABELS } from '@/types';
 import {
   copiedQuizPath,
   copySharedQuiz,
+  rememberCopyWarnings,
   countQuestionTypes,
   fetchSharedQuiz,
   httpStatus,
@@ -72,6 +73,7 @@ export default function SharedQuizPage() {
     setCopyError(null);
     try {
       const copy = await copySharedQuiz(token);
+      rememberCopyWarnings(copy);
       router.push(copiedQuizPath(copy));
     } catch (e) {
       if (httpStatus(e) === 401) goToLogin();

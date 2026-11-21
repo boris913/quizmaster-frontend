@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuiz } from '@/hooks/useQuiz';
 import { QuestionImporter } from '@/components/creator/QuestionImporter';
@@ -8,6 +8,9 @@ import { FileQuizImporter } from '@/components/creator/FileQuizImporter';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useAuthStore } from '@/store/authStore';
+import { useQuizStore } from '@/store/quizStore';
+import { deleteDraftQuiz, deleteDraftQuizOnPageHide } from '@/lib/quizSharing';
 
 type ImportTab = 'markdown' | 'spreadsheet' | 'kahoot';
 
@@ -26,23 +29,62 @@ export default function ImportQuizPage() {
   const [useGlobalTimer, setUseGlobalTimer] = useState(true);
   const [importing, setImporting] = useState(false);
   const [tab, setTab] = useState<ImportTab>('markdown');
-  // Quiz cible des imports tableur / Kahoot : créé au premier aperçu, puis réutilisé.
-  const fileQuizId = useRef<Promise<string> | null>(null);
+  // Quiz cible des imports tableur / Kahoot : créé au premier aperçu, réutilisé pour l'import
+  // réel, et supprimé (au mieux) s'il n'a finalement rien reçu : annulation, import sans
+  // question, changement de page ou fermeture de l'onglet.
+  const draft = useRef<{ promise: Promise<string> | null; id: string | null }>({ promise: null, id: null });
+  const draftKept = useRef(false);
 
-  const getFileQuizId = () => {
-    if (!fileQuizId.current) {
-      fileQuizId.current = createQuiz({
-        title: title || 'Quiz importé',
-        description,
-        global_timer_seconds: globalTimer,
-        use_global_timer: useGlobalTimer,
-        questions: [],
-      }).then((quiz) => quiz.id);
-      fileQuizId.current.catch(() => {
-        fileQuizId.current = null;
-      });
-    }
-    return fileQuizId.current;
+  const getFileQuizId = (): Promise<string> => {
+    if (draft.current.promise) return draft.current.promise;
+    const promise: Promise<string> = createQuiz({
+      title: title || 'Quiz importé',
+      description,
+      global_timer_seconds: globalTimer,
+      use_global_timer: useGlobalTimer,
+      questions: [],
+    }).then((quiz) => {
+      if (draft.current.promise === promise) draft.current.id = quiz.id;
+      return quiz.id;
+    });
+    draft.current = { promise, id: null };
+    promise.catch(() => {
+      if (draft.current.promise === promise) draft.current = { promise: null, id: null };
+    });
+    return promise;
+  };
+
+  const discardDraft = useCallback(() => {
+    const { promise } = draft.current;
+    draft.current = { promise: null, id: null };
+    if (!promise || draftKept.current) return;
+    promise.then(
+      async (id) => {
+        await deleteDraftQuiz(id);
+        useQuizStore.setState((state) => ({ quizzes: state.quizzes.filter((q) => q.id !== id) }));
+      },
+      () => undefined
+    );
+  }, []);
+
+  useEffect(() => {
+    const onPageHide = () => {
+      const { id } = draft.current;
+      if (!id || draftKept.current) return;
+      draft.current = { promise: null, id: null };
+      deleteDraftQuizOnPageHide(id, useAuthStore.getState().token);
+    };
+    window.addEventListener('pagehide', onPageHide);
+    return () => {
+      window.removeEventListener('pagehide', onPageHide);
+      // Navigation dans l'application : la page est démontée sans import confirmé.
+      discardDraft();
+    };
+  }, [discardDraft]);
+
+  const handleFileImported = (quizId: string) => {
+    draftKept.current = true;
+    router.push(`/creator/quiz/${quizId}`);
   };
 
   const handleImport = async (questionsContent: string, answersContent?: string) => {
@@ -136,7 +178,8 @@ export default function ImportQuizPage() {
               key={tab}
               source={tab}
               getQuizId={getFileQuizId}
-              onImported={(quizId) => router.push(`/creator/quiz/${quizId}`)}
+              onImported={handleFileImported}
+              onDiscard={discardDraft}
             />
           )}
         </div>

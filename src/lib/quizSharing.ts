@@ -62,43 +62,44 @@ export function serverMessage(err: unknown): string | null {
 // Duplication et copie
 // ------------------------------------------------------------
 
+export interface CopyWarning {
+  /** Position (à partir de 1) de la question dans le quiz d'origine, `null` si inconnue. */
+  questionNumber: number | null;
+  message: string;
+}
+
 export interface QuizCopyResult {
   quizId: string;
-  /** Nombre d'images qui n'ont pas pu être copiées (0 si toutes l'ont été ou s'il n'y en avait pas). */
-  imagesNotCopied: number;
+  /**
+   * Avertissements de la copie (backend #12) : image non copiée (question gardée sans image)
+   * ou question invalide non copiée.
+   */
+  warnings: CopyWarning[];
 }
 
 /**
- * Normalise la réponse d'une duplication ou d'une copie. Formes tolérées : le quiz à plat
- * (`{ id, … }`) ou enveloppé (`{ quiz: { id } }`), avec un compteur d'images non copiées
- * (`imagesNotCopied`, `imagesFailed`, `failedImages`, en camelCase ou snake_case, nombre ou
- * liste) ou des avertissements `warnings: [{ code: 'IMAGE_NOT_COPIED' }]`.
+ * Normalise la réponse d'une duplication ou d'une copie. Contrat backend #12 :
+ * `{ quiz: { id, … }, warnings: [{ question_number, message }] }`. Tolère aussi le quiz à plat
+ * et des avertissements sous forme de chaînes.
  */
 export function normalizeQuizCopy(raw: unknown): QuizCopyResult {
   const quiz = pick(raw, 'quiz');
   const id = pick(quiz, 'id') ?? pick(raw, 'id', 'quizId', 'quiz_id');
   if (id === undefined) throw new Error('Réponse inattendue du serveur (identifiant de la copie absent).');
-
-  const counter = pick(
-    raw,
-    'imagesNotCopied',
-    'images_not_copied',
-    'imagesFailed',
-    'images_failed',
-    'failedImages',
-    'failed_images'
-  );
-  let imagesNotCopied = Array.isArray(counter) ? counter.length : toCount(counter);
-  if (!imagesNotCopied) {
-    const warnings = pick(raw, 'warnings');
-    if (Array.isArray(warnings)) {
-      imagesNotCopied = warnings.filter((w) => {
-        const text = typeof w === 'string' ? w : `${pick(w, 'code') ?? ''} ${pick(w, 'message') ?? ''}`;
-        return /image/i.test(text);
-      }).length;
-    }
-  }
-  return { quizId: String(id), imagesNotCopied };
+  const list = pick(raw, 'warnings');
+  const warnings: CopyWarning[] = Array.isArray(list)
+    ? list
+        .map((w) => {
+          if (typeof w === 'string') return { questionNumber: null, message: w };
+          const n = Number(pick(w, 'question_number', 'questionNumber'));
+          const message = toText(pick(w, 'message')) ?? toText(pick(w, 'code'));
+          return message
+            ? { questionNumber: Number.isFinite(n) && n > 0 ? n : null, message }
+            : null;
+        })
+        .filter((w): w is CopyWarning => w !== null)
+    : [];
+  return { quizId: String(id), warnings };
 }
 
 export async function duplicateQuiz(quizId: string): Promise<QuizCopyResult> {
@@ -111,10 +112,42 @@ export async function copySharedQuiz(token: string): Promise<QuizCopyResult> {
   return normalizeQuizCopy(data);
 }
 
-/** URL de la page d'un quiz copié, avec l'avertissement éventuel sur les images. */
-export function copiedQuizPath({ quizId, imagesNotCopied }: QuizCopyResult): string {
-  const base = `/creator/quiz/${encodeURIComponent(quizId)}`;
-  return imagesNotCopied > 0 ? `${base}?imagesNonCopiees=${imagesNotCopied}` : base;
+/** URL de la page d'un quiz copié. */
+export function copiedQuizPath({ quizId }: Pick<QuizCopyResult, 'quizId'>): string {
+  return `/creator/quiz/${encodeURIComponent(quizId)}`;
+}
+
+// Avertissements transmis à la page de la copie (navigation client : mémoire ; rechargement :
+// sessionStorage, toujours sous try/catch). Lus une seule fois.
+const pendingCopyWarnings = new Map<string, CopyWarning[]>();
+const copyWarningsKey = (quizId: string) => `kwizora_copy_warnings:${quizId}`;
+
+export function rememberCopyWarnings({ quizId, warnings }: QuizCopyResult): void {
+  if (warnings.length === 0) return;
+  pendingCopyWarnings.set(quizId, warnings);
+  try {
+    window.sessionStorage.setItem(copyWarningsKey(quizId), JSON.stringify(warnings));
+  } catch {
+    // Stockage indisponible : la mémoire suffit pour la navigation client.
+  }
+}
+
+export function takeCopyWarnings(quizId: string): CopyWarning[] {
+  let warnings = pendingCopyWarnings.get(quizId) ?? null;
+  pendingCopyWarnings.delete(quizId);
+  try {
+    const raw = window.sessionStorage.getItem(copyWarningsKey(quizId));
+    window.sessionStorage.removeItem(copyWarningsKey(quizId));
+    if (!warnings && raw) warnings = normalizeQuizCopy({ id: quizId, warnings: JSON.parse(raw) }).warnings;
+  } catch {
+    // idem
+  }
+  return warnings ?? [];
+}
+
+/** Libellé d'un avertissement : « Question 2 : image non copiée (…) ». */
+export function copyWarningLabel(w: CopyWarning): string {
+  return w.questionNumber ? `Question ${w.questionNumber} : ${w.message}` : w.message;
 }
 
 export function duplicateErrorMessage(err: unknown): string {
@@ -312,6 +345,15 @@ export interface ImportReport {
   errors: ImportRowError[];
 }
 
+/** « 3 questions seront importées, 2 lignes ignorées. » */
+export function importSummary(report: Pick<ImportReport, 'valid' | 'errors'>): string {
+  const n = report.valid;
+  const m = report.errors.length;
+  const questions = n === 1 ? '1 question sera importée' : `${n} questions seront importées`;
+  const ignored = m === 1 ? '1 ligne ignorée' : `${m} lignes ignorées`;
+  return `${questions}, ${ignored}.`;
+}
+
 export function normalizeImportReport(raw: unknown): ImportReport {
   const errors = pick(raw, 'errors');
   const imported = toCount(pick(raw, 'imported'));
@@ -373,4 +415,33 @@ export async function downloadImportTemplate(): Promise<void> {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+// ------------------------------------------------------------
+// Quiz brouillon créé pour l'aperçu d'un import
+// ------------------------------------------------------------
+
+/** Supprime (au mieux) un quiz créé uniquement pour l'aperçu d'un import. */
+export async function deleteDraftQuiz(quizId: string): Promise<void> {
+  try {
+    await api.delete(`/quizzes/${encodeURIComponent(quizId)}`);
+  } catch {
+    // Au mieux : un échec laisse un quiz vide, que l'enseignant peut supprimer lui-même.
+  }
+}
+
+/**
+ * Variante pour la fermeture de l'onglet (`pagehide`) : `fetch` avec `keepalive`, qui survit
+ * au déchargement de la page, sans boîte de dialogue.
+ */
+export function deleteDraftQuizOnPageHide(quizId: string, token: string | null): void {
+  try {
+    void fetch(`${API_URL}${HTTP_PREFIX}/quizzes/${encodeURIComponent(quizId)}`, {
+      method: 'DELETE',
+      keepalive: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    }).catch(() => undefined);
+  } catch {
+    // idem
+  }
 }

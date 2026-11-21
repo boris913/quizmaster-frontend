@@ -9,6 +9,7 @@ import {
   downloadImportTemplate,
   formatBytes,
   importErrorMessage,
+  importSummary,
   importQuizFile,
   resolveImportFile,
   type FileImportFormat,
@@ -20,15 +21,17 @@ interface FileQuizImporterProps {
   source: 'spreadsheet' | 'kahoot';
   /** Fournit l'identifiant du quiz cible (créé au premier appel si besoin). */
   getQuizId: () => Promise<string>;
-  /** Appelé après l'import réel. */
+  /** Appelé après un import réel qui a enregistré au moins une question. */
   onImported: (quizId: string, imported: number) => void;
+  /** « Annuler » sur l'aperçu, ou import réel sans aucune question enregistrée. */
+  onDiscard: () => void;
 }
 
 /**
  * Import d'un fichier en deux temps : aperçu (`dryRun`) avec le nombre de questions valides
  * et les erreurs par ligne, puis import réel sur confirmation uniquement.
  */
-export function FileQuizImporter({ source, getQuizId, onImported }: FileQuizImporterProps) {
+export function FileQuizImporter({ source, getQuizId, onImported, onDiscard }: FileQuizImporterProps) {
   const inputId = useId();
   const [file, setFile] = useState<File | null>(null);
   const [format, setFormat] = useState<FileImportFormat | null>(null);
@@ -66,7 +69,12 @@ export function FileQuizImporter({ source, getQuizId, onImported }: FileQuizImpo
       const quizId = await getQuizId();
       const result = await importQuizFile(quizId, file, format, dryRun);
       if (dryRun) setReport(result);
-      else onImported(quizId, result.imported);
+      else if (result.imported > 0) onImported(quizId, result.imported);
+      else {
+        setReport(null);
+        onDiscard();
+        setError('Aucune question n’a été importée : corrigez le fichier puis relancez l’aperçu.');
+      }
     } catch (e) {
       setError(importErrorMessage(e));
     } finally {
@@ -158,15 +166,13 @@ export function FileQuizImporter({ source, getQuizId, onImported }: FileQuizImpo
       {report && (
         <section aria-label="Aperçu de l’import" className="space-y-3" data-testid="import-preview">
           <p className="font-medium" role="status">
-            {report.valid === 0
-              ? 'Aucune question valide dans ce fichier.'
-              : `${report.valid} question${report.valid > 1 ? 's' : ''} valide${report.valid > 1 ? 's' : ''} prête${report.valid > 1 ? 's' : ''} à importer.`}
+            {report.valid === 0 ? 'Aucune question valide dans ce fichier.' : importSummary(report)}
           </p>
           {report.errors.length > 0 && (
             <div className="space-y-2">
               <p className="text-small text-danger">
-                {report.errors.length} erreur{report.errors.length > 1 ? 's' : ''} : les lignes concernées ne seront
-                pas importées. Corrigez le fichier puis relancez l&apos;aperçu, ou importez seulement les questions
+                {report.errors.length} erreur{report.errors.length > 1 ? 's' : ''} : les lignes concernées seront
+                ignorées. Corrigez le fichier puis relancez l&apos;aperçu, ou importez seulement les questions
                 valides.
               </p>
               <div className="max-h-72 overflow-auto rounded-md border border-borderc">
@@ -199,7 +205,14 @@ export function FileQuizImporter({ source, getQuizId, onImported }: FileQuizImpo
               <Upload className="w-4 h-4 mr-2" aria-hidden="true" />
               {`Importer ${report.valid} question${report.valid > 1 ? 's' : ''}`}
             </Button>
-            <Button variant="outline" onClick={reset} disabled={busy !== null}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                reset();
+                onDiscard();
+              }}
+              disabled={busy !== null}
+            >
               Annuler
             </Button>
           </div>

@@ -1,18 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import QuizDetailPage from '@/app/creator/quiz/[id]/page';
 import api from '@/lib/api';
 import { useQuizStore } from '@/store/quizStore';
+import { rememberCopyWarnings, takeCopyWarnings } from '@/lib/quizSharing';
 
 vi.setConfig({ testTimeout: 30_000 });
 
 const push = vi.fn();
-let search = '';
 vi.mock('next/navigation', () => ({
   useParams: () => ({ id: 'quiz-1' }),
   useRouter: () => ({ push }),
-  useSearchParams: () => new URLSearchParams(search),
 }));
 
 let quiz: Record<string, unknown>;
@@ -53,7 +52,6 @@ function baseQuiz(extra: Record<string, unknown> = {}) {
 describe('Page du quiz : dupliquer et partager', () => {
   beforeEach(() => {
     push.mockReset();
-    search = '';
     quiz = baseQuiz();
     useQuizStore.setState({ currentQuiz: null, quizzes: [] });
     vi.mocked(api.get).mockReset();
@@ -86,26 +84,40 @@ describe('Page du quiz : dupliquer et partager', () => {
     expect(api.post).toHaveBeenCalledWith('/quizzes/quiz-1/duplicate');
   });
 
-  it('transmet l’avertissement des images non copiées à la page de la copie', async () => {
+  it('transmet tous les avertissements de la duplication à la page de la copie', async () => {
     const user = userEvent.setup();
     vi.mocked(api.post).mockResolvedValue({
       data: {
         quiz: { id: 'quiz-2' },
         warnings: [
           { question_number: 1, message: 'image non copiée (erreur du stockage) : question copiée sans image' },
-          { question_number: 2, message: 'image non copiée (copie refusée par le stockage) : question copiée sans image' },
+          { question_number: 2, message: 'question non copiée : texte requis' },
         ],
       },
     });
     render(<QuizDetailPage />);
     await user.click(await screen.findByRole('button', { name: /Dupliquer/ }));
-    await waitFor(() => expect(push).toHaveBeenCalledWith('/creator/quiz/quiz-2?imagesNonCopiees=2'));
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/creator/quiz/quiz-2'));
+    expect(takeCopyWarnings('quiz-2').map((w) => w.questionNumber)).toEqual([1, 2]);
   });
 
-  it('affiche l’avertissement sur la copie', async () => {
-    search = 'imagesNonCopiees=2';
+  it('affiche la liste des avertissements sur la copie (images et questions non copiées)', async () => {
+    rememberCopyWarnings({
+      quizId: 'quiz-1',
+      warnings: [
+        { questionNumber: 1, message: 'image non copiée (erreur du stockage) : question copiée sans image' },
+        { questionNumber: 4, message: 'question non copiée : texte requis' },
+      ],
+    });
+    const user = userEvent.setup();
     render(<QuizDetailPage />);
-    expect(await screen.findByTestId('images-not-copied')).toHaveTextContent('2 images n’ont pas pu être copiées');
+    const box = await screen.findByTestId('copy-warnings');
+    expect(box).toHaveTextContent('Copie créée avec 2 avertissements');
+    const items = within(box).getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent('Question 1 : image non copiée');
+    expect(items[1]).toHaveTextContent('Question 4 : question non copiée : texte requis');
+    await user.click(screen.getByRole('button', { name: 'Masquer les avertissements' }));
+    expect(screen.queryByTestId('copy-warnings')).not.toBeInTheDocument();
   });
 
   it('affiche une erreur si la duplication échoue', async () => {
