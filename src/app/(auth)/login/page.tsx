@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
+import { redirectAfterLogin, REDIRECT_PARAM, safeRedirectPath } from '@/lib/quizSharing';
 
 type LoginForm = { pseudo: string; password: string };
 
@@ -19,6 +20,12 @@ export default function LoginPage() {
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
   const [error, setError] = useState('');
+  // Conserve la page de retour (`?next=`) entre connexion et inscription.
+  const [returnQuery, setReturnQuery] = useState('');
+  useEffect(() => {
+    const next = safeRedirectPath(new URLSearchParams(window.location.search).get(REDIRECT_PARAM));
+    if (next) setReturnQuery(`?${REDIRECT_PARAM}=${encodeURIComponent(next)}`);
+  }, []);
 
   const loginSchema = useMemo(
     () =>
@@ -40,7 +47,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       await login(data.pseudo, data.password);
-      router.push('/creator/dashboard');
+      // Retour sur la page d'origine (`?next=/…`, chemin interne uniquement).
+      router.push(redirectAfterLogin(window.location.search));
     } catch (err: any) {
       setError(err.response?.data?.message || t('errors.login'));
     }
@@ -72,7 +80,7 @@ export default function LoginPage() {
         </form>
         <p className="text-small text-center mt-4">
           {t('login.noAccount')}{' '}
-          <Link href="/register" className="text-primary hover:underline">
+          <Link href={`/register${returnQuery}`} className="text-primary hover:underline">
             {t('login.toRegister')}
           </Link>
         </p>
