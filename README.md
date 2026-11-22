@@ -105,6 +105,11 @@ Pour un composant qui reçoit le socket par props ou via un contexte mocké, `cr
 `.github/workflows/ci.yml` s'exécute sur chaque pull request et sur `main` (Node 20) :
 
 1. **checks** : `npm ci`, `npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run build` (avec des `NEXT_PUBLIC_*` factices) ;
-2. **e2e** : `npm ci`, installation de Chromium, `npm run build`, `npm run test:e2e` (hors tests `@backend`). Le rapport Playwright est publié en artefact en cas d'échec.
+2. **e2e** : `npm ci`, installation de Chromium, `npm run build`, `npm run test:e2e` (hors tests `@backend`). Le rapport Playwright est publié en artefact en cas d'échec ;
+3. **docker** : construction de l'image (`Dockerfile`, sans push vers un registre), puis lancement du conteneur et vérification de `/`, `/api/health` et de l'état `healthy` du `HEALTHCHECK`.
 
 Une PR n'est mergeable que si la CI est verte.
+
+## Déploiement
+
+Le frontend est déployé sur un VPS géré par **Coolify** à partir du `Dockerfile` (Next.js `output: 'standalone'`, `node server.js`, port 3000). Les variables `NEXT_PUBLIC_*` sont figées au build : elles se saisissent comme « build variables » dans Coolify. Procédure complète : [docs/deploiement-coolify.md](docs/deploiement-coolify.md).
