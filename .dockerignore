@@ -1,0 +1,28 @@
+# Secrets et configuration locale : jamais dans le contexte de build.
+.env*
+
+# Dépendances et artefacts : reconstruits dans l'image.
+node_modules
+.next
+out
+build
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Résultats Playwright
+test-results
+playwright-report
+blob-report
+playwright/.cache
+
+# Git, CI, éditeurs, divers
+.git
+.github
+.vscode
+.DS_Store
+npm-debug.log*
+Dockerfile
+.dockerignore
+docs
+*.md
